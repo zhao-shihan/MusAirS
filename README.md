@@ -18,7 +18,7 @@ In source directory, execute line-by-line:
 ```sh
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake ..
 make -j8
 ```
 
