@@ -1,0 +1,32 @@
+#############################################################################
+# Initialization settings
+#############################################################################
+
+/control/verbose 0
+/run/verbose 0
+
+#/MusAirS/Detector/Description/Ixport MusAirS_geom.yaml
+
+/run/initialize
+
+/gps/particle             gamma
+/gps/position             0 0 100 km
+/gps/ang/type             iso
+/gps/ene/type             Pow
+/gps/ene/biasAlpha        -2
+/gps/ene/min              2 GeV
+/gps/ene/max              10 TeV
+
+/run/setCut 10 m
+
+#/MusAirS/Analysis/SavePrimaryVertexData  false
+#/MusAirS/Analysis/SaveDecayVertexData    false
+
+#############################################################################
+# Run
+#############################################################################
+
+/MusAirS/Analysis/FilePath MusAirS_gamma_pow2
+/MusAirS/Analysis/FileMode NEW
+/run/beamOn 1000000
+/Mustard/Run/PrintRunSummary
