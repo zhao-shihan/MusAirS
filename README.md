@@ -2,6 +2,8 @@
 
 Simulation of cosmic ray air shower.
 
+![MusAirS](document/picture/proton_shower.png "A proton shower.")
+
 ## Quick start
 
 ### Dependencies
