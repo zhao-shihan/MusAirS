@@ -67,6 +67,12 @@
 /vis/filtering/trajectories/particleFilter-0/add pi+
 /vis/filtering/trajectories/particleFilter-0/add pi-
 /vis/filtering/trajectories/particleFilter-0/add pi0
+/vis/filtering/trajectories/particleFilter-0/add kaon+
+/vis/filtering/trajectories/particleFilter-0/add kaon-
+/vis/filtering/trajectories/particleFilter-0/add kaon0
+/vis/filtering/trajectories/particleFilter-0/add kaon0L
+/vis/filtering/trajectories/particleFilter-0/add kaon0S
+/vis/filtering/trajectories/particleFilter-0/add anti_kaon0
 
 /vis/modeling/trajectories/create/drawByParticleID
 /vis/modeling/trajectories/drawByParticleID-0/default/setDrawAuxPts false
