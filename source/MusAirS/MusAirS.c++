@@ -1,9 +1,10 @@
+#include "FTFP_BERT.hh"
 #include "MusAirS/Action/ActionInitialization.h++"
 #include "MusAirS/Action/DetectorConstruction.h++"
 #include "MusAirS/Analysis.h++"
 #include "MusAirS/DefaultMacro.h++"
-#include "FTFP_BERT.hh"
 
+#include "Mustard/Env/CLI/Geant4CLI.h++"
 #include "Mustard/Env/MPIEnv.h++"
 #include "Mustard/Extension/Geant4X/Interface/MPIExecutive.h++"
 #include "Mustard/Extension/Geant4X/Run/MPIRunManager.h++"
@@ -12,7 +13,7 @@
 #include "Randomize.hh"
 
 auto main(int argc, char* argv[]) -> int {
-    Mustard::Env::CLI::Geant4CLI cli;
+    Mustard::Env::CLI::Geant4CLI<> cli;
     Mustard::Env::MPIEnv env{argc, argv, cli};
 
     Mustard::UseXoshiro<512> random;
