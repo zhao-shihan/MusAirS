@@ -9,7 +9,7 @@ constexpr auto defaultMacro = {
     "#/control/saveHistory",
     "/run/verbose 2",
     "",
-    "#/Mustard/Detector/Description/Ixport MusAirS_geom.yaml",
+    "#/Mustard/Detector/Description/Ixport MusAirS.yaml",
     "",
     "/run/initialize",
     "",
