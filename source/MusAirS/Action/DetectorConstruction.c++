@@ -12,12 +12,16 @@
 #include "Mustard/Utility/VectorCast.h++"
 
 #include "G4ChordFinder.hh"
+#include "G4GeometryManager.hh"
 #include "G4InterpolationDriver.hh"
 #include "G4TDormandPrince45.hh"
+#include "G4FieldManager.hh"
 #include "G4TMagFieldEquation.hh"
 #include "G4ThreeVector.hh"
 
 #include "gsl/gsl"
+
+#include <algorithm>
 
 namespace MusAirS::inline Action {
 
@@ -30,6 +34,11 @@ DetectorConstruction::DetectorConstruction(bool checkOverlap) :
 }
 
 auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
+    // adjust tolerance for big geometry
+
+    const auto& world{Detector::Description::World::Instance()};
+    G4GeometryManager::GetInstance()->SetWorldMaximumExtent(std::max(world.Width(), 2 * world.MaxHeight()));
+
     // Construct volumes
 
     fWorld = std::make_unique<Detector::Definition::World>();
@@ -41,8 +50,9 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
     earth.RegisterSD(new SD::EarthSD{"EarthSD"});
 
     // Register field
+
     using namespace Mustard::LiteralUnit::Length;
-    constexpr auto hMin{1_m};
+    constexpr auto delta{1_m};
     using Field = Mustard::Detector::Field::AsG4Field<Mustard::Detector::Field::UniformMagneticField>;
     using Equation = G4TMagFieldEquation<Field>;
     using Stepper = G4TDormandPrince45<Equation, 6>;
@@ -50,9 +60,11 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
     const auto field{new Field{Detector::Description::Field::Instance().MagneticField()}};
     const auto equation{new Equation{field}}; // clang-format off
     const auto stepper{new Stepper{equation, 6}};
-    const auto driver{new Driver{hMin, stepper, 6}}; // clang-format on
+    const auto driver{new Driver{delta, stepper, 6}}; // clang-format on
     const auto chordFinder{new G4ChordFinder{driver}};
-    fWorld->RegisterField(std::make_unique<G4FieldManager>(field, chordFinder), false);
+    auto fieldManager{std::make_unique<G4FieldManager>(field, chordFinder)};
+    fieldManager->SetAccuraciesWithDeltaOneStep(delta);
+    fWorld->RegisterField(std::move(fieldManager), false);
 
     return fWorld->PhysicalVolume();
 }
