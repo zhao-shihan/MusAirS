@@ -12,11 +12,13 @@
 #include "Mustard/Utility/VectorCast.h++"
 
 #include "G4ChordFinder.hh"
+#include "G4FieldManager.hh"
 #include "G4InterpolationDriver.hh"
 #include "G4TDormandPrince45.hh"
-#include "G4FieldManager.hh"
 #include "G4TMagFieldEquation.hh"
 #include "G4ThreeVector.hh"
+
+#include "muc/numeric"
 
 #include "gsl/gsl"
 
@@ -45,16 +47,19 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
 
     // Register field
 
-    using namespace Mustard::LiteralUnit::Length;
-    constexpr auto delta{1_m};
+    const auto& world{Detector::Description::World::Instance()};
+    const auto hMin{muc::default_tolerance<double> * std::max(world.MaxHeight(), world.Width())};
+    const auto delta{0.001 * hMin};
+
     using Field = Mustard::Detector::Field::AsG4Field<Mustard::Detector::Field::UniformMagneticField>;
     using Equation = G4TMagFieldEquation<Field>;
     using Stepper = G4TDormandPrince45<Equation, 6>;
     using Driver = G4InterpolationDriver<Stepper>;
+
     const auto field{new Field{Detector::Description::Field::Instance().MagneticField()}};
     const auto equation{new Equation{field}}; // clang-format off
     const auto stepper{new Stepper{equation, 6}};
-    const auto driver{new Driver{delta, stepper, 6}}; // clang-format on
+    const auto driver{new Driver{hMin, stepper, 6}}; // clang-format on
     const auto chordFinder{new G4ChordFinder{driver}};
     auto fieldManager{std::make_unique<G4FieldManager>(field, chordFinder)};
     fieldManager->SetAccuraciesWithDeltaOneStep(delta);
