@@ -12,7 +12,6 @@
 #include "Mustard/Utility/VectorCast.h++"
 
 #include "G4ChordFinder.hh"
-#include "G4GeometryManager.hh"
 #include "G4InterpolationDriver.hh"
 #include "G4TDormandPrince45.hh"
 #include "G4FieldManager.hh"
@@ -34,11 +33,6 @@ DetectorConstruction::DetectorConstruction(bool checkOverlap) :
 }
 
 auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
-    // adjust tolerance for big geometry
-
-    const auto& world{Detector::Description::World::Instance()};
-    G4GeometryManager::GetInstance()->SetWorldMaximumExtent(std::max(world.Width(), 2 * world.MaxHeight()));
-
     // Construct volumes
 
     fWorld = std::make_unique<Detector::Definition::World>();
