@@ -12,7 +12,10 @@
 /gps/particle             proton
 /gps/position             0 0 100 km
 /gps/ang/type             iso
-/gps/energy               100 GeV
+/gps/ene/type             Pow
+/gps/ene/biasAlpha        -2.7
+/gps/ene/min              2 GeV
+/gps/ene/max              10 TeV
 
 /run/setCut 10 m    # low cut for accurate EM shower shape
 
@@ -23,7 +26,7 @@
 # Run
 #############################################################################
 
-/MusAirS/Analysis/FilePath MusAirS_p_100GeV_full
+/MusAirS/Analysis/FilePath MusAirS_p_pow2_7_full
 /MusAirS/Analysis/FileMode NEW
 /run/beamOn 10000
 /Mustard/Run/PrintRunSummary

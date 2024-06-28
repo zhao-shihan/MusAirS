@@ -12,12 +12,9 @@
 /gps/particle             proton
 /gps/position             0 0 100 km
 /gps/ang/type             iso
-/gps/ene/type             Pow
-/gps/ene/biasAlpha        -2.7
-/gps/ene/min              2 GeV
-/gps/ene/max              10 TeV
+/gps/energy               100 GeV
 
-/run/setCut 10 m
+/run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
 
 #/MusAirS/Analysis/SavePrimaryVertexData  false
 #/MusAirS/Analysis/SaveDecayVertexData    false
@@ -26,7 +23,7 @@
 # Run
 #############################################################################
 
-/MusAirS/Analysis/FilePath MusAirS_p_pow2_7
+/MusAirS/Analysis/FilePath MusAirS_p_100GeV_muon
 /MusAirS/Analysis/FileMode NEW
-/run/beamOn 1000000
+/run/beamOn 10000
 /Mustard/Run/PrintRunSummary
