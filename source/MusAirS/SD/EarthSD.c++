@@ -55,7 +55,7 @@ auto EarthSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
     const auto vertexMomentum{track.GetVertexMomentumDirection() * std::sqrt(vertexEk * (vertexEk + 2 * particle.GetPDGMass()))};
     // calculate theta
     const auto p{preStepPoint.GetMomentum()};
-    const auto theta{std::atan2(p.perp(), -p.z())};
+    const auto zenith{1 + p.z() / p.mag()};
     const auto phi{std::atan2(p.y(), p.x())};
     // track creator process
     const auto creatorProcess{track.GetCreatorProcess()};
@@ -72,9 +72,9 @@ auto EarthSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
     Get<"Ek0">(*hit) = vertexEk;
     Get<"p">(*hit) = p;
     Get<"p0">(*hit) = vertexMomentum;
-    Get<"theta">(*hit) = theta;
+    Get<"Zenith">(*hit) = zenith;
     Get<"phi">(*hit) = phi;
-    Get<"len">(*hit) = track.GetTrackLength();
+    Get<"TrkLen">(*hit) = track.GetTrackLength();
     Get<"ParentTrkID">(*hit) = track.GetParentID();
     *Get<"CreatProc">(*hit) = creatorProcess ? std::string_view{creatorProcess->GetProcessName()} : "|0>";
     fHitsCollection->insert(hit);
