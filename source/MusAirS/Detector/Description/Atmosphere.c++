@@ -177,7 +177,7 @@ using namespace Mustard::LiteralUnit::Pressure;
 Atmosphere::Atmosphere() :
     DescriptionWithCacheBase{"Atmosphere"},
     fMaxAltitude{this, 90_km},
-    fNPressureSlice{this, 200},
+    fNPressureSlice{this, 1000},
     fAltitudeSlice{this, [this] { return CalculateAltitudeSlice(); }},
     fStateSlice{this, [this] { return CalculateStateSlice(); }} {}
 
