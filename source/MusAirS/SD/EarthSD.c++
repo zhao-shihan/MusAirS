@@ -33,6 +33,9 @@ auto EarthSD::Initialize(G4HCofThisEvent* hitsCollectionOfThisEvent) -> void {
 }
 
 auto EarthSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
+    // just kill the track underground
+    theStep->GetTrack()->SetTrackStatus(fStopAndKill);
+
     const auto& step{*theStep};
     if (not step.IsFirstStepInVolume()) { return false; } // ensure first step
 
@@ -78,9 +81,6 @@ auto EarthSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
     Get<"ParentTrkID">(*hit) = track.GetParentID();
     *Get<"CreatProc">(*hit) = creatorProcess ? std::string_view{creatorProcess->GetProcessName()} : "|0>";
     fHitsCollection->insert(hit);
-
-    // kill the track
-    step.GetTrack()->SetTrackStatus(fStopAndKill);
 
     return true;
 }
