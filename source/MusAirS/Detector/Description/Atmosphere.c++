@@ -1,4 +1,5 @@
 #include "MusAirS/Detector/Description/Atmosphere.h++"
+#include "MusAirS/Detector/Description/Earth.h++"
 
 #include "Mustard/Env/Print.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
@@ -186,7 +187,8 @@ auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
         [](double alt) {
             return LouiEriksson::ISA<>::TrySolve(alt / m).value().m_Pressure * pascal;
         }};
-    const auto pGround{CalculateP(0)};
+    const auto zGround{Earth::Instance().GroundAltitude()};
+    const auto pGround{CalculateP(zGround)};
     const auto deltaP{(pGround - CalculateP(fMaxAltitude)) / fNPressureSlice};
 
     std::vector<double> pressure(fNPressureSlice);
@@ -198,7 +200,7 @@ auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
     for (gsl::index i{}; i < fNPressureSlice - 1; ++i) {
         const auto [alt, converged]{
             muc::find_root::zbrent([&, p = pressure[i]](auto z) { return CalculateP(z) - p; },
-                                   0., *fMaxAltitude)};
+                                   zGround, *fMaxAltitude)};
         if (not converged) { Mustard::Env::PrintLnWarning("Warning: Slice altitude not converged"); }
         altitude[i] = alt;
     }
@@ -216,7 +218,7 @@ auto Atmosphere::CalculateStateSlice() const -> std::vector<AtmoState> {
 
     std::vector<AtmoState> state(fNPressureSlice);
     const auto& altitude{*fAltitudeSlice};
-    state.front() = CalculateState(muc::midpoint(0., altitude.front()));
+    state.front() = CalculateState(muc::midpoint(Earth::Instance().GroundAltitude(), altitude.front()));
     for (gsl::index i{1}; i < fNPressureSlice; ++i) {
         state[i] = CalculateState(muc::midpoint(altitude[i - 1], altitude[i]));
     }

@@ -1,5 +1,6 @@
 #include "MusAirS/Detector/Definition/Atmosphere.h++"
 #include "MusAirS/Detector/Description/Atmosphere.h++"
+#include "MusAirS/Detector/Description/Earth.h++"
 #include "MusAirS/Detector/Description/World.h++"
 
 #include "G4Box.hh"
@@ -14,15 +15,18 @@ namespace MusAirS::Detector::Definition {
 
 auto Atmosphere::Construct(bool checkOverlaps) -> void {
     const auto& atmosphere{Description::Atmosphere::Instance()};
+    const auto& earth{Description::Earth::Instance()};
     const auto& world{Description::World::Instance()};
 
     G4LogicalVolume* outerAtmosphere{};
+    double outerSliceThickness{};
     for (gsl::index i{atmosphere.NPressureSlice() - 1}; i >= 0; --i) {
+        const auto sliceThickness{atmosphere.AltitudeSlice()[i] - earth.GroundAltitude()};
         const auto solid{Make<G4Box>(
             atmosphere.Name(),
             world.Width() / 2,
             world.Width() / 2,
-            atmosphere.AltitudeSlice()[i] / 2)};
+            sliceThickness / 2)};
         const auto logic{Make<G4LogicalVolume>(
             solid,
             G4NistManager::Instance()->BuildMaterialWithNewDensity(
@@ -32,8 +36,8 @@ auto Atmosphere::Construct(bool checkOverlaps) -> void {
                 atmosphere.StateSlice()[i].pressure),
             atmosphere.Name())};
         Make<G4PVPlacement>(
-            G4TranslateZ3D{outerAtmosphere ? -atmosphere.AltitudeSlice()[i + 1] / 2 + atmosphere.AltitudeSlice()[i] / 2 :
-                                             atmosphere.AltitudeSlice()[i] / 2},
+            G4TranslateZ3D{outerAtmosphere ? -outerSliceThickness / 2 + sliceThickness / 2 :
+                                             sliceThickness / 2},
             logic,
             atmosphere.Name(),
             outerAtmosphere ? outerAtmosphere :
@@ -42,6 +46,7 @@ auto Atmosphere::Construct(bool checkOverlaps) -> void {
             i,
             checkOverlaps);
         outerAtmosphere = logic;
+        outerSliceThickness = sliceThickness;
     }
 }
 

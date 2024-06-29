@@ -12,8 +12,10 @@ private:
     ~Earth() = default;
 
 public:
+    auto GroundAltitude() const -> auto { return fGroundAltitude; }
     auto Depth() const -> auto { return fDepth; }
 
+    auto GroundAltitude(double val) -> auto { fGroundAltitude = val; }
     auto Depth(double val) -> void { fDepth = val; }
 
 private:
@@ -21,6 +23,7 @@ private:
     auto ExportAllValue(YAML::Node& node) const -> void override;
 
 private:
+    double fGroundAltitude;
     double fDepth;
 };
 
