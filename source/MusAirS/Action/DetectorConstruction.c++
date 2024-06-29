@@ -49,7 +49,7 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
 
     const auto& world{Detector::Description::World::Instance()};
     const auto hMin{muc::default_tolerance<double> * std::max(world.MaxHeight(), world.Width())};
-    const auto delta{0.001 * hMin};
+    const auto delta{0.01 * hMin};
 
     using Field = Mustard::Detector::Field::AsG4Field<Mustard::Detector::Field::UniformMagneticField>;
     using Equation = G4TMagFieldEquation<Field>;
