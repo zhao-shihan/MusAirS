@@ -8,8 +8,12 @@
 #include "Mustard/Env/MPIEnv.h++"
 #include "Mustard/Extension/Geant4X/Interface/MPIExecutive.h++"
 #include "Mustard/Extension/Geant4X/Run/MPIRunManager.h++"
+#include "Mustard/Utility/LiteralUnit.h++"
 #include "Mustard/Utility/UseXoshiro.h++"
 
+#include "G4GeometryManager.hh"
+#include "G4Navigator.hh"
+#include "G4TransportationManager.hh"
 #include "Randomize.hh"
 
 auto main(int argc, char* argv[]) -> int {
@@ -19,6 +23,12 @@ auto main(int argc, char* argv[]) -> int {
     Mustard::UseXoshiro<256> random;
     // First set random seed here
     cli.SeedRandomIfFlagged();
+
+    // Huge model, propose tolerance
+    using namespace Mustard::LiteralUnit::Length;
+    constexpr auto scale{100_km}; // a good scale with a little bit magic
+    G4GeometryManager::GetInstance()->SetWorldMaximumExtent(scale);
+    G4TransportationManager::GetTransportationManager()->GetNavigatorForTracking()->SetPushVerbosity(env.VerboseLevelReach<'I'>());
 
     // Mutually exclusive random seeds are distributed to all processes upon each BeamOn.
     Mustard::Geant4X::MPIRunManager runManager;

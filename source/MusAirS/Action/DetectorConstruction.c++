@@ -13,12 +13,10 @@
 
 #include "G4ChordFinder.hh"
 #include "G4FieldManager.hh"
-#include "G4IntegrationDriver.hh"
-#include "G4TCashKarpRKF45.hh"
+#include "G4InterpolationDriver.hh"
+#include "G4TDormandPrince45.hh"
 #include "G4TMagFieldEquation.hh"
 #include "G4ThreeVector.hh"
-
-#include "muc/numeric"
 
 #include "gsl/gsl"
 
@@ -47,14 +45,14 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
 
     // Register field
 
-    const auto& world{Detector::Description::World::Instance()};
-    const auto hMin{muc::default_tolerance<double> * std::max(world.MaxHeight(), world.Width())};
-    const auto delta{0.01 * hMin};
+    using namespace Mustard::LiteralUnit::Length;
+    constexpr auto hMin{1_m};          // pure magic. don't low, don't high.
+    constexpr auto delta{0.01 * hMin}; // ok from 0.01*hMin to 0.001*hMin
 
     using Field = Mustard::Detector::Field::AsG4Field<Mustard::Detector::Field::UniformMagneticField>;
     using Equation = G4TMagFieldEquation<Field>;
-    using Stepper = G4TCashKarpRKF45<Equation, 6>;
-    using Driver = G4IntegrationDriver<Stepper>;
+    using Stepper = G4TDormandPrince45<Equation, 6>;
+    using Driver = G4InterpolationDriver<Stepper>;
 
     const auto field{new Field{Detector::Description::Field::Instance().MagneticField()}};
     const auto equation{new Equation{field}}; // clang-format off
