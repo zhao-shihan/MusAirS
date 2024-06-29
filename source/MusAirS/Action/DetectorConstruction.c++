@@ -14,7 +14,7 @@
 #include "G4ChordFinder.hh"
 #include "G4FieldManager.hh"
 #include "G4IntegrationDriver.hh"
-#include "G4TDormandPrince45.hh"
+#include "G4TCashKarpRKF45.hh"
 #include "G4TMagFieldEquation.hh"
 #include "G4ThreeVector.hh"
 
@@ -53,12 +53,12 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
 
     using Field = Mustard::Detector::Field::AsG4Field<Mustard::Detector::Field::UniformMagneticField>;
     using Equation = G4TMagFieldEquation<Field>;
-    using Stepper = G4TDormandPrince45<Equation, 6>;
+    using Stepper = G4TCashKarpRKF45<Equation, 6>;
     using Driver = G4IntegrationDriver<Stepper>;
 
     const auto field{new Field{Detector::Description::Field::Instance().MagneticField()}};
     const auto equation{new Equation{field}}; // clang-format off
-    const auto stepper{new Stepper{equation, 6}};
+    const auto stepper{new Stepper{equation}};
     const auto driver{new Driver{hMin, stepper, 6}}; // clang-format on
     const auto chordFinder{new G4ChordFinder{driver}};
     auto fieldManager{std::make_unique<G4FieldManager>(field, chordFinder)};
