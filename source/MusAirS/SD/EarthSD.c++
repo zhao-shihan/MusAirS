@@ -15,6 +15,7 @@
 #include "muc/math"
 
 #include <cmath>
+#include <numbers>
 #include <string_view>
 
 namespace MusAirS::inline SD {
@@ -56,10 +57,10 @@ auto EarthSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
     // calculate (E0, p0)
     const auto vertexEk{track.GetVertexKineticEnergy()};
     const auto vertexMomentum{track.GetVertexMomentumDirection() * std::sqrt(vertexEk * (vertexEk + 2 * particle.GetPDGMass()))};
-    // calculate theta
+    // calculate direction
     const auto p{preStepPoint.GetMomentum()};
     const auto zenith{1 + p.z() / p.mag()};
-    const auto phi{std::atan2(p.y(), p.x())};
+    const auto phi{std::atan2(p.x(), p.y()) + std::numbers::pi};
     // track creator process
     const auto creatorProcess{track.GetCreatorProcess()};
     // new a hit
