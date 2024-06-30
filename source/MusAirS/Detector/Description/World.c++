@@ -8,7 +8,7 @@ using namespace Mustard::LiteralUnit::Length;
 
 World::World() :
     DescriptionBase{"World"},
-    fWidth{3000_km},
+    fWidth{2000_km},
     fMaxHeight{110_km} {}
 
 void World::ImportAllValue(const YAML::Node& node) {

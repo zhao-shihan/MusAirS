@@ -24,7 +24,7 @@ auto Earth::Construct(bool checkOverlaps) -> void {
         G4NistManager::Instance()->FindOrBuildMaterial("G4_WATER"),
         earth.Name())};
     Make<G4PVPlacement>(
-        G4TranslateZ3D{-earth.Depth() / 2},
+        G4TranslateZ3D{-earth.Depth() / 2 + earth.GroundAltitude()},
         logic,
         earth.Name(),
         Mother().LogicalVolume(),
