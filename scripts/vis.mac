@@ -81,10 +81,10 @@
 /vis/modeling/trajectories/drawByParticleID-0/default/setAuxPtsType dots
 /vis/modeling/trajectories/drawByParticleID-0/default/setDrawLine true
 /vis/modeling/trajectories/drawByParticleID-0/default/setLineWidth 1
-#/vis/modeling/trajectories/drawByParticleID-0/default/setDrawStepPts true
-#/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSize 1
-#/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSizeType screen
-#/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsType dots
+/vis/modeling/trajectories/drawByParticleID-0/default/setDrawStepPts true
+/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSize 1
+/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSizeType screen
+/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsType dots
 
 /vis/scene/endOfEventAction accumulate
 
