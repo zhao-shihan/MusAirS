@@ -46,8 +46,8 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
     // Register field
 
     using namespace Mustard::LiteralUnit::Length;
-    constexpr auto hMin{1_m};          // pure magic. don't low, don't high.
-    constexpr auto delta{0.01 * hMin}; // ok from 0.01*hMin to 0.001*hMin
+    constexpr auto hMin{1_m};
+    constexpr auto delta{0.01 * hMin};
 
     using Field = Mustard::Detector::Field::AsG4Field<Mustard::Detector::Field::UniformMagneticField>;
     using Equation = G4TMagFieldEquation<Field>;
@@ -59,6 +59,7 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
     const auto stepper{new Stepper{equation}};
     const auto driver{new Driver{hMin, stepper, 6}}; // clang-format on
     const auto chordFinder{new G4ChordFinder{driver}};
+    chordFinder->SetDeltaChord(delta);
     auto fieldManager{std::make_unique<G4FieldManager>(field, chordFinder)};
     fieldManager->SetAccuraciesWithDeltaOneStep(delta);
     fWorld->RegisterField(std::move(fieldManager), false);
