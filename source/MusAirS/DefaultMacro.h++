@@ -38,7 +38,7 @@ constexpr auto defaultMacro = {
     "/vis/drawVolume",
     "",
     "/vis/viewer/set/upVector 0 0 1",
-    "/vis/viewer/set/viewpointVector 0 1 0",
+    "/vis/viewer/set/viewpointVector 0 -1 0",
     "/vis/viewer/set/lightsVector -1 1 1",
     "#/vis/viewer/set/rotationStyle freeRotation",
     "/vis/viewer/set/projection p",
