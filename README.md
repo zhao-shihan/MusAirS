@@ -50,3 +50,21 @@ Parallel computing:
 ```sh
 mpirun -n <nproc> ./MusAirS <run_macro>
 ```
+
+## Choose an alternative physics list
+
+MusAirS uses FTFP_BERT as the default physics list. However, you may change it by option `--physics-list`. For example,
+```sh
+MusAirS --physics-list QBBC
+```
+It accepts a [Geant4 reference physics list](https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsListGuide/html/reference_PL/index.html) name as argument.
+
+## Run macro
+
+We provided a few example Geant4 macros, based on which you can write your own.
+
+For more, refer to [Geant4 Book For Application Developers](https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/index.html). [General particle source](https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/GettingStarted/generalParticleSource.html) would especially be helpful.
+
+## Geometry and field
+
+There are some adjustable geometric and field parameters. See [the geometry description file](scripts/MusAirS.yaml) for detail. The unit system is the Geant4 unit system (MeV, mm, ns).
