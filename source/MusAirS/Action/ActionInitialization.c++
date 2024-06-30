@@ -2,6 +2,7 @@
 #include "MusAirS/Action/EventAction.h++"
 #include "MusAirS/Action/PrimaryGeneratorAction.h++"
 #include "MusAirS/Action/RunAction.h++"
+#include "MusAirS/Action/SteppingAction.h++"
 #include "MusAirS/Action/TrackingAction.h++"
 
 namespace MusAirS::inline Action {
@@ -11,6 +12,7 @@ auto ActionInitialization::Build() const -> void {
     SetUserAction(new PrimaryGeneratorAction);
     SetUserAction(new EventAction);
     SetUserAction(new TrackingAction);
+    SetUserAction(new SteppingAction);
 }
 
-} // namespace MusAirS
+} // namespace MusAirS::inline Action
