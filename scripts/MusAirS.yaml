@@ -2,8 +2,10 @@
 
 Atmosphere:
   MaxAltitude: 90000000
-  NPressureSlice: 200
+  SliceMode: Altitude
+  NSlice: 1000
 Earth:
+  GroundAltitude: 0
   Depth: 1000000
 Field:
   MagneticField:
@@ -11,5 +13,5 @@ Field:
     - 5.0000000000000004e-08
     - 0
 World:
-  Width: 1000000000
+  Width: 3000000000
   MaxHeight: 110000000

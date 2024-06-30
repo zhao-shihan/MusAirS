@@ -18,10 +18,9 @@ auto Atmosphere::Construct(bool checkOverlaps) -> void {
     const auto& earth{Description::Earth::Instance()};
     const auto& world{Description::World::Instance()};
 
-    G4LogicalVolume* outerAtmosphere{};
-    double outerSliceThickness{};
-    for (gsl::index i{atmosphere.NPressureSlice() - 1}; i >= 0; --i) {
-        const auto sliceThickness{atmosphere.AltitudeSlice()[i] - earth.GroundAltitude()};
+    for (gsl::index i{}; i < atmosphere.NSlice(); ++i) {
+        const auto sliceThickness{i == 0 ? atmosphere.AltitudeSlice()[i] - earth.GroundAltitude() :
+                                           atmosphere.AltitudeSlice()[i] - atmosphere.AltitudeSlice()[i - 1]};
         const auto solid{Make<G4Box>(
             atmosphere.Name(),
             world.Width() / 2,
@@ -36,17 +35,13 @@ auto Atmosphere::Construct(bool checkOverlaps) -> void {
                 atmosphere.StateSlice()[i].pressure),
             atmosphere.Name())};
         Make<G4PVPlacement>(
-            G4TranslateZ3D{outerAtmosphere ? -outerSliceThickness / 2 + sliceThickness / 2 :
-                                             sliceThickness / 2},
+            G4TranslateZ3D{-sliceThickness / 2 + atmosphere.AltitudeSlice()[i]},
             logic,
             atmosphere.Name(),
-            outerAtmosphere ? outerAtmosphere :
-                              Mother().LogicalVolume(),
+            Mother().LogicalVolume(),
             false,
             i,
             checkOverlaps);
-        outerAtmosphere = logic;
-        outerSliceThickness = sliceThickness;
     }
 }
 

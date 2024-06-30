@@ -14,13 +14,21 @@ private:
     ~Atmosphere() = default;
 
 public:
+    enum struct SliceMode {
+        Altitude,
+        Pressure
+    };
+
+public:
     auto MaxAltitude() const -> auto { return *fMaxAltitude; }
-    auto NPressureSlice() const -> auto { return *fNPressureSlice; }
+    auto SliceMode() const -> auto { return *fSliceMode; }
+    auto NSlice() const -> auto { return *fNSlice; }
     auto AltitudeSlice() const -> const auto& { return *fAltitudeSlice; }
     auto StateSlice() const -> const auto& { return *fStateSlice; }
 
     auto MaxAltitude(double val) -> void { fMaxAltitude = val; }
-    auto NPressureSlice(int val) -> void { fNPressureSlice = val; }
+    auto SliceMode(enum SliceMode val) -> void { fSliceMode = val; }
+    auto NSlice(int val) -> void { fNSlice = val; }
 
 private:
     struct AtmoState {
@@ -38,7 +46,8 @@ private:
 
 private:
     Simple<double> fMaxAltitude;
-    Simple<int> fNPressureSlice;
+    Simple<enum SliceMode> fSliceMode;
+    Simple<int> fNSlice;
     Cached<std::vector<double>> fAltitudeSlice;
     Cached<std::vector<AtmoState>> fStateSlice;
 };

@@ -9,18 +9,17 @@
 #include "Mustard/Detector/Field/AsG4Field.h++"
 #include "Mustard/Detector/Field/UniformMagneticField.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
-#include "Mustard/Utility/VectorCast.h++"
 
 #include "G4ChordFinder.hh"
 #include "G4FieldManager.hh"
-#include "G4IntegrationDriver.hh"
-#include "G4TCashKarpRKF45.hh"
+#include "G4InterpolationDriver.hh"
+#include "G4TDormandPrince45.hh"
 #include "G4TMagFieldEquation.hh"
 #include "G4ThreeVector.hh"
 
 #include "gsl/gsl"
 
-#include <algorithm>
+#include <utility>
 
 namespace MusAirS::inline Action {
 
@@ -51,8 +50,8 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
 
     using Field = Mustard::Detector::Field::AsG4Field<Mustard::Detector::Field::UniformMagneticField>;
     using Equation = G4TMagFieldEquation<Field>;
-    using Stepper = G4TCashKarpRKF45<Equation, 6>;
-    using Driver = G4IntegrationDriver<Stepper>;
+    using Stepper = G4TDormandPrince45<Equation, 6>;
+    using Driver = G4InterpolationDriver<Stepper>;
 
     const auto field{new Field{Detector::Description::Field::Instance().MagneticField()}};
     const auto equation{new Equation{field}}; // clang-format off

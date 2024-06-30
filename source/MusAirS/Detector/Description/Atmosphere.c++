@@ -178,35 +178,49 @@ using namespace Mustard::LiteralUnit::Pressure;
 Atmosphere::Atmosphere() :
     DescriptionWithCacheBase{"Atmosphere"},
     fMaxAltitude{this, 90_km},
-    fNPressureSlice{this, 1000},
+    fSliceMode{this, SliceMode::Altitude},
+    fNSlice{this, 1000},
     fAltitudeSlice{this, [this] { return CalculateAltitudeSlice(); }},
     fStateSlice{this, [this] { return CalculateStateSlice(); }} {}
 
 auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
-    constexpr auto CalculateP{
-        [](double alt) {
-            return LouiEriksson::ISA<>::TrySolve(alt / m).value().m_Pressure * pascal;
-        }};
-    const auto zGround{Earth::Instance().GroundAltitude()};
-    const auto pGround{CalculateP(zGround)};
-    const auto deltaP{(pGround - CalculateP(fMaxAltitude)) / fNPressureSlice};
-
-    std::vector<double> pressure(fNPressureSlice);
-    for (gsl::index i{}; i < fNPressureSlice; ++i) {
-        pressure[i] = pGround - (i + 1) * deltaP;
+    switch (fSliceMode) {
+    case SliceMode::Altitude: {
+        const auto zGround{Earth::Instance().GroundAltitude()};
+        const auto deltaZ{(fMaxAltitude - zGround) / fNSlice};
+        std::vector<double> altitude(fNSlice);
+        for (gsl::index i{}; i < fNSlice; ++i) {
+            altitude[i] = zGround + (i + 1) * deltaZ;
+        }
+        return altitude;
     }
+    case SliceMode::Pressure: {
+        constexpr auto CalculateP{
+            [](double alt) {
+                return LouiEriksson::ISA<>::TrySolve(alt / m).value().m_Pressure * pascal;
+            }};
+        const auto zGround{Earth::Instance().GroundAltitude()};
+        const auto pGround{CalculateP(zGround)};
+        const auto deltaP{(pGround - CalculateP(fMaxAltitude)) / fNSlice};
 
-    std::vector<double> altitude(fNPressureSlice);
-    for (gsl::index i{}; i < fNPressureSlice - 1; ++i) {
-        const auto [alt, converged]{
-            muc::find_root::zbrent([&, p = pressure[i]](auto z) { return CalculateP(z) - p; },
-                                   zGround, *fMaxAltitude)};
-        if (not converged) { Mustard::Env::PrintLnWarning("Warning: Slice altitude not converged"); }
-        altitude[i] = alt;
+        std::vector<double> pressure(fNSlice);
+        for (gsl::index i{}; i < fNSlice; ++i) {
+            pressure[i] = pGround - (i + 1) * deltaP;
+        }
+
+        std::vector<double> altitude(fNSlice);
+        for (gsl::index i{}; i < fNSlice - 1; ++i) {
+            const auto [alt, converged]{
+                muc::find_root::zbrent([&, p = pressure[i]](auto z) { return CalculateP(z) - p; },
+                                       zGround, *fMaxAltitude)};
+            if (not converged) { Mustard::Env::PrintLnWarning("Warning: Slice altitude not converged"); }
+            altitude[i] = alt;
+        }
+        altitude.back() = fMaxAltitude;
+
+        return altitude;
     }
-    altitude.back() = fMaxAltitude;
-
-    return altitude;
+    }
 }
 
 auto Atmosphere::CalculateStateSlice() const -> std::vector<AtmoState> {
@@ -216,10 +230,10 @@ auto Atmosphere::CalculateStateSlice() const -> std::vector<AtmoState> {
             return {p * pascal, rho * (kg / m3), t * kelvin};
         }};
 
-    std::vector<AtmoState> state(fNPressureSlice);
+    std::vector<AtmoState> state(fNSlice);
     const auto& altitude{*fAltitudeSlice};
     state.front() = CalculateState(muc::midpoint(Earth::Instance().GroundAltitude(), altitude.front()));
-    for (gsl::index i{1}; i < fNPressureSlice; ++i) {
+    for (gsl::index i{1}; i < fNSlice; ++i) {
         state[i] = CalculateState(muc::midpoint(altitude[i - 1], altitude[i]));
     }
 
@@ -228,12 +242,27 @@ auto Atmosphere::CalculateStateSlice() const -> std::vector<AtmoState> {
 
 void Atmosphere::ImportAllValue(const YAML::Node& node) {
     ImportValue(node, fMaxAltitude, "MaxAltitude");
-    ImportValue(node, fNPressureSlice, "NPressureSlice");
+    ImportValue<std::string>(node, [this](auto&& mode) {
+            if (mode == "Altitude") {
+                fSliceMode = SliceMode::Altitude;
+            } else if (mode == "Pressure") {
+                fSliceMode = SliceMode::Pressure;
+            } else {
+                Mustard::Env::PrintLnError("MusAirS::Detector::Description::Atmosphere::ImportAllValue: Unknown slice mode '{}', skipping", mode);
+            } }, "SliceMode");
+    ImportValue(node, fNSlice, "NSlice");
 }
 
 void Atmosphere::ExportAllValue(YAML::Node& node) const {
     ExportValue(node, fMaxAltitude, "MaxAltitude");
-    ExportValue(node, fNPressureSlice, "NPressureSlice");
+    ExportValue<std::string>(node, [this] {
+            switch (fSliceMode) {
+            case SliceMode::Altitude:
+                return "Altitude";
+            case SliceMode::Pressure:
+                return "Pressure";
+            } }(), "SliceMode");
+    ExportValue(node, fNSlice, "NSlice");
 }
 
 } // namespace MusAirS::Detector::Description
