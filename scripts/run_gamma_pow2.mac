@@ -19,7 +19,7 @@
 
 /run/setCut 10 m
 
-#/MusAirS/Analysis/SavePrimaryVertexData  false
+/MusAirS/Analysis/SavePrimaryVertexData  false
 #/MusAirS/Analysis/SaveDecayVertexData    false
 
 #############################################################################
