@@ -2,13 +2,13 @@
 #include "MusAirS/Action/DetectorConstruction.h++"
 #include "MusAirS/Analysis.h++"
 #include "MusAirS/DefaultMacro.h++"
-#include "MusAirS/Detector/Description/World.h++"
 
 #include "Mustard/Env/CLI/Geant4CLI.h++"
 #include "Mustard/Env/CLI/Module/Geant4ReferencePhysicsListModule.h++"
 #include "Mustard/Env/MPIEnv.h++"
 #include "Mustard/Extension/Geant4X/Interface/MPIExecutive.h++"
 #include "Mustard/Extension/Geant4X/Run/MPIRunManager.h++"
+#include "Mustard/Utility/LiteralUnit.h++"
 #include "Mustard/Utility/UseXoshiro.h++"
 
 #include "G4GeometryManager.hh"
@@ -25,8 +25,8 @@ auto main(int argc, char* argv[]) -> int {
     cli.SeedRandomIfFlagged();
 
     // Set geometry tolerance
-    const auto& world{MusAirS::Detector::Description::World::Instance()};
-    G4GeometryManager::GetInstance()->SetWorldMaximumExtent(std::max(2 * world.MaxHeight(), world.Width()));
+    using namespace Mustard::LiteralUnit::Length;
+    G4GeometryManager::GetInstance()->SetWorldMaximumExtent(100_km); // just a scale
 
     // Mutually exclusive random seeds are distributed to all processes upon each BeamOn.
     Mustard::Geant4X::MPIRunManager runManager;

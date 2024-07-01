@@ -7,6 +7,9 @@
 
 #/Mustard/Detector/Description/Ixport MusAirS.yaml
 
+/MusAirS/Numeric/MinDriverStep    1 cm
+/MusAirS/Numeric/DeltaChord       1 m
+
 /run/initialize
 
 /gps/particle             proton

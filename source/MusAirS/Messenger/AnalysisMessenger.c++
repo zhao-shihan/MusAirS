@@ -4,7 +4,6 @@
 #include "MusAirS/Messenger/AnalysisMessenger.h++"
 
 #include "G4UIcmdWithABool.hh"
-#include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithAString.hh"
 #include "G4UIdirectory.hh"
 

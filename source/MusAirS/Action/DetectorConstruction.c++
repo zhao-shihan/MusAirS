@@ -23,11 +23,16 @@
 
 namespace MusAirS::inline Action {
 
+using namespace Mustard::LiteralUnit::Length;
+
 DetectorConstruction::DetectorConstruction(bool checkOverlap) :
     PassiveSingleton{},
     G4VUserDetectorConstruction{},
     fCheckOverlap{checkOverlap},
-    fWorld{} {
+    fMinDriverStep{1_cm},
+    fDeltaChord{1_m},
+    fWorld{},
+    fNumericMessengerRegister{this} {
     DetectorMessenger::EnsureInstantiation();
 }
 
@@ -44,10 +49,6 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
 
     // Register field
 
-    using namespace Mustard::LiteralUnit::Length;
-    constexpr auto hMin{1_m};
-    constexpr auto delta{0.01 * hMin};
-
     using Field = Mustard::Detector::Field::AsG4Field<Mustard::Detector::Field::UniformMagneticField>;
     using Equation = G4TMagFieldEquation<Field>;
     using Stepper = G4TDormandPrince45<Equation, 6>;
@@ -56,12 +57,10 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
     const auto field{new Field{Detector::Description::Field::Instance().MagneticField()}};
     const auto equation{new Equation{field}}; // clang-format off
     const auto stepper{new Stepper{equation}};
-    const auto driver{new Driver{hMin, stepper, 6}}; // clang-format on
+    const auto driver{new Driver{fMinDriverStep, stepper, 6}}; // clang-format on
     const auto chordFinder{new G4ChordFinder{driver}};
-    chordFinder->SetDeltaChord(delta);
-    auto fieldManager{std::make_unique<G4FieldManager>(field, chordFinder)};
-    fieldManager->SetAccuraciesWithDeltaOneStep(delta);
-    fWorld->RegisterField(std::move(fieldManager), false);
+    chordFinder->SetDeltaChord(fDeltaChord);
+    fWorld->RegisterField(std::make_unique<G4FieldManager>(field, chordFinder), false);
 
     return fWorld->PhysicalVolume();
 }

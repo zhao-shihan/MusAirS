@@ -3,6 +3,7 @@
 #include "MusAirS/Detector/Description/Atmosphere.h++"
 #include "MusAirS/Detector/Description/Earth.h++"
 #include "MusAirS/Detector/Description/Field.h++"
+#include "MusAirS/Messenger/NumericMessenger.h++"
 #include "MusAirS/Detector/Description/World.h++"
 
 #include "Mustard/Env/Memory/PassiveSingleton.h++"
@@ -28,6 +29,9 @@ class DetectorConstruction final : public Mustard::Env::Memory::PassiveSingleton
 public:
     DetectorConstruction(bool checkOverlap);
 
+    auto MinDriverStep(double val) -> void { fMinDriverStep = val; }
+    auto DeltaChord(double val) -> void { fDeltaChord = val; }
+
     auto Construct() -> G4VPhysicalVolume* override;
 
 public:
@@ -39,7 +43,12 @@ public:
 private:
     bool fCheckOverlap;
 
+    double fMinDriverStep;
+    double fDeltaChord;
+
     std::unique_ptr<Mustard::Detector::Definition::DefinitionBase> fWorld;
+
+    NumericMessenger::Register<DetectorConstruction> fNumericMessengerRegister;
 };
 
 } // namespace Action
