@@ -11,6 +11,7 @@
 #include "G4VProcess.hh"
 
 #include <cassert>
+#include <string_view>
 #include <vector>
 
 namespace MusAirS::inline Action {
@@ -32,6 +33,7 @@ auto TrackingAction::UpdateDecayVertexData(const G4Track& track) -> void {
             ->GetSteppingManager()
             ->GetfCurrentProcess()
             ->GetProcessType() == fDecay) {
+        const auto creatorProcess{track.GetCreatorProcess()};
         std::vector<int> secondaryPDGID;
         secondaryPDGID.reserve(track.GetStep()->GetSecondary()->size());
         for (auto&& sec : *track.GetStep()->GetSecondary()) {
@@ -41,11 +43,12 @@ auto TrackingAction::UpdateDecayVertexData(const G4Track& track) -> void {
         Get<"EvtID">(vertex) = eventManager.GetConstCurrentEvent()->GetEventID();
         Get<"TrkID">(vertex) = track.GetTrackID();
         Get<"PDGID">(vertex) = track.GetParticleDefinition()->GetPDGEncoding();
-        Get<"SecPDGID">(vertex) = std::move(secondaryPDGID);
+        Get<"CreatProc">(vertex) = creatorProcess ? std::string_view{creatorProcess->GetProcessName()} : "|0>";
         Get<"t">(vertex) = track.GetGlobalTime();
         Get<"x">(vertex) = track.GetPosition();
         Get<"Ek">(vertex) = track.GetKineticEnergy();
         Get<"p">(vertex) = track.GetMomentum();
+        Get<"SecPDGID">(vertex) = std::move(secondaryPDGID);
     }
 }
 
