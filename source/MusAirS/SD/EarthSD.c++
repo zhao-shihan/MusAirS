@@ -45,13 +45,13 @@ auto EarthSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
 
     const auto& particle{*track.GetDefinition()};
     const auto pdgID{particle.GetPDGEncoding()};
-    enum { vE = 12,
+    /* enum { vE = 12,
            vMu = 14,
            vTau = 16 };
     if (const auto absPDGID{muc::abs(pdgID)};
         absPDGID == vE or absPDGID == vMu or absPDGID == vTau) { // ignoring neutrino
         return false;
-    }
+    } */
 
     const auto& preStepPoint{*step.GetPreStepPoint()};
     // calculate (E0, p0)
