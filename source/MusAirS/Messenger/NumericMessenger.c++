@@ -4,8 +4,6 @@
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIdirectory.hh"
 
-#include <string_view>
-
 namespace MusAirS::inline Messenger {
 
 NumericMessenger::NumericMessenger() :
