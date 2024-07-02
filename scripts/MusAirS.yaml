@@ -8,10 +8,10 @@ Earth:
   GroundAltitude: 0
   Depth: 1000000
 Field:
-  MagneticField:
-    - 0
-    - 5.0000000000000004e-08
-    - 0
+  MagneticField: # Geomagnetic field measured at Zhaoqing
+    - -1.7620e-09
+    - 3.76382e-08
+    - -2.61202e-08
 World:
-  Width: 3000000000
-  MaxHeight: 110000000
+  Width: 2000000000
+  MaxHeight: 150000000
