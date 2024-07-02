@@ -69,7 +69,7 @@ constexpr auto defaultMacro = {
     "/vis/filtering/trajectories/particleFilter-0/add anti_nu_e",
     "/vis/filtering/trajectories/particleFilter-0/add anti_nu_mu",
     "/vis/filtering/trajectories/particleFilter-0/add anti_nu_tau",
-    "/vis/filtering/trajectories/particleFilter-0/invert",
+    "/vis/filtering/trajectories/particleFilter-0/invert true",
     "",
     "/vis/modeling/trajectories/create/drawByParticleID",
     "/vis/modeling/trajectories/drawByParticleID-0/default/setDrawAuxPts false",
