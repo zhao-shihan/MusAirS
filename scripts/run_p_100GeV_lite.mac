@@ -19,6 +19,8 @@
 
 /run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
 
+/MusAirS/SD/EarthSD/DetectNeutrino no
+
 /MusAirS/Analysis/SavePrimaryVertexData  no
 /MusAirS/Analysis/SaveDecayVertexData    yes
 
@@ -26,7 +28,7 @@
 # Run
 #############################################################################
 
-/MusAirS/Analysis/FilePath MusAirS_p_100GeV_muon
+/MusAirS/Analysis/FilePath MusAirS_p_100GeV_lite
 /MusAirS/Analysis/FileMode NEW
 /run/beamOn 10000
 /Mustard/Run/PrintRunSummary

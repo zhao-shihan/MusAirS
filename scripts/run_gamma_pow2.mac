@@ -22,6 +22,8 @@
 
 /run/setCut 10 m
 
+/MusAirS/SD/EarthSD/DetectNeutrino yes
+
 /MusAirS/Analysis/SavePrimaryVertexData  no
 /MusAirS/Analysis/SaveDecayVertexData    yes
 

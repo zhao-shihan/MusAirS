@@ -23,7 +23,9 @@ namespace MusAirS::inline SD {
 EarthSD::EarthSD(const G4String& sdName) :
     Mustard::NonMoveableBase{},
     G4VSensitiveDetector{sdName},
-    fHitsCollection{} {
+    fDetectNeutrino{false},
+    fHitsCollection{},
+    fSDMessengerRegister{this} {
     collectionName.insert(sdName + "HC");
 }
 
@@ -45,13 +47,16 @@ auto EarthSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
 
     const auto& particle{*track.GetDefinition()};
     const auto pdgID{particle.GetPDGEncoding()};
-    /* enum { vE = 12,
+
+    if (fDetectNeutrino) { goto SkipIgnoringNeutrino; }
+    enum { vE = 12,
            vMu = 14,
            vTau = 16 };
     if (const auto absPDGID{muc::abs(pdgID)};
         absPDGID == vE or absPDGID == vMu or absPDGID == vTau) { // ignoring neutrino
         return false;
-    } */
+    }
+SkipIgnoringNeutrino:
 
     const auto& preStepPoint{*step.GetPreStepPoint()};
     // calculate (E0, p0)
