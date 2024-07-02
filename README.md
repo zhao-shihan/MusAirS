@@ -27,6 +27,9 @@ Simulation of cosmic ray air shower.
     - [Geomagnetic field](#geomagnetic-field)
     - [Elevating the ground](#elevating-the-ground)
   - [Primary particles](#primary-particles)
+  - [Save primary vertex data](#save-primary-vertex-data)
+  - [Save decay vertex data](#save-decay-vertex-data)
+  - [Who ordered neutrino?](#who-ordered-neutrino)
   - [Bug tracking](#bug-tracking)
   - [Contributing](#contributing)
 
@@ -158,6 +161,29 @@ We use Geant4 [General Particle Source (GPS)](https://geant4-userdoc.web.cern.ch
 /gps/ene/max          10 TeV
 ```
 Detailed usage can be found in the [Geant4 Book For Application Developers](https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/GettingStarted/generalParticleSource.html).
+
+## Save primary vertex data
+
+Primary vertices are not recorded by default. You can enable saving primary vertices by the command
+```sh
+/MusAirS/Analysis/SavePrimaryVertexData yes
+```
+This can sometimes be useful in debugging.
+
+## Save decay vertex data
+
+Decay vertices (of **any** unstable particles) are recorded by default. You can disable saving them by the command
+```sh
+/MusAirS/Analysis/SaveDecayVertexData no
+```
+**A decay vertex dataset can be huge.** It is useful to not save them when there are many many events.
+
+## Who ordered neutrino?
+
+Neutrino hits are not recorded by default (since there are to much neutrino). You can let `EarthSD` to record neutrino hits by the command
+```sh
+/MusAirS/SD/EarthSD/DetectNeutrino yes
+```
 
 ## Bug tracking
 
