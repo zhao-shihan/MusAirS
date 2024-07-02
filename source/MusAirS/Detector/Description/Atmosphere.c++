@@ -221,6 +221,7 @@ auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
         return altitude;
     }
     }
+    muc::unreachable();
 }
 
 auto Atmosphere::CalculateStateSlice() const -> std::vector<AtmoState> {
@@ -261,7 +262,7 @@ void Atmosphere::ExportAllValue(YAML::Node& node) const {
                 return "Altitude";
             case SliceMode::Pressure:
                 return "Pressure";
-            } }(), "SliceMode");
+            } muc::unreachable(); }(), "SliceMode");
     ExportValue(node, fNSlice, "NSlice");
 }
 
