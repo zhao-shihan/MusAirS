@@ -22,8 +22,8 @@
 
 /run/setCut 10 m    # low cut for accurate EM shower shape
 
-/MusAirS/Analysis/SavePrimaryVertexData  false
-/MusAirS/Analysis/SaveDecayVertexData    true
+/MusAirS/Analysis/SavePrimaryVertexData  no
+/MusAirS/Analysis/SaveDecayVertexData    yes
 
 #############################################################################
 # Run

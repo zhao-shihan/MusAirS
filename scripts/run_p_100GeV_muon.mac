@@ -19,8 +19,8 @@
 
 /run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
 
-/MusAirS/Analysis/SavePrimaryVertexData  false
-/MusAirS/Analysis/SaveDecayVertexData    true
+/MusAirS/Analysis/SavePrimaryVertexData  no
+/MusAirS/Analysis/SaveDecayVertexData    yes
 
 #############################################################################
 # Run
