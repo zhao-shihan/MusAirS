@@ -11,7 +11,7 @@ PrimaryGeneratorAction::PrimaryGeneratorAction() :
     PassiveSingleton{},
     G4VUserPrimaryGeneratorAction{},
     fGPSX{},
-    fSavePrimaryVertexData{true},
+    fSavePrimaryVertexData{false},
     fPrimaryVertexData{},
     fMessengerRegister{this} {}
 
