@@ -24,8 +24,7 @@
 
 /MusAirS/SD/EarthSD/DetectNeutrino no
 
-/MusAirS/Analysis/SavePrimaryVertexData  no
-/MusAirS/Analysis/SaveDecayVertexData    yes
+/MusAirS/Analysis/SavePrimaryVertexData no
 
 #############################################################################
 # Run

@@ -1,9 +1,10 @@
 #pragma once
 
-#include "MusAirS/Data/DecayVertex.h++"
-#include "MusAirS/Data/PrimaryVertex.h++"
-#include "MusAirS/Hit/EarthHit.h++"
+#include "MusAirS/Action/PrimaryGeneratorAction.h++"
+#include "MusAirS/Action/TrackingAction.h++"
+#include "MusAirS/Data/Track.h++"
 #include "MusAirS/Messenger/AnalysisMessenger.h++"
+#include "MusAirS/SD/EarthSD.h++"
 
 #include "Mustard/Data/Output.h++"
 #include "Mustard/Data/Tuple.h++"
@@ -11,12 +12,11 @@
 
 #include "G4Types.hh"
 
-#include "muc/ptr_vector"
-
 #include "gsl/gsl"
 
 #include <filesystem>
 #include <memory>
+#include <unordered_set>
 #include <utility>
 
 class TFile;
@@ -32,12 +32,16 @@ public:
 
     auto RunBegin(int runID) -> void;
 
-    auto SubmitPrimaryVertexData(const muc::unique_ptr_vector<Mustard::Data::Tuple<Data::PrimaryVertex>>& data) -> void { fPrimaryVertex = &data; }
-    auto SubmitDecayVertexData(const muc::unique_ptr_vector<Mustard::Data::Tuple<Data::DecayVertex>>& data) -> void { fDecayVertex = &data; }
-    auto SubmitVirtualHC(const std::vector<EarthHit*>& hc) -> void { fEarthHit = &hc; }
+    auto SubmitPrimaryVertexData(const typename PrimaryGeneratorAction::PrimaryVertexDataType& data) -> void { fPrimaryVertexData = &data; }
+    auto SubmitTrackData(typename TrackingAction::TrackDataType& data) -> void { fTrackData = &data; }
+    auto SubmitEarthSDHitTrackID(const typename EarthSD::HitTrackIDDataType& hc) -> void { fEarthSDHitTrackIDData = &hc; }
     auto EventEnd() -> void;
 
     auto RunEnd(Option_t* option = {}) -> void;
+
+private:
+    auto BuildReactionChain() const -> std::unordered_set<Mustard::Data::Tuple<Data::Track>*>;
+    auto BuildReactionChainImpl(Mustard::Data::Tuple<Data::Track>& track, std::unordered_set<Mustard::Data::Tuple<Data::Track>*>& chain) const -> void;
 
 private:
     std::filesystem::path fFilePath;
@@ -47,12 +51,11 @@ private:
 
     gsl::owner<TFile*> fFile;
     std::optional<Mustard::Data::Output<Data::PrimaryVertex>> fPrimaryVertexOutput;
-    std::optional<Mustard::Data::Output<Data::DecayVertex>> fDecayVertexOutput;
-    std::optional<Mustard::Data::Output<Data::EarthHit>> fEarthHitOutput;
+    std::optional<Mustard::Data::Output<Data::Track>> fReactionChainOutput;
 
-    const muc::unique_ptr_vector<Mustard::Data::Tuple<Data::PrimaryVertex>>* fPrimaryVertex;
-    const muc::unique_ptr_vector<Mustard::Data::Tuple<Data::DecayVertex>>* fDecayVertex;
-    const std::vector<EarthHit*>* fEarthHit;
+    const typename PrimaryGeneratorAction::PrimaryVertexDataType* fPrimaryVertexData;
+    typename TrackingAction::TrackDataType* fTrackData;
+    const typename EarthSD::HitTrackIDDataType* fEarthSDHitTrackIDData;
 
     AnalysisMessenger::Register<Analysis> fMessengerRegister;
 };

@@ -8,18 +8,12 @@
 namespace MusAirS::inline Action {
 
 auto EventAction::BeginOfEventAction(const G4Event*) -> void {
-    if (auto& trackingAction{TrackingAction::Instance()};
-        trackingAction.SaveDecayVertexData()) {
-        trackingAction.ClearDecayVertexData();
-    }
+    TrackingAction::Instance().ClearTrackData();
 }
 
 auto EventAction::EndOfEventAction(const G4Event*) -> void {
     auto& analysis{Analysis::Instance()};
-    if (const auto& trackingAction{TrackingAction::Instance()};
-        trackingAction.SaveDecayVertexData()) {
-        analysis.SubmitDecayVertexData(trackingAction.DecayVertexData());
-    }
+    analysis.SubmitTrackData(TrackingAction::Instance().TrackData());
     analysis.EventEnd();
 }
 

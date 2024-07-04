@@ -5,14 +5,21 @@
 #include "Mustard/Env/MPIEnv.h++"
 #include "Mustard/Extension/Geant4X/Utility/ConvertGeometry.h++"
 #include "Mustard/Extension/MPIX/ParallelizePath.h++"
+#include "Mustard/Utility/VectorCast.h++"
 
 #include "TFile.h"
 #include "TMacro.h"
 
+#include "Eigen/Core"
+
 #include "fmt/format.h"
 
+#include <cmath>
+#include <numbers>
 #include <optional>
 #include <stdexcept>
+#include <string_view>
+#include <unordered_map>
 
 namespace MusAirS {
 
@@ -23,11 +30,10 @@ Analysis::Analysis() :
     fLastUsedFullFilePath{},
     fFile{},
     fPrimaryVertexOutput{},
-    fDecayVertexOutput{},
-    fEarthHitOutput{},
-    fPrimaryVertex{},
-    fDecayVertex{},
-    fEarthHit{},
+    fReactionChainOutput{},
+    fPrimaryVertexData{},
+    fTrackData{},
+    fEarthSDHitTrackIDData{},
     fMessengerRegister{this} {}
 
 auto Analysis::RunBegin(int runID) -> void {
@@ -46,32 +52,57 @@ auto Analysis::RunBegin(int runID) -> void {
         Mustard::Geant4X::ConvertGeometryToTMacro("MusAirS_gdml", "MusAirS.gdml")->Write();
     }
     // initialize outputs
-    if (PrimaryGeneratorAction::Instance().SavePrimaryVertexData()) { fPrimaryVertexOutput.emplace(fmt::format("G4Run{}/SimPrimaryVertex", runID)); }
-    if (TrackingAction::Instance().SaveDecayVertexData()) { fDecayVertexOutput.emplace(fmt::format("G4Run{}/SimDecayVertex", runID)); }
-    fEarthHitOutput.emplace(fmt::format("G4Run{}/EarthHit", runID));
+    if (PrimaryGeneratorAction::Instance().SavePrimaryVertexData()) { fPrimaryVertexOutput.emplace(fmt::format("G4Run{}/PrimaryVertex", runID)); }
+    fReactionChainOutput.emplace(fmt::format("G4Run{}/ReactionChain", runID));
 }
 
 auto Analysis::EventEnd() -> void {
-    if (fPrimaryVertex and fPrimaryVertexOutput) { fPrimaryVertexOutput->Fill(*fPrimaryVertex); }
-    if (fDecayVertex and fDecayVertexOutput) { fDecayVertexOutput->Fill(*fDecayVertex); }
-    if (fEarthHit) { fEarthHitOutput->Fill(*fEarthHit); }
-    fPrimaryVertex = {};
-    fDecayVertex = {};
-    fEarthHit = {};
+    if (fPrimaryVertexOutput) { fPrimaryVertexOutput->Fill(*fPrimaryVertexData); }
+    fReactionChainOutput->Fill(BuildReactionChain());
+    fPrimaryVertexData = {};
+    fTrackData = {};
+    fEarthSDHitTrackIDData = {};
 }
 
 auto Analysis::RunEnd(Option_t* option) -> void {
     // write data
     if (fPrimaryVertexOutput) { fPrimaryVertexOutput->Write(); }
-    if (fDecayVertexOutput) { fDecayVertexOutput->Write(); }
-    fEarthHitOutput->Write();
+    fReactionChainOutput->Write();
     // close file
     fFile->Close(option);
     delete fFile;
     // reset output
     fPrimaryVertexOutput.reset();
-    fDecayVertexOutput.reset();
-    fEarthHitOutput.reset();
+    fReactionChainOutput.reset();
+}
+
+auto Analysis::BuildReactionChain() const -> std::unordered_set<Mustard::Data::Tuple<Data::Track>*> {
+    std::unordered_set<Mustard::Data::Tuple<Data::Track>*> chain;
+    for (auto&& trackID : *fEarthSDHitTrackIDData) {
+        auto& track{fTrackData->at(trackID)};
+        Get<"KillProc">(track) = "<0|"; // track is killed by EarthSD
+        BuildReactionChainImpl(track, chain);
+    }
+    return chain;
+}
+
+auto Analysis::BuildReactionChainImpl(Mustard::Data::Tuple<Data::Track>& track, std::unordered_set<Mustard::Data::Tuple<Data::Track>*>& chain) const -> void {
+    if (Get<"ParTrkID">(track) != -1) {
+        auto& parentTrack{fTrackData->at(Get<"ParTrkID">(track))};
+        // Amend parent PDGID here
+        Get<"ParPDGID">(track) = Get<"PDGID">(parentTrack);
+        // Amend parent's secondary's track ID and PDG ID
+        Get<"SecTrkID">(parentTrack)->emplace_back(Get<"TrkID">(track));
+        Get<"SecPDGID">(parentTrack)->emplace_back(Get<"PDGID">(track));
+        // Trace recursively
+        BuildReactionChainImpl(parentTrack, chain);
+    }
+    // Amend Zenith and phi here
+    const auto p{Mustard::VectorCast<Eigen::Vector3d>(Get<"p">(track))};
+    Get<"Zenith">(track) = 1 + p.z() / p.norm();
+    Get<"phi">(track) = std::atan2(p.x(), p.y()) + std::numbers::pi;
+    // Insert into reaction chain
+    chain.emplace(&track);
 }
 
 } // namespace MusAirS

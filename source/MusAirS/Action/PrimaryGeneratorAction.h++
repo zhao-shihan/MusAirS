@@ -19,6 +19,9 @@ namespace MusAirS::inline Action {
 class PrimaryGeneratorAction final : public Mustard::Env::Memory::PassiveSingleton<PrimaryGeneratorAction>,
                                      public G4VUserPrimaryGeneratorAction {
 public:
+    using PrimaryVertexDataType = muc::unique_ptr_vector<Mustard::Data::Tuple<Data::PrimaryVertex>>;
+
+public:
     PrimaryGeneratorAction();
 
     auto SavePrimaryVertexData() const -> auto { return fSavePrimaryVertexData; }
@@ -33,7 +36,7 @@ private:
     Mustard::Geant4X::GeneralParticleSourceX fGPSX;
 
     bool fSavePrimaryVertexData;
-    muc::unique_ptr_vector<Mustard::Data::Tuple<Data::PrimaryVertex>> fPrimaryVertexData;
+    PrimaryVertexDataType fPrimaryVertexData;
 
     AnalysisMessenger::Register<PrimaryGeneratorAction> fMessengerRegister;
 };

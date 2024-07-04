@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MusAirS/Data/DecayVertex.h++"
+#include "MusAirS/Data/Track.h++"
 #include "MusAirS/Messenger/AnalysisMessenger.h++"
 
 #include "Mustard/Data/Tuple.h++"
@@ -8,9 +8,9 @@
 
 #include "G4UserTrackingAction.hh"
 
-#include "muc/ptr_vector"
-
 #include <memory>
+#include <memory_resource>
+#include <unordered_map>
 #include <vector>
 
 namespace MusAirS::inline Action {
@@ -18,23 +18,22 @@ namespace MusAirS::inline Action {
 class TrackingAction final : public Mustard::Env::Memory::PassiveSingleton<TrackingAction>,
                              public G4UserTrackingAction {
 public:
+    using TrackDataType = std::pmr::unordered_map<int, Mustard::Data::Tuple<Data::Track>>;
+
+public:
     TrackingAction();
 
     auto PostUserTrackingAction(const G4Track* track) -> void override;
 
-    auto SaveDecayVertexData() const -> auto { return fSaveDecayVertexData; }
-    auto SaveDecayVertexData(bool val) -> void { fSaveDecayVertexData = val; }
-
-    auto ClearDecayVertexData() -> void { return fDecayVertexData.clear(); }
-    auto DecayVertexData() const -> const auto& { return fDecayVertexData; }
+    auto ClearTrackData() -> void { return fTrackData.clear(); }
+    auto TrackData() -> auto& { return fTrackData; }
 
 private:
-    auto UpdateDecayVertexData(const G4Track& track) -> void;
+    auto UpdateTrackData(const G4Track& track) -> void;
 
 private:
-    bool fSaveDecayVertexData;
-
-    muc::unique_ptr_vector<Mustard::Data::Tuple<Data::DecayVertex>> fDecayVertexData;
+    std::pmr::unsynchronized_pool_resource fMemoryPool;
+    TrackDataType fTrackData;
 
     AnalysisMessenger::Register<TrackingAction> fMessengerRegister;
 };
