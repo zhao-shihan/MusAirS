@@ -28,8 +28,6 @@ using Track = Mustard::Data::TupleModel<
     Mustard::Data::Value<float, "Zenith", "Final 1 - cos(zenith angle)">,
     Mustard::Data::Value<float, "phi", "Final azimuth angle">,
     Mustard::Data::Value<float, "TrkLen", "Track total length">,
-    Mustard::Data::Value<std::string, "KillProc", "Track killer process">,
-    Mustard::Data::Value<std::vector<int>, "SecTrkID", "Track ID of decay products">,
-    Mustard::Data::Value<std::vector<int>, "SecPDGID", "PDG ID of decay products">>;
+    Mustard::Data::Value<std::string, "KillProc", "Track killer process">>;
 
 } // namespace MusAirS::Data

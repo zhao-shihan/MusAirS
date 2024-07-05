@@ -16,6 +16,7 @@
 
 #include <filesystem>
 #include <memory>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 
@@ -40,18 +41,20 @@ public:
     auto RunEnd(Option_t* option = {}) -> void;
 
 private:
-    auto BuildReactionChain() const -> std::unordered_set<Mustard::Data::Tuple<Data::Track>*>;
-    auto BuildReactionChainImpl(Mustard::Data::Tuple<Data::Track>& track, std::unordered_set<Mustard::Data::Tuple<Data::Track>*>& chain) const -> void;
+    using ReactionChain = std::unordered_set<Mustard::Data::Tuple<Data::Track>*>;
+    auto BuildReactionChain() const -> std::unordered_map<int, ReactionChain>;
+    auto BuildReactionChainImpl(Mustard::Data::Tuple<Data::Track>& track, ReactionChain& chain) const -> void;
 
 private:
     std::filesystem::path fFilePath;
     std::string fFileMode;
 
+    int fCurrentRunID;
     std::filesystem::path fLastUsedFullFilePath;
 
     gsl::owner<TFile*> fFile;
     std::optional<Mustard::Data::Output<Data::PrimaryVertex>> fPrimaryVertexOutput;
-    std::optional<Mustard::Data::Output<Data::Track>> fReactionChainOutput;
+    std::unordered_map<int, Mustard::Data::Output<Data::Track>> fReactionChainOutput;
 
     const typename PrimaryGeneratorAction::PrimaryVertexDataType* fPrimaryVertexData;
     typename TrackingAction::TrackDataType* fTrackData;

@@ -27,6 +27,7 @@ Analysis::Analysis() :
     PassiveSingleton{},
     fFilePath{"MusAirS_untitled"},
     fFileMode{"NEW"},
+    fCurrentRunID{},
     fLastUsedFullFilePath{},
     fFile{},
     fPrimaryVertexOutput{},
@@ -37,6 +38,7 @@ Analysis::Analysis() :
     fMessengerRegister{this} {}
 
 auto Analysis::RunBegin(int runID) -> void {
+    fCurrentRunID = runID;
     // open ROOT file
     auto fullFilePath{Mustard::MPIX::ParallelizePath(fFilePath).replace_extension(".root").generic_string()};
     const auto filePathChanged{fullFilePath != fLastUsedFullFilePath};
@@ -53,12 +55,15 @@ auto Analysis::RunBegin(int runID) -> void {
     }
     // initialize outputs
     if (PrimaryGeneratorAction::Instance().SavePrimaryVertexData()) { fPrimaryVertexOutput.emplace(fmt::format("G4Run{}/PrimaryVertex", runID)); }
-    fReactionChainOutput.emplace(fmt::format("G4Run{}/ReactionChain", runID));
 }
 
 auto Analysis::EventEnd() -> void {
     if (fPrimaryVertexOutput) { fPrimaryVertexOutput->Fill(*fPrimaryVertexData); }
-    fReactionChainOutput->Fill(BuildReactionChain());
+    for (auto&& [pdgID, chain] : BuildReactionChain()) {
+        const auto [it, _]{fReactionChainOutput.try_emplace(pdgID, fmt::format("G4Run{}/ReactionChain<{}>", fCurrentRunID, pdgID))};
+        auto&& [__, output]{*it};
+        output.Fill(std::move(chain));
+    }
     fPrimaryVertexData = {};
     fTrackData = {};
     fEarthSDHitTrackIDData = {};
@@ -67,33 +72,30 @@ auto Analysis::EventEnd() -> void {
 auto Analysis::RunEnd(Option_t* option) -> void {
     // write data
     if (fPrimaryVertexOutput) { fPrimaryVertexOutput->Write(); }
-    fReactionChainOutput->Write();
+    for (auto&& [_, output] : fReactionChainOutput) { output.Write(); }
     // close file
     fFile->Close(option);
     delete fFile;
     // reset output
     fPrimaryVertexOutput.reset();
-    fReactionChainOutput.reset();
+    fReactionChainOutput.clear();
 }
 
-auto Analysis::BuildReactionChain() const -> std::unordered_set<Mustard::Data::Tuple<Data::Track>*> {
-    std::unordered_set<Mustard::Data::Tuple<Data::Track>*> chain;
+auto Analysis::BuildReactionChain() const -> std::unordered_map<int, ReactionChain> {
+    std::unordered_map<int, ReactionChain> chain;
     for (auto&& trackID : *fEarthSDHitTrackIDData) {
         auto& track{fTrackData->at(trackID)};
         Get<"KillProc">(track) = "<0|"; // track is killed by EarthSD
-        BuildReactionChainImpl(track, chain);
+        BuildReactionChainImpl(track, chain[Get<"PDGID">(track)]);
     }
     return chain;
 }
 
-auto Analysis::BuildReactionChainImpl(Mustard::Data::Tuple<Data::Track>& track, std::unordered_set<Mustard::Data::Tuple<Data::Track>*>& chain) const -> void {
+auto Analysis::BuildReactionChainImpl(Mustard::Data::Tuple<Data::Track>& track, ReactionChain& chain) const -> void {
     if (Get<"ParTrkID">(track) != -1) {
         auto& parentTrack{fTrackData->at(Get<"ParTrkID">(track))};
         // Amend parent PDGID here
         Get<"ParPDGID">(track) = Get<"PDGID">(parentTrack);
-        // Amend parent's secondary's track ID and PDG ID
-        Get<"SecTrkID">(parentTrack)->emplace_back(Get<"TrkID">(track));
-        Get<"SecPDGID">(parentTrack)->emplace_back(Get<"PDGID">(track));
         // Trace recursively
         BuildReactionChainImpl(parentTrack, chain);
     }
