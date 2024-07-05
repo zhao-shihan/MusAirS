@@ -105,9 +105,9 @@ mpirun -n <nproc> ./MusAirS <run_macro>
 
 MusAirS uses FTFP_BERT as the default physics list. However, you may change it by option `--physics-list`. For example,
 ```sh
-MusAirS --physics-list QBBC
+MusAirS --physics-list QGSP_BERT
 ```
-It accepts a [Geant4 reference physics list](https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsListGuide/html/reference_PL/index.html) name as its argument.
+It accepts a [Geant4 reference physics list](https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsListGuide/html/reference_PL/index.html) name as its argument. Note that electromagnetic physics is forced to `EM Opt1`, so EM physics suffix won't work.
 
 ## Run macro
 
