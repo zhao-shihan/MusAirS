@@ -60,7 +60,7 @@ auto Analysis::RunBegin(int runID) -> void {
 auto Analysis::EventEnd() -> void {
     if (fPrimaryVertexOutput) { fPrimaryVertexOutput->Fill(*fPrimaryVertexData); }
     for (auto&& [pdgID, chain] : BuildReactionChain()) {
-        const auto [it, _]{fReactionChainOutput.try_emplace(pdgID, fmt::format("G4Run{}/ReactionChain<{}>", fCurrentRunID, pdgID))};
+        const auto [it, _]{fReactionChainOutput.try_emplace(pdgID, fmt::format("G4Run{}/ReactionChain({})", fCurrentRunID, pdgID))};
         auto&& [__, output]{*it};
         output.Fill(std::move(chain));
     }
