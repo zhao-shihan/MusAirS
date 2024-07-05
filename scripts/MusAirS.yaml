@@ -6,7 +6,6 @@ Atmosphere:
   NSlice: 1000
 Earth:
   GroundAltitude: 0
-  Depth: 1000000
 Field:
   MagneticField: # Geomagnetic field measured at Zhaoqing
     - -1.7620e-09
