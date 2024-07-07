@@ -28,8 +28,8 @@ Simulation of cosmic ray air shower.
     - [Elevating the ground](#elevating-the-ground)
   - [Primary particles](#primary-particles)
   - [Save primary vertex data](#save-primary-vertex-data)
-  - [Save decay vertex data](#save-decay-vertex-data)
   - [Who ordered neutrino?](#who-ordered-neutrino)
+  - [Interpret the result](#interpret-the-result)
   - [Bug tracking](#bug-tracking)
   - [Contributing](#contributing)
 
@@ -105,9 +105,9 @@ mpirun -n <nproc> ./MusAirS <run_macro>
 
 MusAirS uses FTFP_BERT as the default physics list. However, you may change it by option `--physics-list`. For example,
 ```sh
-MusAirS --physics-list QBBC
+MusAirS --physics-list QGSP_BERT
 ```
-It accepts a [Geant4 reference physics list](https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsListGuide/html/reference_PL/index.html) name as its argument.
+It accepts a [Geant4 reference physics list](https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsListGuide/html/reference_PL/index.html) name as its argument. Note that electromagnetic physics is forced to `EM Opt1`, so EM physics suffix won't work.
 
 ## Run macro
 
@@ -170,20 +170,16 @@ Primary vertices are not recorded by default. You can enable saving primary vert
 ```
 This can sometimes be useful in debugging.
 
-## Save decay vertex data
-
-Decay vertices (of **any** unstable particles) are recorded by default. You can disable saving them by the command
-```sh
-/MusAirS/Analysis/SaveDecayVertexData no
-```
-**A decay vertex dataset can be huge.** It is useful to not save them when there are many many events.
-
 ## Who ordered neutrino?
 
 Neutrino hits are not recorded by default (since there are to much neutrino). You can let `EarthSD` to record neutrino hits by the command
 ```sh
 /MusAirS/SD/EarthSD/DetectNeutrino yes
 ```
+
+## Interpret the result
+
+// TODO
 
 ## Bug tracking
 

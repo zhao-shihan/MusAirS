@@ -14,9 +14,6 @@
 
 #include "muc/math"
 
-#include <cmath>
-#include <numbers>
-#include <string_view>
 
 namespace MusAirS::inline SD {
 
@@ -24,15 +21,13 @@ EarthSD::EarthSD(const G4String& sdName) :
     Mustard::NonMoveableBase{},
     G4VSensitiveDetector{sdName},
     fDetectNeutrino{false},
-    fHitsCollection{},
+    fHitTrackIDData{},
     fSDMessengerRegister{this} {
     collectionName.insert(sdName + "HC");
 }
 
 auto EarthSD::Initialize(G4HCofThisEvent* hitsCollectionOfThisEvent) -> void {
-    fHitsCollection = new EarthHitCollection{SensitiveDetectorName, collectionName[0]};
-    auto hitsCollectionID{G4SDManager::GetSDMpointer()->GetCollectionID(fHitsCollection)};
-    hitsCollectionOfThisEvent->AddHitsCollection(hitsCollectionID, fHitsCollection);
+    fHitTrackIDData.clear();
 }
 
 auto EarthSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
@@ -58,41 +53,13 @@ auto EarthSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
     }
 SkipIgnoringNeutrino:
 
-    const auto& preStepPoint{*step.GetPreStepPoint()};
-    // calculate (E0, p0)
-    const auto vertexEk{track.GetVertexKineticEnergy()};
-    const auto vertexMomentum{track.GetVertexMomentumDirection() * std::sqrt(vertexEk * (vertexEk + 2 * particle.GetPDGMass()))};
-    // calculate direction
-    const auto p{preStepPoint.GetMomentum()};
-    const auto zenith{1 + p.z() / p.mag()};
-    const auto phi{std::atan2(p.x(), p.y()) + std::numbers::pi};
-    // track creator process
-    const auto creatorProcess{track.GetCreatorProcess()};
-    // new a hit
-    auto hit{new EarthHit};
-    Get<"EvtID">(*hit) = G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID();
-    Get<"TrkID">(*hit) = track.GetTrackID();
-    Get<"PDGID">(*hit) = pdgID;
-    Get<"t">(*hit) = preStepPoint.GetGlobalTime();
-    Get<"t0">(*hit) = track.GetGlobalTime() - track.GetLocalTime();
-    Get<"x">(*hit) = preStepPoint.GetPosition();
-    Get<"x0">(*hit) = track.GetVertexPosition();
-    Get<"Ek">(*hit) = preStepPoint.GetKineticEnergy();
-    Get<"Ek0">(*hit) = vertexEk;
-    Get<"p">(*hit) = p;
-    Get<"p0">(*hit) = vertexMomentum;
-    Get<"Zenith">(*hit) = zenith;
-    Get<"phi">(*hit) = phi;
-    Get<"TrkLen">(*hit) = track.GetTrackLength();
-    Get<"ParentTrkID">(*hit) = track.GetParentID();
-    *Get<"CreatProc">(*hit) = creatorProcess ? std::string_view{creatorProcess->GetProcessName()} : "|0>";
-    fHitsCollection->insert(hit);
+    fHitTrackIDData.emplace_back(track.GetTrackID());
 
     return true;
 }
 
 auto EarthSD::EndOfEvent(G4HCofThisEvent*) -> void {
-    Analysis::Instance().SubmitVirtualHC(*fHitsCollection->GetVector());
+    Analysis::Instance().SubmitEarthSDHitTrackID(fHitTrackIDData);
 }
 
 } // namespace MusAirS::inline SD

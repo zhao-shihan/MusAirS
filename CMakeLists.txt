@@ -25,6 +25,26 @@ else()
     message(STATUS "MusAirS build type: ${CMAKE_BUILD_TYPE}")
 endif()
 
+# Turn on unity build
+set(CMAKE_UNITY_BUILD ON)
+set(CMAKE_UNITY_BUILD_BATCH_SIZE 0)
+message(STATUS "Unity build enabled (batch size: unlimited)")
+
+# Turn on LTO/IPO
+include(CheckIPOSupported)
+check_ipo_supported(RESULT MusAirS_ENABLE_IPO_SUPPORTED
+                    OUTPUT MusAirS_IPO_SUPPORTED_ERROR)
+if(MusAirS_ENABLE_IPO_SUPPORTED)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    message(STATUS "LTO/IPO enabled")
+else()
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE OFF)
+    message(NOTICE "***Notice: LTO/IPO not supported")
+endif()
+
+# Always static
+set(BUILD_SHARED_LIBS OFF)
+
 # Find or build-in Mustard.
 # ROOT, Geant4, and MPI, etc. are also found here.
 include(cmake/LookForMustard.cmake)

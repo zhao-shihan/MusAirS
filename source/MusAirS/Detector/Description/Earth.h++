@@ -13,10 +13,8 @@ private:
 
 public:
     auto GroundAltitude() const -> auto { return fGroundAltitude; }
-    auto Depth() const -> auto { return fDepth; }
 
     auto GroundAltitude(double val) -> auto { fGroundAltitude = val; }
-    auto Depth(double val) -> void { fDepth = val; }
 
 private:
     auto ImportAllValue(const YAML::Node& node) -> void override;
@@ -24,7 +22,6 @@ private:
 
 private:
     double fGroundAltitude;
-    double fDepth;
 };
 
 } // namespace MusAirS::Detector::Description

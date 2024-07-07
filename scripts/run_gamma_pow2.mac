@@ -20,12 +20,9 @@
 /gps/ene/min              2 GeV
 /gps/ene/max              10 TeV
 
-/run/setCut 10 m
-
+/run/setCut 10 m    # low cut for accurate EM shower shape
 /MusAirS/SD/EarthSD/DetectNeutrino yes
-
-/MusAirS/Analysis/SavePrimaryVertexData  no
-/MusAirS/Analysis/SaveDecayVertexData    yes
+/MusAirS/Analysis/SavePrimaryVertexData no
 
 #############################################################################
 # Run

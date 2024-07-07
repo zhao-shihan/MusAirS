@@ -1,16 +1,20 @@
 #pragma once
 
-#include "MusAirS/Hit/EarthHit.h++"
 #include "MusAirS/Messenger/SDMessenger.h++"
 
 #include "Mustard/Utility/NonMoveableBase.h++"
 
 #include "G4VSensitiveDetector.hh"
 
+#include <vector>
+
 namespace MusAirS::inline SD {
 
 class EarthSD : public Mustard::NonMoveableBase,
                 public G4VSensitiveDetector {
+public:
+    using HitTrackIDDataType = std::vector<int>;
+
 public:
     EarthSD(const G4String& sdName);
 
@@ -24,7 +28,7 @@ public:
 protected:
     bool fDetectNeutrino;
 
-    EarthHitCollection* fHitsCollection;
+    HitTrackIDDataType fHitTrackIDData;
 
     SDMessenger::Register<EarthSD> fSDMessengerRegister;
 };

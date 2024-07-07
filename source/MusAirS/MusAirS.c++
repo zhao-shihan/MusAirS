@@ -11,7 +11,10 @@
 #include "Mustard/Utility/LiteralUnit.h++"
 #include "Mustard/Utility/UseXoshiro.h++"
 
+#include "G4EmStandardPhysics_option1.hh"
 #include "G4GeometryManager.hh"
+
+#include "muc/utility"
 
 #include <algorithm>
 
@@ -31,7 +34,9 @@ auto main(int argc, char* argv[]) -> int {
     // Mutually exclusive random seeds are distributed to all processes upon each BeamOn.
     Mustard::Geant4X::MPIRunManager runManager;
     // Physics lists
-    runManager.SetUserInitialization(cli.PhysicsList());
+    const auto physicsList{cli.PhysicsList()};
+    physicsList->ReplacePhysics(new G4EmStandardPhysics_option1{muc::to_underlying(env.VerboseLevel())}); // force to EMV
+    runManager.SetUserInitialization(physicsList);
     // Register detector construction
     runManager.SetUserInitialization(new MusAirS::DetectorConstruction{env.VerboseLevelReach<'I'>()});
     // Register action initialization, including run action, event action, etc.

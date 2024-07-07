@@ -16,8 +16,7 @@ AnalysisMessenger::AnalysisMessenger() :
     fDirectory{},
     fFilePath{},
     fFileMode{},
-    fSavePrimaryVertexData{},
-    fSaveDecayVertexData{} {
+    fSavePrimaryVertexData{} {
 
     fDirectory = std::make_unique<G4UIdirectory>("/MusAirS/Analysis/");
     fDirectory->SetGuidance("MusAirS::Analysis controller.");
@@ -36,11 +35,6 @@ AnalysisMessenger::AnalysisMessenger() :
     fSavePrimaryVertexData->SetGuidance("Save primary vertex data if enabled.");
     fSavePrimaryVertexData->SetParameterName("mode", false);
     fSavePrimaryVertexData->AvailableForStates(G4State_Idle);
-
-    fSaveDecayVertexData = std::make_unique<G4UIcmdWithABool>("/MusAirS/Analysis/SaveDecayVertexData", this);
-    fSaveDecayVertexData->SetGuidance("Save decay vertex data if enabled.");
-    fSaveDecayVertexData->SetParameterName("mode", false);
-    fSaveDecayVertexData->AvailableForStates(G4State_Idle);
 }
 
 AnalysisMessenger::~AnalysisMessenger() = default;
@@ -57,10 +51,6 @@ auto AnalysisMessenger::SetNewValue(G4UIcommand* command, G4String value) -> voi
     } else if (command == fSavePrimaryVertexData.get()) {
         Deliver<PrimaryGeneratorAction>([&](auto&& r) {
             r.SavePrimaryVertexData(fSavePrimaryVertexData->GetNewBoolValue(value));
-        });
-    } else if (command == fSaveDecayVertexData.get()) {
-        Deliver<TrackingAction>([&](auto&& r) {
-            r.SaveDecayVertexData(fSaveDecayVertexData->GetNewBoolValue(value));
         });
     }
 }
