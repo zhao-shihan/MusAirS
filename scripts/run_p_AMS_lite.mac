@@ -90,7 +90,7 @@
 
 /run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
 /MusAirS/SD/EarthSD/DetectNeutrino no
-/MusAirS/Analysis/SavePrimaryVertexData yes
+/MusAirS/Analysis/SavePrimaryVertexData no
 
 #############################################################################
 # Run
