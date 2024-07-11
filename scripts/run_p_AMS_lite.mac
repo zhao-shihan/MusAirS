@@ -90,15 +90,16 @@
 
 /gps/hist/inter Lin
 
+
 /run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
 /MusAirS/SD/EarthSD/DetectNeutrino no
-/MusAirS/Analysis/SavePrimaryVertexData no
+/MusAirS/Analysis/SavePrimaryVertexData yes
 
 #############################################################################
 # Run
 #############################################################################
 
-/MusAirS/Analysis/FilePath MusAirS_p_AMS_full
+/MusAirS/Analysis/FilePath MusAirS_p_AMS_lite2
 /MusAirS/Analysis/FileMode NEW
-/run/beamOn 1000000
+/run/beamOn 10000000
 /Mustard/Run/PrintRunSummary
