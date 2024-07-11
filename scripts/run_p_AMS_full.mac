@@ -86,8 +86,6 @@
 /gps/hist/point 717008.1287671548 1.5220349094233146e-12
 /gps/hist/point 952255.6126039722 6.967180915527777e-13
 /gps/hist/point 1401524.0886158117 2.402602589304194e-13
-
-
 /gps/hist/inter Lin
 
 /run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
@@ -100,5 +98,5 @@
 
 /MusAirS/Analysis/FilePath MusAirS_p_AMS_full
 /MusAirS/Analysis/FileMode NEW
-/run/beamOn 1000000
+/run/beamOn 10000
 /Mustard/Run/PrintRunSummary
