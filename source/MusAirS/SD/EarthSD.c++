@@ -1,5 +1,4 @@
 #include "MusAirS/Analysis.h++"
-#include "MusAirS/Hit/EarthHit.h++"
 #include "MusAirS/SD/EarthSD.h++"
 
 #include "G4Event.hh"

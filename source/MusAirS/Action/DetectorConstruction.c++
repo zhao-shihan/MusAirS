@@ -13,8 +13,8 @@
 #include "G4ChordFinder.hh"
 #include "G4FieldManager.hh"
 #include "G4InterpolationDriver.hh"
+#include "G4Mag_SpinEqRhs.hh"
 #include "G4TDormandPrince45.hh"
-#include "G4TMagFieldEquation.hh"
 #include "G4ThreeVector.hh"
 
 #include "gsl/gsl"
@@ -50,14 +50,14 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
     // Register field
 
     using Field = Mustard::Detector::Field::AsG4Field<Mustard::Detector::Field::UniformMagneticField>;
-    using Equation = G4TMagFieldEquation<Field>;
-    using Stepper = G4TDormandPrince45<Equation, 6>;
+    using Equation = G4Mag_SpinEqRhs;
+    using Stepper = G4TDormandPrince45<Equation, 12>;
     using Driver = G4InterpolationDriver<Stepper>;
 
     const auto field{new Field{Detector::Description::Field::Instance().MagneticField()}};
     const auto equation{new Equation{field}}; // clang-format off
     const auto stepper{new Stepper{equation}};
-    const auto driver{new Driver{fMinDriverStep, stepper, 6}}; // clang-format on
+    const auto driver{new Driver{fMinDriverStep, stepper, 12}}; // clang-format on
     const auto chordFinder{new G4ChordFinder{driver}};
     chordFinder->SetDeltaChord(fDeltaChord);
     fWorld->RegisterField(std::make_unique<G4FieldManager>(field, chordFinder), false);

@@ -13,6 +13,7 @@
 
 #include "G4EmStandardPhysics_option1.hh"
 #include "G4GeometryManager.hh"
+#include "G4SpinDecayPhysics.hh"
 
 #include "muc/utility"
 
@@ -36,6 +37,7 @@ auto main(int argc, char* argv[]) -> int {
     // Physics lists
     const auto physicsList{cli.PhysicsList()};
     physicsList->ReplacePhysics(new G4EmStandardPhysics_option1{muc::to_underlying(env.VerboseLevel())}); // force to EMV
+    physicsList->ReplacePhysics(new G4SpinDecayPhysics{muc::to_underlying(env.VerboseLevel())});
     runManager.SetUserInitialization(physicsList);
     // Register detector construction
     runManager.SetUserInitialization(new MusAirS::DetectorConstruction{env.VerboseLevelReach<'I'>()});

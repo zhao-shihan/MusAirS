@@ -7,6 +7,7 @@
 #include "Mustard/Env/Memory/PassiveSingleton.h++"
 
 #include "G4UserTrackingAction.hh"
+#include "G4ThreeVector.hh"
 
 #include <memory>
 #include <memory_resource>
@@ -23,6 +24,7 @@ public:
 public:
     TrackingAction();
 
+    auto PreUserTrackingAction(const G4Track* track) -> void override;
     auto PostUserTrackingAction(const G4Track* track) -> void override;
 
     auto ClearTrackData() -> void { return fTrackData.clear(); }
@@ -32,6 +34,8 @@ private:
     auto UpdateTrackData(const G4Track& track) -> void;
 
 private:
+    G4ThreeVector fVertexPolarization;
+
     std::pmr::unsynchronized_pool_resource fMemoryPool;
     TrackDataType fTrackData;
 

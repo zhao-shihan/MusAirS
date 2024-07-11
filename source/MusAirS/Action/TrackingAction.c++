@@ -21,9 +21,14 @@ namespace MusAirS::inline Action {
 TrackingAction::TrackingAction() :
     PassiveSingleton{},
     G4UserTrackingAction{},
+    fVertexPolarization{},
     fMemoryPool{},
     fTrackData{&fMemoryPool},
     fMessengerRegister{this} {}
+
+auto TrackingAction::PreUserTrackingAction(const G4Track* track) -> void {
+    fVertexPolarization = track->GetPolarization();
+}
 
 auto TrackingAction::PostUserTrackingAction(const G4Track* track) -> void {
     UpdateTrackData(*track);
@@ -54,10 +59,12 @@ auto TrackingAction::UpdateTrackData(const G4Track& g4Track) -> void {
     Get<"x0">(track) = g4Track.GetVertexPosition();
     Get<"Ek0">(track) = vertexEk;
     Get<"p0">(track) = vertexMomentum;
+    Get<"P0">(track) = fVertexPolarization;
     Get<"t">(track) = g4Track.GetGlobalTime();
     Get<"x">(track) = g4Track.GetPosition();
     Get<"Ek">(track) = g4Track.GetKineticEnergy();
     Get<"p">(track) = g4Track.GetMomentum();
+    Get<"P">(track) = g4Track.GetPolarization();
     // Get<"Zenith">(track) = <delay to event end analysis>
     // Get<"phi">(track) = <delay to event end analysis>
     Get<"TrkLen">(track) = g4Track.GetTrackLength();
