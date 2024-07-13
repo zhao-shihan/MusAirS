@@ -34,7 +34,7 @@ private:
     auto UpdateTrackData(const G4Track& track) -> void;
 
 private:
-    G4ThreeVector fVertexPolarization;
+    G4ThreeVector fVertexSigma;
 
     std::pmr::unsynchronized_pool_resource fMemoryPool;
     TrackDataType fTrackData;

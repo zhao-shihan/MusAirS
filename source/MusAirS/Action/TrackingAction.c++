@@ -21,13 +21,13 @@ namespace MusAirS::inline Action {
 TrackingAction::TrackingAction() :
     PassiveSingleton{},
     G4UserTrackingAction{},
-    fVertexPolarization{},
+    fVertexSigma{},
     fMemoryPool{},
     fTrackData{&fMemoryPool},
     fMessengerRegister{this} {}
 
 auto TrackingAction::PreUserTrackingAction(const G4Track* track) -> void {
-    fVertexPolarization = track->GetPolarization();
+    fVertexSigma = track->GetPolarization();
 }
 
 auto TrackingAction::PostUserTrackingAction(const G4Track* track) -> void {
@@ -59,12 +59,14 @@ auto TrackingAction::UpdateTrackData(const G4Track& g4Track) -> void {
     Get<"x0">(track) = g4Track.GetVertexPosition();
     Get<"Ek0">(track) = vertexEk;
     Get<"p0">(track) = vertexMomentum;
-    Get<"P0">(track) = fVertexPolarization;
+    Get<"Sigma0">(track) = fVertexSigma;
+    Get<"Helicity0">(track) = g4Track.GetVertexMomentumDirection() * fVertexSigma;
     Get<"t">(track) = g4Track.GetGlobalTime();
     Get<"x">(track) = g4Track.GetPosition();
     Get<"Ek">(track) = g4Track.GetKineticEnergy();
     Get<"p">(track) = g4Track.GetMomentum();
-    Get<"P">(track) = g4Track.GetPolarization();
+    Get<"Sigma">(track) = g4Track.GetPolarization();
+    Get<"Helicity">(track) = g4Track.GetMomentumDirection() * g4Track.GetPolarization();
     // Get<"Zenith">(track) = <delay to event end analysis>
     // Get<"phi">(track) = <delay to event end analysis>
     Get<"TrkLen">(track) = g4Track.GetTrackLength();
