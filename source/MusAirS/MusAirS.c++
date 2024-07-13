@@ -2,6 +2,7 @@
 #include "MusAirS/Action/DetectorConstruction.h++"
 #include "MusAirS/Analysis.h++"
 #include "MusAirS/DefaultMacro.h++"
+#include "MusAirS/Physics/SpinDecayPhysicsWithKaon.h++"
 
 #include "Mustard/Env/CLI/Geant4CLI.h++"
 #include "Mustard/Env/CLI/Module/Geant4ReferencePhysicsListModule.h++"
@@ -37,7 +38,7 @@ auto main(int argc, char* argv[]) -> int {
     // Physics lists
     const auto physicsList{cli.PhysicsList()};
     physicsList->ReplacePhysics(new G4EmStandardPhysics_option1{muc::to_underlying(env.VerboseLevel())}); // force to EMV
-    physicsList->ReplacePhysics(new G4SpinDecayPhysics{muc::to_underlying(env.VerboseLevel())});
+    physicsList->ReplacePhysics(new MusAirS::SpinDecayPhysicsWithKaon{muc::to_underlying(env.VerboseLevel())});
     runManager.SetUserInitialization(physicsList);
     // Register detector construction
     runManager.SetUserInitialization(new MusAirS::DetectorConstruction{env.VerboseLevelReach<'I'>()});
