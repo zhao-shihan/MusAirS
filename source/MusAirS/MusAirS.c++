@@ -15,7 +15,6 @@
 #include "G4EmStandardPhysics_option1.hh"
 #include "G4GeometryManager.hh"
 #include "G4HadronicParameters.hh"
-#include "G4SpinDecayPhysics.hh"
 
 #include "muc/utility"
 
@@ -23,7 +22,7 @@
 
 auto main(int argc, char* argv[]) -> int {
     // Use default Geant4 CLI and extends it with reference physics list interface
-    Mustard::Env::CLI::Geant4CLI<Mustard::Env::CLI::Geant4ReferencePhysicsListModule<>> cli;
+    Mustard::Env::CLI::Geant4CLI<Mustard::Env::CLI::Geant4ReferencePhysicsListModule<"FTFP_BERT">> cli;
     Mustard::Env::MPIEnv env{argc, argv, cli};
 
     Mustard::UseXoshiro<256> random;
