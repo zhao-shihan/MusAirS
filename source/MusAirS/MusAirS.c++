@@ -14,6 +14,7 @@
 
 #include "G4EmStandardPhysics_option1.hh"
 #include "G4GeometryManager.hh"
+#include "G4HadronicParameters.hh"
 #include "G4SpinDecayPhysics.hh"
 
 #include "muc/utility"
@@ -35,15 +36,20 @@ auto main(int argc, char* argv[]) -> int {
 
     // Mutually exclusive random seeds are distributed to all processes upon each BeamOn.
     Mustard::Geant4X::MPIRunManager runManager;
+
     // Physics lists
     const auto physicsList{cli.PhysicsList()};
     physicsList->ReplacePhysics(new G4EmStandardPhysics_option1{muc::to_underlying(env.VerboseLevel())}); // force to EMV
     physicsList->ReplacePhysics(new MusAirS::SpinDecayPhysicsWithKaon{muc::to_underlying(env.VerboseLevel())});
+    G4HadronicParameters::Instance()->SetEnableCRCoalescence(true);
     runManager.SetUserInitialization(physicsList);
+
     // Register detector construction
     runManager.SetUserInitialization(new MusAirS::DetectorConstruction{env.VerboseLevelReach<'I'>()});
+
     // Register action initialization, including run action, event action, etc.
     runManager.SetUserInitialization(new MusAirS::ActionInitialization);
+
     // Instanitiate analysis
     MusAirS::Analysis anaylsis;
 
