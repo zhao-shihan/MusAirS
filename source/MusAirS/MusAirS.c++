@@ -14,7 +14,6 @@
 
 #include "G4EmStandardPhysics_option1.hh"
 #include "G4GeometryManager.hh"
-#include "G4HadronicParameters.hh"
 
 #include "muc/utility"
 
@@ -40,7 +39,6 @@ auto main(int argc, char* argv[]) -> int {
     const auto physicsList{cli.PhysicsList()};
     physicsList->ReplacePhysics(new G4EmStandardPhysics_option1{muc::to_underlying(env.VerboseLevel())}); // force to EMV
     physicsList->ReplacePhysics(new MusAirS::SpinDecayPhysicsWithKaon{muc::to_underlying(env.VerboseLevel())});
-    G4HadronicParameters::Instance()->SetEnableCRCoalescence(true);
     runManager.SetUserInitialization(physicsList);
 
     // Register detector construction
