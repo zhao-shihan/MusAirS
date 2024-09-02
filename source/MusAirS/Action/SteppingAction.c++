@@ -26,14 +26,14 @@ SteppingAction::SteppingAction() :
     fKillChargedPion{false},
     fActionMessengerRegister{this} {}
 
-auto SteppingAction::KillEMShower(bool val) -> auto {
+auto SteppingAction::KillEMShower(bool val) -> void {
     fKillEMShower = val;
     SetPhysicalProcessActivation(G4Gamma::Definition(), not val);
     SetPhysicalProcessActivation(G4Electron::Definition(), not val);
     SetPhysicalProcessActivation(G4Positron::Definition(), not val);
 }
 
-auto SteppingAction::KillNeutrino(bool val) -> auto {
+auto SteppingAction::KillNeutrino(bool val) -> void {
     fKillNeutrino = val;
     SetPhysicalProcessActivation(G4NeutrinoE::Definition(), not val);
     SetPhysicalProcessActivation(G4AntiNeutrinoE::Definition(), not val);
@@ -43,7 +43,7 @@ auto SteppingAction::KillNeutrino(bool val) -> auto {
     SetPhysicalProcessActivation(G4AntiNeutrinoTau::Definition(), not val);
 }
 
-auto SteppingAction::KillChargedPion(bool val) -> auto {
+auto SteppingAction::KillChargedPion(bool val) -> void {
     fKillChargedPion = val;
     SetPhysicalProcessActivation(G4PionPlus::Definition(), not val);
     SetPhysicalProcessActivation(G4PionMinus::Definition(), not val);

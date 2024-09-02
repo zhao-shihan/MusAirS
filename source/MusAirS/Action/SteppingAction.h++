@@ -22,9 +22,9 @@ public:
     auto KillNeutrino() const -> auto { return fKillNeutrino; }
     auto KillChargedPion() const -> auto { return fKillChargedPion; }
 
-    auto KillEMShower(bool val) -> auto;
-    auto KillNeutrino(bool val) -> auto;
-    auto KillChargedPion(bool val) -> auto;
+    auto KillEMShower(bool val) -> void;
+    auto KillNeutrino(bool val) -> void;
+    auto KillChargedPion(bool val) -> void;
 
     auto UserSteppingAction(const G4Step* step) -> void override;
 
