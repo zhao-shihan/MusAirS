@@ -88,8 +88,9 @@
 /gps/hist/point 1401524.0886158117 2.402602589304194e-13
 /gps/hist/inter Lin
 
-/run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
-/MusAirS/SD/EarthSD/DetectNeutrino no
+/run/setCut 10 m    # low cut for accurate EM shower shape
+/run/setCutForAGivenParticle proton 3 m
+/MusAirS/SD/EarthSD/DetectNeutrino yes
 /MusAirS/Analysis/SavePrimaryVertexData no
 
 #############################################################################

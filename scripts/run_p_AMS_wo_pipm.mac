@@ -89,6 +89,8 @@
 /gps/hist/inter Lin
 
 /run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
+/run/setCutForAGivenParticle proton 3 m
+/MusAirS/Action/KillEMShower yes
 /MusAirS/Action/KillChargedPion yes
 /MusAirS/SD/EarthSD/DetectNeutrino no
 /MusAirS/Analysis/SavePrimaryVertexData no
@@ -97,7 +99,7 @@
 # Run
 #############################################################################
 
-/MusAirS/Analysis/FilePath MusAirS_p_AMS_lite
+/MusAirS/Analysis/FilePath MusAirS_p_AMS_wo_pipm
 /MusAirS/Analysis/FileMode NEW
 /run/beamOn 10000
 /Mustard/Run/PrintRunSummary

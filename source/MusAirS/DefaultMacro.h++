@@ -22,6 +22,7 @@ constexpr auto defaultMacro = {
     "/gps/energy               100 GeV",
     "",
     "/run/setCut 10 m",
+    "/run/setCutForAGivenParticle proton 3 m",
     "/MusAirS/SD/EarthSD/DetectNeutrino yes",
     "",
     "/MusAirS/Analysis/FilePath MusAirS_vis",

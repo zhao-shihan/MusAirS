@@ -1,9 +1,11 @@
 #include "MusAirS/Action/SteppingAction.h++"
 #include "MusAirS/Messenger/SDMessenger.h++"
-#include "MusAirS/SD/EarthSD.h++"
 
 #include "G4UIcmdWithABool.hh"
 #include "G4UIdirectory.hh"
+#include "G4UImanager.hh"
+
+#include "fmt/core.h"
 
 namespace MusAirS::inline Messenger {
 
@@ -29,9 +31,7 @@ auto SDMessenger::SetNewValue(G4UIcommand* command, G4String value) -> void {
         Deliver<EarthSD>([&](auto&& r) {
             r.DetectNeutrino(detect);
         });
-        Deliver<SteppingAction>([&](auto&& r) {
-            r.KillNeutrino(not detect);
-        });
+        G4UImanager::GetUIpointer()->ApplyCommand(fmt::format("/MusAirS/Action/KillNeutrino {}", detect ? "yes" : "no"));
     }
 }
 

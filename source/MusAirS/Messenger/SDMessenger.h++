@@ -12,15 +12,11 @@ namespace MusAirS {
 inline namespace SD {
 class EarthSD;
 } // namespace SD
-inline namespace Action {
-class SteppingAction;
-} // namespace Action
 
 inline namespace Messenger {
 
 class SDMessenger final : public Mustard::Geant4X::SingletonMessenger<SDMessenger,
-                                                                      EarthSD,
-                                                                      SteppingAction> {
+                                                                      EarthSD> {
     friend Mustard::Env::Memory::SingletonInstantiator;
 
 private:

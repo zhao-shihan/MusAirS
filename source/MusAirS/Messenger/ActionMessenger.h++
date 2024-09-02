@@ -28,6 +28,8 @@ public:
 
 private:
     std::unique_ptr<G4UIdirectory> fDirectory;
+    std::unique_ptr<G4UIcmdWithABool> fKillEMShower;
+    std::unique_ptr<G4UIcmdWithABool> fKillNeutrino;
     std::unique_ptr<G4UIcmdWithABool> fKillChargedPion;
 };
 

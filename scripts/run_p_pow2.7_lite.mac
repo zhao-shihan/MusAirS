@@ -21,6 +21,8 @@
 /gps/ene/max              10 TeV
 
 /run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
+/run/setCutForAGivenParticle proton 3 m
+/MusAirS/Action/KillEMShower yes
 /MusAirS/SD/EarthSD/DetectNeutrino no
 /MusAirS/Analysis/SavePrimaryVertexData no
 

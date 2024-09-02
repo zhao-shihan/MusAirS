@@ -7,6 +7,10 @@
 
 #include "G4UserSteppingAction.hh"
 
+#include "gsl/gsl"
+
+class G4ParticleDefinition;
+
 namespace MusAirS::inline Action {
 
 class SteppingAction final : public Mustard::Env::Memory::PassiveSingleton<SteppingAction>,
@@ -14,20 +18,25 @@ class SteppingAction final : public Mustard::Env::Memory::PassiveSingleton<Stepp
 public:
     SteppingAction();
 
+    auto KillEMShower() const -> auto { return fKillEMShower; }
     auto KillNeutrino() const -> auto { return fKillNeutrino; }
     auto KillChargedPion() const -> auto { return fKillChargedPion; }
 
-    auto KillNeutrino(bool val) -> auto { fKillNeutrino = val; }
-    auto KillChargedPion(bool val) -> auto { fKillChargedPion = val; }
+    auto KillEMShower(bool val) -> auto;
+    auto KillNeutrino(bool val) -> auto;
+    auto KillChargedPion(bool val) -> auto;
 
     auto UserSteppingAction(const G4Step* step) -> void override;
 
 private:
+    auto SetPhysicalProcessActivation(gsl::not_null<G4ParticleDefinition*> particle, bool active) -> void;
+
+private:
+    bool fKillEMShower;
     bool fKillNeutrino;
     bool fKillChargedPion;
 
     ActionMessenger::Register<SteppingAction> fActionMessengerRegister;
-    SDMessenger::Register<SteppingAction> fSDMessengerRegister;
 
     static constexpr auto fgNStepLimit{1000'0000};
 };
