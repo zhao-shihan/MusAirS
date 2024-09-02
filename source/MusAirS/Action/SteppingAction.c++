@@ -1,13 +1,14 @@
 #include "MusAirS/Action/SteppingAction.h++"
 
 #include "Mustard/Env/Print.h++"
-#include "Mustard/Extension/Geant4X/Run/MPIRunManager.h++"
 
 #include "G4Event.hh"
 #include "G4EventManager.hh"
 #include "G4ParticleDefinition.hh"
 #include "G4ParticleTypes.hh"
 #include "G4ProcessTable.hh"
+#include "G4ProcessType.hh"
+#include "G4RunManager.hh"
 #include "G4Step.hh"
 #include "G4String.hh"
 #include "G4Track.hh"
@@ -87,7 +88,7 @@ auto SteppingAction::SetPhysicalProcessActivation(gsl::not_null<G4ParticleDefini
     processTable->SetProcessActivation(fDecay, particle, active);
     processTable->SetProcessActivation(fPhonon, particle, active);
     processTable->SetProcessActivation(fUCN, particle, active);
-    Mustard::Geant4X::MPIRunManager::GetRunManager()->PhysicsHasBeenModified();
+    G4RunManager::GetRunManager()->PhysicsHasBeenModified();
 }
 
 } // namespace MusAirS::inline Action
