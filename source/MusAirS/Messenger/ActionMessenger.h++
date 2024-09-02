@@ -9,30 +9,26 @@ class G4UIdirectory;
 
 namespace MusAirS {
 
-inline namespace SD {
-class EarthSD;
-} // namespace SD
 inline namespace Action {
 class SteppingAction;
 } // namespace Action
 
 inline namespace Messenger {
 
-class SDMessenger final : public Mustard::Geant4X::SingletonMessenger<SDMessenger,
-                                                                      EarthSD,
-                                                                      SteppingAction> {
+class ActionMessenger final : public Mustard::Geant4X::SingletonMessenger<ActionMessenger,
+                                                                          SteppingAction> {
     friend Mustard::Env::Memory::SingletonInstantiator;
 
 private:
-    SDMessenger();
-    ~SDMessenger();
+    ActionMessenger();
+    ~ActionMessenger();
 
 public:
     auto SetNewValue(G4UIcommand* command, G4String value) -> void override;
 
 private:
     std::unique_ptr<G4UIdirectory> fDirectory;
-    std::unique_ptr<G4UIcmdWithABool> fDetectNeutrino;
+    std::unique_ptr<G4UIcmdWithABool> fKillChargedPion;
 };
 
 } // namespace Messenger

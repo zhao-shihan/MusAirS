@@ -1,0 +1,35 @@
+#############################################################################
+# Initialization settings
+#############################################################################
+
+/control/verbose 0
+/run/verbose 0
+
+#/Mustard/Detector/Description/Ixport MusAirS.yaml
+
+/MusAirS/Numeric/MinDriverStep    1 cm
+/MusAirS/Numeric/DeltaChord       1 m
+
+/run/initialize
+
+/gps/particle             proton
+/gps/position             0 0 100 km
+/gps/ang/type             iso
+/gps/ene/type             Pow
+/gps/ene/biasAlpha        -2.7
+/gps/ene/min              2 GeV
+/gps/ene/max              10 TeV
+
+/run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
+/MusAirS/Action/KillChargedPion yes
+/MusAirS/SD/EarthSD/DetectNeutrino no
+/MusAirS/Analysis/SavePrimaryVertexData no
+
+#############################################################################
+# Run
+#############################################################################
+
+/MusAirS/Analysis/FilePath MusAirS_p_pow2_7_lite
+/MusAirS/Analysis/FileMode NEW
+/run/beamOn 10000
+/Mustard/Run/PrintRunSummary

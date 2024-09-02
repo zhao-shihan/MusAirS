@@ -1,3 +1,4 @@
+#include "MusAirS/Action/SteppingAction.h++"
 #include "MusAirS/Messenger/SDMessenger.h++"
 #include "MusAirS/SD/EarthSD.h++"
 
@@ -24,8 +25,12 @@ SDMessenger::~SDMessenger() = default;
 
 auto SDMessenger::SetNewValue(G4UIcommand* command, G4String value) -> void {
     if (command == fDetectNeutrino.get()) {
+        const auto detect{fDetectNeutrino->GetNewBoolValue(value)};
         Deliver<EarthSD>([&](auto&& r) {
-            r.DetectNeutrino(fDetectNeutrino->GetNewBoolValue(value));
+            r.DetectNeutrino(detect);
+        });
+        Deliver<SteppingAction>([&](auto&& r) {
+            r.KillNeutrino(not detect);
         });
     }
 }
