@@ -6,8 +6,8 @@
 #include "Mustard/Data/Tuple.h++"
 #include "Mustard/Env/Memory/PassiveSingleton.h++"
 
-#include "G4UserTrackingAction.hh"
 #include "G4ThreeVector.hh"
+#include "G4UserTrackingAction.hh"
 
 #include <memory>
 #include <memory_resource>

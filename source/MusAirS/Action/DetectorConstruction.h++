@@ -3,8 +3,8 @@
 #include "MusAirS/Detector/Description/Atmosphere.h++"
 #include "MusAirS/Detector/Description/Earth.h++"
 #include "MusAirS/Detector/Description/Field.h++"
-#include "MusAirS/Messenger/NumericMessenger.h++"
 #include "MusAirS/Detector/Description/World.h++"
+#include "MusAirS/Messenger/NumericMessenger.h++"
 
 #include "Mustard/Env/Memory/PassiveSingleton.h++"
 

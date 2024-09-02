@@ -13,7 +13,6 @@
 
 #include "muc/math"
 
-
 namespace MusAirS::inline SD {
 
 EarthSD::EarthSD(const G4String& sdName) :

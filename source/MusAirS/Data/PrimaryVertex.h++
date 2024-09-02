@@ -15,4 +15,4 @@ using PrimaryVertex = Mustard::Data::TupleModel<
     Mustard::Data::Value<float, "Ek0", "Primary kinetic energy">,
     Mustard::Data::Value<muc::array3f, "p0", "Primary momentum">>;
 
-} // namespace MACE::Data
+} // namespace MusAirS::Data
