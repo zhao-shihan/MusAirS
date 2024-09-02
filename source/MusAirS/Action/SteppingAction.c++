@@ -86,6 +86,8 @@ auto SteppingAction::SetPhysicalProcessActivation(gsl::not_null<G4ParticleDefini
     processTable->SetProcessActivation(fHadronic, particle, active);
     processTable->SetProcessActivation(fPhotolepton_hadron, particle, active);
     processTable->SetProcessActivation(fDecay, particle, active);
+    processTable->SetProcessActivation(fGeneral, particle, active);
+    processTable->SetProcessActivation(fParameterisation, particle, active);
     processTable->SetProcessActivation(fPhonon, particle, active);
     processTable->SetProcessActivation(fUCN, particle, active);
     G4RunManager::GetRunManager()->PhysicsHasBeenModified();
