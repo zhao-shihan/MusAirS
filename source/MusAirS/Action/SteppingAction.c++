@@ -75,7 +75,7 @@ auto SteppingAction::UserSteppingAction(const G4Step* step) -> void {
     mustKill = mustKill or (fKillNeutrino and (absPDGID == nuE or absPDGID == nuMu or absPDGID == nuTau));
     mustKill = mustKill or (fKillChargedPion and absPDGID == pi);
     if (mustKill) {
-        track->SetTrackStatus(fStopAndKill);
+        track->SetTrackStatus(fKillTrackAndSecondaries);
     }
 }
 
