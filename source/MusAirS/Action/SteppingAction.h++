@@ -22,14 +22,11 @@ public:
     auto KillNeutrino() const -> auto { return fKillNeutrino; }
     auto KillChargedPion() const -> auto { return fKillChargedPion; }
 
-    auto KillEMShower(bool val) -> void;
-    auto KillNeutrino(bool val) -> void;
-    auto KillChargedPion(bool val) -> void;
+    auto KillEMShower(bool val) -> void { fKillEMShower = val; }
+    auto KillNeutrino(bool val) -> void { fKillNeutrino = val; }
+    auto KillChargedPion(bool val) -> void { fKillChargedPion = val; }
 
     auto UserSteppingAction(const G4Step* step) -> void override;
-
-private:
-    auto SetPhysicalProcessActivation(gsl::not_null<G4ParticleDefinition*> particle, bool active) -> void;
 
 private:
     bool fKillEMShower;
