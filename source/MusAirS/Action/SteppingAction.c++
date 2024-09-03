@@ -4,6 +4,11 @@
 
 #include "G4Event.hh"
 #include "G4EventManager.hh"
+#include "G4ParticleDefinition.hh"
+#include "G4ParticleTypes.hh"
+#include "G4ProcessTable.hh"
+#include "G4ProcessType.hh"
+#include "G4RunManager.hh"
 #include "G4Step.hh"
 #include "G4String.hh"
 #include "G4Track.hh"
@@ -21,6 +26,29 @@ SteppingAction::SteppingAction() :
     fKillNeutrino{true},
     fKillChargedPion{false},
     fActionMessengerRegister{this} {}
+
+auto SteppingAction::KillEMShower(bool val) -> void {
+    fKillEMShower = val;
+    SetPhysicalProcessActivation(G4Gamma::Definition(), not val);
+    SetPhysicalProcessActivation(G4Electron::Definition(), not val);
+    SetPhysicalProcessActivation(G4Positron::Definition(), not val);
+}
+
+auto SteppingAction::KillNeutrino(bool val) -> void {
+    fKillNeutrino = val;
+    SetPhysicalProcessActivation(G4NeutrinoE::Definition(), not val);
+    SetPhysicalProcessActivation(G4AntiNeutrinoE::Definition(), not val);
+    SetPhysicalProcessActivation(G4NeutrinoMu::Definition(), not val);
+    SetPhysicalProcessActivation(G4AntiNeutrinoMu::Definition(), not val);
+    SetPhysicalProcessActivation(G4NeutrinoTau::Definition(), not val);
+    SetPhysicalProcessActivation(G4AntiNeutrinoTau::Definition(), not val);
+}
+
+auto SteppingAction::KillChargedPion(bool val) -> void {
+    fKillChargedPion = val;
+    SetPhysicalProcessActivation(G4PionPlus::Definition(), not val);
+    SetPhysicalProcessActivation(G4PionMinus::Definition(), not val);
+}
 
 auto SteppingAction::UserSteppingAction(const G4Step* step) -> void {
     const auto track{step->GetTrack()};
@@ -49,6 +77,20 @@ auto SteppingAction::UserSteppingAction(const G4Step* step) -> void {
     if (mustKill) {
         track->SetTrackStatus(fKillTrackAndSecondaries);
     }
+}
+
+auto SteppingAction::SetPhysicalProcessActivation(gsl::not_null<G4ParticleDefinition*> particle, bool active) -> void {
+    const auto processTable{G4ProcessTable::GetProcessTable()};
+    processTable->SetProcessActivation(fElectromagnetic, particle, active);
+    processTable->SetProcessActivation(fOptical, particle, active);
+    processTable->SetProcessActivation(fHadronic, particle, active);
+    processTable->SetProcessActivation(fPhotolepton_hadron, particle, active);
+    processTable->SetProcessActivation(fDecay, particle, active);
+    processTable->SetProcessActivation(fGeneral, particle, active);
+    processTable->SetProcessActivation(fParameterisation, particle, active);
+    processTable->SetProcessActivation(fPhonon, particle, active);
+    processTable->SetProcessActivation(fUCN, particle, active);
+    G4RunManager::GetRunManager()->PhysicsHasBeenModified();
 }
 
 } // namespace MusAirS::inline Action
