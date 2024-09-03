@@ -179,7 +179,7 @@ Atmosphere::Atmosphere() :
     DescriptionWithCacheBase{"Atmosphere"},
     fMaxAltitude{this, 90_km},
     fSliceMode{this, SliceMode::Altitude},
-    fNSlice{this, 1000},
+    fNSlice{this, 450},
     fAltitudeSlice{this, [this] { return CalculateAltitudeSlice(); }},
     fStateSlice{this, [this] { return CalculateStateSlice(); }} {}
 
