@@ -31,7 +31,7 @@ auto SDMessenger::SetNewValue(G4UIcommand* command, G4String value) -> void {
         Deliver<EarthSD>([&](auto&& r) {
             r.DetectNeutrino(detect);
         });
-        G4UImanager::GetUIpointer()->ApplyCommand(fmt::format("/MusAirS/Action/KillNeutrino {}", detect ? "yes" : "no"));
+        G4UImanager::GetUIpointer()->ApplyCommand(fmt::format("/MusAirS/Action/KillNeutrino {}", detect ? "no" : "yes"));
     }
 }
 
