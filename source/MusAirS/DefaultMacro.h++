@@ -79,7 +79,7 @@ constexpr auto defaultMacro = {
     "/vis/modeling/trajectories/drawByParticleID-0/default/setAuxPtsType dots",
     "/vis/modeling/trajectories/drawByParticleID-0/default/setDrawLine yes",
     "/vis/modeling/trajectories/drawByParticleID-0/default/setLineWidth 1",
-    "/vis/modeling/trajectories/drawByParticleID-0/default/setDrawStepPts yes",
+    "/vis/modeling/trajectories/drawByParticleID-0/default/setDrawStepPts no",
     "/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSize 1",
     "/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsSizeType screen",
     "/vis/modeling/trajectories/drawByParticleID-0/default/setStepPtsType dots",
