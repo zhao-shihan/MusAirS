@@ -4,7 +4,6 @@
 
 #include <memory>
 #include <string>
-#include <utility>
 
 class G4Event;
 class G4ParticleDefinition;
