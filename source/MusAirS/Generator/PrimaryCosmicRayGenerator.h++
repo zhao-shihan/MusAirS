@@ -11,22 +11,25 @@ class TH1;
 
 namespace MusAirS::inline Generator {
 
-class WeightedPrimaryGenerator : public G4VPrimaryGenerator {
+class PrimaryCosmicRayGenerator : public G4VPrimaryGenerator {
 public:
-    WeightedPrimaryGenerator();
+    PrimaryCosmicRayGenerator();
 
     auto PrimaryParticle(G4ParticleDefinition* particle) -> void { fPrimaryParticle = particle; }
     auto PrimaryParticle(const std::string& particle) -> void;
 
-    auto ApplyEkHistogram(std::unique_ptr<TH1> h) -> void;
-    auto ApplyEkHistogram(const std::string& fileName, const std::string& th1Name = "Ek");
+    auto EnergySpectrum(std::unique_ptr<TH1> h) -> void;
+    auto EnergySpectrum(const std::string& fileName, const std::string& th1Name = "Ek");
+
+    auto MinEnergy(double val) -> void;
+    auto MaxEnergy(double val) -> void;
 
     virtual auto GeneratePrimaryVertex(G4Event* event) -> void override;
 
 private:
-    std::unique_ptr<TH1> fEkHistogram;
-    double fEkMin;
-    double fEkMax;
+    std::unique_ptr<TH1> fEnergySpectrum;
+    double fMinEnergy;
+    double fMaxEnergy;
     G4ParticleDefinition* fPrimaryParticle;
 };
 
