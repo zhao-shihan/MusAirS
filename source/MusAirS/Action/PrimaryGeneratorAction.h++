@@ -1,6 +1,8 @@
 #pragma once
 
 #include "MusAirS/Data/PrimaryVertex.h++"
+#include "MusAirS/Generator/PrimaryCosmicRayGenerator.h++"
+#include "MusAirS/Messenger/ActionMessenger.h++"
 #include "MusAirS/Messenger/AnalysisMessenger.h++"
 
 #include "Mustard/Data/Tuple.h++"
@@ -24,6 +26,9 @@ public:
 public:
     PrimaryGeneratorAction();
 
+    auto SwitchToPCR() -> void { fGenerator = &fAvailableGenerator.pcr; }
+    auto SwitchToGPSX() -> void { fGenerator = &fAvailableGenerator.gpsx; }
+
     auto SavePrimaryVertexData() const -> auto { return fSavePrimaryVertexData; }
     auto SavePrimaryVertexData(bool val) -> void { fSavePrimaryVertexData = val; }
 
@@ -33,12 +38,17 @@ private:
     auto UpdatePrimaryVertexData(const G4Event& event) -> void;
 
 private:
-    Mustard::Geant4X::GeneralParticleSourceX fGPSX;
+    struct {
+        PrimaryCosmicRayGenerator pcr;
+        Mustard::Geant4X::GeneralParticleSourceX gpsx;
+    } fAvailableGenerator;
+    G4VPrimaryGenerator* fGenerator;
 
     bool fSavePrimaryVertexData;
     PrimaryVertexDataType fPrimaryVertexData;
 
-    AnalysisMessenger::Register<PrimaryGeneratorAction> fMessengerRegister;
+    ActionMessenger::Register<PrimaryGeneratorAction> fActionMessengerRegister;
+    AnalysisMessenger::Register<PrimaryGeneratorAction> fAnalysisMessengerRegister;
 };
 
 } // namespace MusAirS::inline Action
