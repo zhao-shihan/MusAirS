@@ -150,14 +150,14 @@ By default, the detection plane (the ground") is at the sea level (altitude = 0 
 
 ## Primary particles
 
-We use Geant4 [General Particle Source (GPS)](https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/GettingStarted/generalParticleSource.html) for primary particle generation. For example, the follwing macro lines configures GPS to generate protons isotropically from 100 km above the sea level, with $E^{-2.7}$ energy spectrum ranges from 2 GeV to 10 TeV.
+We use Geant4 [General Particle Source (GPS)](https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/GettingStarted/generalParticleSource.html) for primary particle generation. For example, the following macro lines configures GPS to generate protons isotopically from 100 km above the sea level, with $E^{-2.7}$ energy spectrum ranges from 3 GeV to 10 TeV.
 ```sh
 /gps/particle         proton
 /gps/position         0 0 100 km
 /gps/ang/type         iso
 /gps/ene/type         Pow
 /gps/ene/biasAlpha    -2.7
-/gps/ene/min          2 GeV
+/gps/ene/min          3 GeV
 /gps/ene/max          10 TeV
 ```
 Detailed usage can be found in the [Geant4 Book For Application Developers](https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/GettingStarted/generalParticleSource.html).
