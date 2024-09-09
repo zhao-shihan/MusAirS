@@ -9,9 +9,12 @@
 #include "G4UIparameter.hh"
 #include "G4ios.hh"
 
+#include <ranges>
 #include <stdexcept>
+#include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 namespace MusAirS::inline Messenger {
 
@@ -79,9 +82,19 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
             r.EnergySpectrum(value);
         });
     } else if (command == fEnergySpectrumHistogram.get()) {
+        std::vector<std::string> parameter;
+        parameter.reserve(2);
+        for (auto&& token : value | std::views::split(' ')) {
+            if (token.empty()) { continue; }
+            parameter.emplace_back(token.begin(), token.end());
+            if (parameter.size() == 2) { break; }
+        }
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            G4cout << value << G4endl;
-            // r.EnergySpectrum(fEnergySpectrumHistogram->GetCurrentValue());
+            try {
+                r.EnergySpectrum(parameter.front(), parameter.back());
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
         });
     } else if (command == fMinEnergy.get()) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
@@ -92,11 +105,11 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
             r.MaxEnergy(fMaxEnergy->GetNewDoubleValue(value));
         });
     } else if (command == fEnergySampling.get()) {
+        static const std::unordered_map<std::string_view, enum PrimaryCosmicRayGenerator::EnergySampling> energySamplingMap {
+            {"Normal",          PrimaryCosmicRayGenerator::EnergySampling::Normal         },
+            {"WeightedUniform", PrimaryCosmicRayGenerator::EnergySampling::WeightedUniform}
+        };
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            static const std::unordered_map<std::string_view, enum PrimaryCosmicRayGenerator::EnergySampling> energySamplingMap {
-                {"Normal",          PrimaryCosmicRayGenerator::EnergySampling::Normal         },
-                {"WeightedUniform", PrimaryCosmicRayGenerator::EnergySampling::WeightedUniform}
-            };
             r.EnergySampling(energySamplingMap.at(value));
         });
     }
