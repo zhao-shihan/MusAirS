@@ -13,6 +13,7 @@ using PrimaryVertex = Mustard::Data::TupleModel<
     Mustard::Data::Value<double, "t0", "Primary time">,
     Mustard::Data::Value<muc::array3f, "x0", "Primary position">,
     Mustard::Data::Value<float, "Ek0", "Primary kinetic energy">,
-    Mustard::Data::Value<muc::array3f, "p0", "Primary momentum">>;
+    Mustard::Data::Value<muc::array3f, "p0", "Primary momentum">,
+    Mustard::Data::Value<float, "Weight", "Track weight">>;
 
 } // namespace MusAirS::Data

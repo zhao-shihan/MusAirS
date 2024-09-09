@@ -71,6 +71,7 @@ auto TrackingAction::UpdateTrackData(const G4Track& g4Track) -> void {
     // Get<"phi">(track) = <delay to event end analysis>
     Get<"TrkLen">(track) = g4Track.GetTrackLength();
     Get<"KillProc">(track) = killerProcess->GetProcessName(); // if hit EarthSD, will be <0| in event end analysis
+    Get<"Weight">(track) = g4Track.GetWeight();
 }
 
 } // namespace MusAirS::inline Action

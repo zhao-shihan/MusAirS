@@ -34,6 +34,7 @@ auto PrimaryGeneratorAction::UpdatePrimaryVertexData(const G4Event& event) -> vo
             Get<"x0">(v) = pv->GetPosition();
             Get<"Ek0">(v) = pp->GetKineticEnergy();
             Get<"p0">(v) = pp->GetMomentum();
+            Get<"Weight">(v) = pv->GetWeight();
         }
     }
     Analysis::Instance().SubmitPrimaryVertexData(fPrimaryVertexData);
