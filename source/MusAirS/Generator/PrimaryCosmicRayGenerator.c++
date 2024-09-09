@@ -1,6 +1,9 @@
+#include "MusAirS/Detector/Description/Atmosphere.h++"
+#include "MusAirS/Detector/Description/World.h++"
 #include "MusAirS/Generator/PrimaryCosmicRayGenerator.h++"
 
 #include "TAxis.h"
+#include "TF1.h"
 #include "TFile.h"
 #include "TH1.h"
 
@@ -11,35 +14,51 @@
 #include "G4RandomTools.hh"
 
 #include "muc/math"
+#include "muc/utility"
 
 #include "fmt/core.h"
 
 #include <cmath>
+#include <functional>
+#include <limits>
 #include <stdexcept>
-#include <utility>
 
 namespace MusAirS::inline Generator {
 
 PrimaryCosmicRayGenerator::PrimaryCosmicRayGenerator() :
+    G4VPrimaryGenerator{},
+    fParticle{},
     fEnergySpectrum{},
-    fMinEnergy{},
-    fMaxEnergy{},
-    fPrimaryParticle{} {}
+    fIntrinsicMinEnergy{},
+    fIntrinsicMaxEnergy{std::numeric_limits<double>::max()},
+    fEnergySampling{EnergySampling::Normal} {}
 
-auto PrimaryCosmicRayGenerator::PrimaryParticle(const std::string& particle) -> void {
+auto PrimaryCosmicRayGenerator::Particle(const std::string& particle) -> void {
     const auto p{G4ParticleTable::GetParticleTable()->FindParticle(particle)};
     if (p) {
-        PrimaryParticle(p);
+        Particle(p);
     } else {
-        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::PrimaryParticle: No particle named '{}'", particle)};
+        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::Particle: No particle named '{}'", particle)};
     }
 }
 
-auto PrimaryCosmicRayGenerator::EnergySpectrum(std::unique_ptr<TH1> h) -> void {
-    fEnergySpectrum = std::move(h);
-    const auto spectrumAxis{fEnergySpectrum->GetXaxis()};
-    fMinEnergy = spectrumAxis->GetXmin();
-    fMaxEnergy = spectrumAxis->GetXmax();
+auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& formula) -> void {
+    fEnergySpectrum = std::make_unique<TF1>("EnergySpectrum", formula.c_str(),
+                                            fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax());
+    fIntrinsicMinEnergy = 0;
+    fIntrinsicMaxEnergy = std::numeric_limits<double>::max();
+}
+
+auto PrimaryCosmicRayGenerator::EnergySpectrum(std::shared_ptr<TH1> h) -> void {
+    const auto spectrumAxis{h->GetXaxis()};
+    fIntrinsicMinEnergy = spectrumAxis->GetXmin();
+    fIntrinsicMaxEnergy = spectrumAxis->GetXmax();
+    std::function spectrum{
+        [spectrum = std::move(h)](const double* x, const double*) {
+            return spectrum->Interpolate(*x);
+        }};
+    fEnergySpectrum = std::make_unique<TF1>("EnergySpectrum", spectrum,
+                                            fIntrinsicMinEnergy, fIntrinsicMaxEnergy);
 }
 
 auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& fileName, const std::string& th1Name) {
@@ -53,33 +72,49 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& fileName, cons
         throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::EnergySpectrum: Cannot find TH1 '{}' in '{}'", th1Name, fileName)};
     }
 
-    std::unique_ptr<TH1> h{dynamic_cast<TH1*>(histogram->Clone())};
+    std::shared_ptr<TH1> h{dynamic_cast<TH1*>(histogram->Clone())};
     h->SetDirectory(nullptr);
     EnergySpectrum(std::move(h));
 }
 
 auto PrimaryCosmicRayGenerator::MinEnergy(double val) -> void {
-    const auto spectrumAxis{fEnergySpectrum->GetXaxis()};
-    fMinEnergy = muc::clamp<"[]">(val,
-                                  spectrumAxis->GetXmin(),
-                                  spectrumAxis->GetXmax());
+    fEnergySpectrum->SetRange(muc::clamp<"[]">(val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy),
+                              fEnergySpectrum->GetXmax());
 }
 
 auto PrimaryCosmicRayGenerator::MaxEnergy(double val) -> void {
-    const auto spectrumAxis{fEnergySpectrum->GetXaxis()};
-    fMaxEnergy = muc::clamp<"[]">(val,
-                                  spectrumAxis->GetXmin(),
-                                  spectrumAxis->GetXmax());
+    fEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(),
+                              muc::clamp<"[]">(val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy));
 }
 
 auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
-    const auto kineticEnergy{G4RandFlat::shoot(fMinEnergy, fMaxEnergy)};
-    const auto p{std::sqrt((2 * fPrimaryParticle->GetPDGMass() + kineticEnergy) * kineticEnergy) *
-                 G4RandomDirection(G4RandFlat::shoot(-1, 0))}; // clang-format off
+    const auto hMax{Detector::Description::Atmosphere::Instance().MaxAltitude()};
+    particle_position = {0, 0, hMax};
+    const auto woh{Detector::Description::World::Instance().Width() / hMax};
+    const auto maxCosTheta{woh / std::sqrt(4 + muc::pow<2>(woh))};
+
+    const auto [ek, weight]{SampleEnergy()};
+    const auto p{std::sqrt((2 * fParticle->GetPDGMass() + ek) * ek) *
+                 G4RandomDirection(G4RandFlat::shoot(-1, maxCosTheta))};
+
+    // clang-format off
     const auto vertex{new G4PrimaryVertex{particle_position, particle_time}}; // clang-format on
-    vertex->SetPrimary(new G4PrimaryParticle{fPrimaryParticle, p.x(), p.y(), p.z()});
-    vertex->SetWeight(fEnergySpectrum->Interpolate(kineticEnergy));
+    vertex->SetWeight(weight);
+    vertex->SetPrimary(new G4PrimaryParticle{fParticle, p.x(), p.y(), p.z()});
     event->AddPrimaryVertex(vertex);
+}
+
+auto PrimaryCosmicRayGenerator::SampleEnergy() const -> std::pair<double, double> {
+    switch (fEnergySampling) {
+    case EnergySampling::Normal: {
+        return {fEnergySpectrum->GetRandom(), 1};
+    }
+    case EnergySampling::WeightedUniform: {
+        const auto ek{G4RandFlat::shoot(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax())};
+        return {ek, fEnergySpectrum->Eval(ek)};
+    }
+    }
+    muc::unreachable();
 }
 
 } // namespace MusAirS::inline Generator
