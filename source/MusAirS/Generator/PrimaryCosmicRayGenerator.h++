@@ -1,5 +1,7 @@
 #pragma once
 
+#include "MusAirS/Messenger/PrimaryCosmicRayGeneratorMessenger.h++"
+
 #include "G4VPrimaryGenerator.hh"
 
 #include <memory>
@@ -46,6 +48,8 @@ private:
     double fIntrinsicMinEnergy;
     double fIntrinsicMaxEnergy;
     enum EnergySampling fEnergySampling;
+
+    PrimaryCosmicRayGeneratorMessenger::Register<PrimaryCosmicRayGenerator> fMessengerRegister;
 };
 
 } // namespace MusAirS::inline Generator

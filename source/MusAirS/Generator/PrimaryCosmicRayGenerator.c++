@@ -2,6 +2,8 @@
 #include "MusAirS/Detector/Description/World.h++"
 #include "MusAirS/Generator/PrimaryCosmicRayGenerator.h++"
 
+#include "Mustard/Utility/LiteralUnit.h++"
+
 #include "TAxis.h"
 #include "TF1.h"
 #include "TFile.h"
@@ -11,7 +13,7 @@
 #include "G4ParticleDefinition.hh"
 #include "G4ParticleTable.hh"
 #include "G4PrimaryParticle.hh"
-#include "G4RandomTools.hh"
+#include "Randomize.hh"
 
 #include "muc/math"
 #include "muc/utility"
@@ -25,13 +27,21 @@
 
 namespace MusAirS::inline Generator {
 
+using namespace Mustard::LiteralUnit::Energy;
+
 PrimaryCosmicRayGenerator::PrimaryCosmicRayGenerator() :
     G4VPrimaryGenerator{},
     fParticle{},
     fEnergySpectrum{},
     fIntrinsicMinEnergy{},
     fIntrinsicMaxEnergy{std::numeric_limits<double>::max()},
-    fEnergySampling{EnergySampling::Normal} {}
+    fEnergySampling{EnergySampling::Normal},
+    fMessengerRegister{this} {
+    Particle("proton");
+    EnergySpectrum("x^-2.7");
+    MinEnergy(3_GeV);
+    MaxEnergy(10_TeV);
+}
 
 auto PrimaryCosmicRayGenerator::Particle(const std::string& particle) -> void {
     const auto p{G4ParticleTable::GetParticleTable()->FindParticle(particle)};
@@ -44,7 +54,8 @@ auto PrimaryCosmicRayGenerator::Particle(const std::string& particle) -> void {
 
 auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& formula) -> void {
     fEnergySpectrum = std::make_unique<TF1>("EnergySpectrum", formula.c_str(),
-                                            fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax());
+                                            fEnergySpectrum ? fEnergySpectrum->GetXmin() : fIntrinsicMinEnergy,
+                                            fEnergySpectrum ? fEnergySpectrum->GetXmax() : fIntrinsicMaxEnergy);
     fIntrinsicMinEnergy = 0;
     fIntrinsicMaxEnergy = std::numeric_limits<double>::max();
 }
@@ -88,14 +99,21 @@ auto PrimaryCosmicRayGenerator::MaxEnergy(double val) -> void {
 }
 
 auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
+    using namespace Mustard::LiteralUnit::MathConstantSuffix;
+
     const auto hMax{Detector::Description::Atmosphere::Instance().MaxAltitude()};
     particle_position = {0, 0, hMax};
-    const auto woh{Detector::Description::World::Instance().Width() / hMax};
-    const auto maxCosTheta{woh / std::sqrt(4 + muc::pow<2>(woh))};
+    const auto wo2h{Detector::Description::World::Instance().Width() / (2 * hMax)};
+    const auto maxCosTheta{-1 / std::sqrt(1 + muc::pow<2>(wo2h))};
 
     const auto [ek, weight]{SampleEnergy()};
-    const auto p{std::sqrt((2 * fParticle->GetPDGMass() + ek) * ek) *
-                 G4RandomDirection(G4RandFlat::shoot(-1, maxCosTheta))};
+    const auto pHat{[&maxCosTheta] {
+        const auto z{G4RandFlat::shoot(-1, maxCosTheta)};
+        const auto rho{std::sqrt((1 + z) * (1 - z))};
+        const auto phi{G4RandFlat::shoot(0., 2_pi)};
+        return G4ThreeVector{rho * std::cos(phi), rho * std::sin(phi), z};
+    }()};
+    const auto p{std::sqrt((2 * fParticle->GetPDGMass() + ek) * ek) * pHat};
 
     // clang-format off
     const auto vertex{new G4PrimaryVertex{particle_position, particle_time}}; // clang-format on
