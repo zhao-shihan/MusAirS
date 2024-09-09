@@ -25,40 +25,40 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fMaxEnergy{},
     fEnergySampling{} {
 
-    fDirectory = std::make_unique<G4UIdirectory>("/MusAirS/PCG/");
+    fDirectory = std::make_unique<G4UIdirectory>("/MusAirS/PCR/");
     fDirectory->SetGuidance("MusAirS primary cosmic ray generator controller.");
 
-    fParticle = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCG/Particle", this);
+    fParticle = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCR/Particle", this);
     fParticle->SetGuidance("Set primary particle.");
     fParticle->SetParameterName("particle", false);
     fParticle->AvailableForStates(G4State_Idle);
 
-    fEnergySpectrumFormula = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCG/Energy/Spectrum/Formula", this);
+    fEnergySpectrumFormula = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCR/Energy/Spectrum/Formula", this);
     fEnergySpectrumFormula->SetGuidance("Set formula for kinetic energy spectrum (ROOT TFormula form).");
     fEnergySpectrumFormula->SetParameterName("formula", false);
     fEnergySpectrumFormula->AvailableForStates(G4State_Idle);
 
-    fEnergySpectrumHistogram = std::make_unique<G4UIcommand>("/MusAirS/PCG/Energy/Spectrum/Histogram", this);
+    fEnergySpectrumHistogram = std::make_unique<G4UIcommand>("/MusAirS/PCR/Energy/Spectrum/Histogram", this);
     fEnergySpectrumHistogram->SetGuidance("Set kinetic energy histogram from a TH1 in a ROOT file.");
     fEnergySpectrumHistogram->SetParameter(new G4UIparameter{"file", 's', false});
     fEnergySpectrumHistogram->SetParameter(new G4UIparameter{"h", 's', false});
     fEnergySpectrumHistogram->AvailableForStates(G4State_Idle);
 
-    fMinEnergy = std::make_unique<G4UIcmdWithADoubleAndUnit>("/MusAirS/PCG/Energy/Min", this);
+    fMinEnergy = std::make_unique<G4UIcmdWithADoubleAndUnit>("/MusAirS/PCR/Energy/Min", this);
     fMinEnergy->SetGuidance("Set minimum kinetic energy.");
     fMinEnergy->SetParameterName("E_min", false);
     fMinEnergy->SetUnitCategory("Energy");
     fMinEnergy->SetRange("E_min >= 0");
     fMinEnergy->AvailableForStates(G4State_Idle);
 
-    fMaxEnergy = std::make_unique<G4UIcmdWithADoubleAndUnit>("/MusAirS/PCG/Energy/Max", this);
+    fMaxEnergy = std::make_unique<G4UIcmdWithADoubleAndUnit>("/MusAirS/PCR/Energy/Max", this);
     fMaxEnergy->SetGuidance("Set maximum kinetic energy.");
     fMaxEnergy->SetParameterName("E_max", false);
     fMaxEnergy->SetUnitCategory("Energy");
     fMaxEnergy->SetRange("E_max > 0");
     fMaxEnergy->AvailableForStates(G4State_Idle);
 
-    fEnergySampling = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCG/Energy/Sampling", this);
+    fEnergySampling = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCR/Energy/Sampling", this);
     fEnergySampling->SetGuidance("Set energy importance sampling.");
     fEnergySampling->SetParameterName("mode", false);
     fEnergySampling->SetCandidates("Normal WeightedUniform");
