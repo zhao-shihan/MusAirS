@@ -15,8 +15,9 @@
 /MusAirS/Action/SwitchToPCR
 /MusAirS/PCR/Particle                   proton
 /MusAirS/PCR/Energy/Spectrum/Formula    x^-2.7
-/MusAirS/PCR/Energy/Min                 3 GeV
+/MusAirS/PCR/Energy/Min                 3 GeV  # proton < 3 GeV contribute little to muon shower
 /MusAirS/PCR/Energy/Max                 10 TeV
+#/MusAirS/PCR/Energy/Sampling WeightedUniform
 
 /run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
 /run/setCutForAGivenParticle proton 3 m
