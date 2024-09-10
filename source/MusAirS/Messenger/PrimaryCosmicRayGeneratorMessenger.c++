@@ -72,7 +72,7 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fEnergySampling = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCR/Energy/Sampling", this);
     fEnergySampling->SetGuidance("Set energy importance sampling.");
     fEnergySampling->SetParameterName("mode", false);
-    fEnergySampling->SetCandidates("Normal WeightedUniform");
+    fEnergySampling->SetCandidates("Normal WeightedUniform WeightedMinVar");
     fEnergySampling->AvailableForStates(G4State_Idle);
 }
 
@@ -119,7 +119,8 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
     } else if (command == fEnergySampling.get()) {
         static const std::unordered_map<std::string_view, enum PrimaryCosmicRayGenerator::EnergySampling> energySamplingMap {
             {"Normal",          PrimaryCosmicRayGenerator::EnergySampling::Normal         },
-            {"WeightedUniform", PrimaryCosmicRayGenerator::EnergySampling::WeightedUniform}
+            {"WeightedUniform", PrimaryCosmicRayGenerator::EnergySampling::WeightedUniform},
+            {"WeightedMinVar",  PrimaryCosmicRayGenerator::EnergySampling::WeightedMinVar }
         };
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
             r.EnergySampling(energySamplingMap.at(value));

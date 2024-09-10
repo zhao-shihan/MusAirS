@@ -17,7 +17,7 @@
 /MusAirS/PCR/Energy/Spectrum/Formula    x^-2.7
 /MusAirS/PCR/Energy/Min                 2 GeV
 /MusAirS/PCR/Energy/Max                 10 TeV
-#/MusAirS/PCR/Energy/Sampling WeightedUniform
+#/MusAirS/PCR/Energy/Sampling            WeightedMinVar
 
 /run/setCut 10 m    # low cut for accurate EM shower shape
 /run/setCutForAGivenParticle proton 3 m
