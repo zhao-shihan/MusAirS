@@ -1,7 +1,9 @@
 #include "MusAirS/Action/SteppingAction.h++"
 #include "MusAirS/Messenger/ActionMessenger.h++"
 
+#include "G4ApplicationState.hh"
 #include "G4UIcmdWithABool.hh"
+#include "G4UIcmdWithoutParameter.hh"
 #include "G4UIdirectory.hh"
 
 namespace MusAirS::inline Messenger {
@@ -9,12 +11,22 @@ namespace MusAirS::inline Messenger {
 ActionMessenger::ActionMessenger() :
     SingletonMessenger{},
     fDirectory{},
+    fSwitchToPCR{},
+    fSwitchToGPSX{},
     fKillEMShower{},
     fKillNeutrino{},
     fKillChargedPion{} {
 
     fDirectory = std::make_unique<G4UIdirectory>("/MusAirS/Action/");
     fDirectory->SetGuidance("MusAirS user action controller.");
+
+    fSwitchToPCR = std::make_unique<G4UIcmdWithoutParameter>("/MusAirS/Action/SwitchToPCR", this);
+    fSwitchToPCR->SetGuidance("Switch to MusAirS::PrimaryCosmicRayGenerator in primary generator action.");
+    fSwitchToPCR->AvailableForStates(G4State_Idle);
+
+    fSwitchToGPSX = std::make_unique<G4UIcmdWithoutParameter>("/MusAirS/Action/SwitchToGPSX", this);
+    fSwitchToGPSX->SetGuidance("Switch to extended general particle source in primary generator action.");
+    fSwitchToGPSX->AvailableForStates(G4State_Idle);
 
     fKillEMShower = std::make_unique<G4UIcmdWithABool>("/MusAirS/Action/KillEMShower", this);
     fKillEMShower->SetGuidance("EM shower (e+, e-, gamma) will be killed if set.");
@@ -35,7 +47,15 @@ ActionMessenger::ActionMessenger() :
 ActionMessenger::~ActionMessenger() = default;
 
 auto ActionMessenger::SetNewValue(G4UIcommand* command, G4String value) -> void {
-    if (command == fKillEMShower.get()) {
+    if (command == fSwitchToPCR.get()) {
+        Deliver<PrimaryGeneratorAction>([&](auto&& r) {
+            r.SwitchToPCR();
+        });
+    } else if (command == fSwitchToGPSX.get()) {
+        Deliver<PrimaryGeneratorAction>([&](auto&& r) {
+            r.SwitchToGPSX();
+        });
+    } else if (command == fKillEMShower.get()) {
         Deliver<SteppingAction>([&](auto&& r) {
             r.KillEMShower(fKillEMShower->GetNewBoolValue(value));
         });

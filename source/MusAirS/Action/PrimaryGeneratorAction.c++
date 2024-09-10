@@ -10,13 +10,15 @@ namespace MusAirS::inline Action {
 PrimaryGeneratorAction::PrimaryGeneratorAction() :
     PassiveSingleton{},
     G4VUserPrimaryGeneratorAction{},
-    fGPSX{},
+    fAvailableGenerator{},
+    fGenerator{&fAvailableGenerator.pcr},
     fSavePrimaryVertexData{false},
     fPrimaryVertexData{},
-    fMessengerRegister{this} {}
+    fActionMessengerRegister{this},
+    fAnalysisMessengerRegister{this} {}
 
 auto PrimaryGeneratorAction::GeneratePrimaries(G4Event* event) -> void {
-    fGPSX.GeneratePrimaryVertex(event);
+    fGenerator->GeneratePrimaryVertex(event);
     if (fSavePrimaryVertexData) { UpdatePrimaryVertexData(*event); }
 }
 
@@ -32,6 +34,7 @@ auto PrimaryGeneratorAction::UpdatePrimaryVertexData(const G4Event& event) -> vo
             Get<"x0">(v) = pv->GetPosition();
             Get<"Ek0">(v) = pp->GetKineticEnergy();
             Get<"p0">(v) = pp->GetMomentum();
+            Get<"Weight">(v) = pv->GetWeight();
         }
     }
     Analysis::Instance().SubmitPrimaryVertexData(fPrimaryVertexData);

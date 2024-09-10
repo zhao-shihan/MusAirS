@@ -16,6 +16,7 @@ constexpr auto defaultMacro = {
     "",
     "/run/initialize",
     "",
+    "/MusAirS/Action/SwitchToGPSX",
     "/gps/particle             proton",
     "/gps/direction            0 0 -1",
     "/gps/position             0 0 100 km",

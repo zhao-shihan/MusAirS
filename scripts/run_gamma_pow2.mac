@@ -12,13 +12,13 @@
 
 /run/initialize
 
-/gps/particle             gamma
-/gps/position             0 0 100 km
-/gps/ang/type             iso
-/gps/ene/type             Pow
-/gps/ene/biasAlpha        -2
-/gps/ene/min              2 GeV
-/gps/ene/max              10 TeV
+/MusAirS/Action/SwitchToPCR
+/MusAirS/PCR/Particle                        gamma
+/MusAirS/PCR/Energy/Spectrum/Formula         x^-2
+/MusAirS/PCR/Energy/Min                      2 GeV
+/MusAirS/PCR/Energy/Max                      10 TeV
+#/MusAirS/PCR/Energy/Sampling                 CustomBiased
+#/MusAirS/PCR/Energy/Sampling/Custom/Formula  1/x
 
 /run/setCut 10 m    # low cut for accurate EM shower shape
 /run/setCutForAGivenParticle proton 3 m
