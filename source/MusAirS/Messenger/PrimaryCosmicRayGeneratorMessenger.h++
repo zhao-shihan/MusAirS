@@ -40,6 +40,8 @@ private:
     std::unique_ptr<G4UIcmdWithADoubleAndUnit> fMinEnergy;
     std::unique_ptr<G4UIcmdWithADoubleAndUnit> fMaxEnergy;
     std::unique_ptr<G4UIcmdWithAString> fEnergySampling;
+    std::unique_ptr<G4UIcmdWithAString> fCustomBiasedEnergySpectrumFormula;
+    std::unique_ptr<G4UIcommand> fCustomBiasedEnergySpectrumHistogram;
 };
 
 } // namespace Messenger

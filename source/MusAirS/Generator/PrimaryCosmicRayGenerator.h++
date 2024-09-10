@@ -19,8 +19,9 @@ class PrimaryCosmicRayGenerator : public G4VPrimaryGenerator {
 public:
     enum struct EnergySampling {
         Normal,
-        WeightedUniform,
-        WeightedMinVar
+        UniformBiased,
+        MinVarBiased,
+        CustomBiased
     };
 
 public:
@@ -38,10 +39,14 @@ public:
     auto MaxEnergy(double val) -> void;
     auto EnergySampling(enum EnergySampling mode) -> void { fEnergySampling = mode; }
 
+    auto CustomBiasedEnergySpectrum(const std::string& formula) -> void;
+    auto CustomBiasedEnergySpectrum(const TH1& histogram) -> void;
+    auto CustomBiasedEnergySpectrum(const std::string& fileName, const std::string& th1Name);
+
     virtual auto GeneratePrimaryVertex(G4Event* event) -> void override;
 
 private:
-    auto SyncMinVarBiasedEnergySpectrum() -> void;
+    auto SyncBiasedEnergySpectrum() -> void;
 
     auto SampleEnergy() const -> std::pair<double, double>;
 
@@ -49,11 +54,12 @@ private:
     G4ParticleDefinition* fParticle;
 
     std::unique_ptr<TF1> fEnergySpectrum;
-    std::unique_ptr<TF1> fMinVarBiasedEnergySpectrum;
     int fNEnergySpectrumPoint;
     double fIntrinsicMinEnergy;
     double fIntrinsicMaxEnergy;
     enum EnergySampling fEnergySampling;
+    std::unique_ptr<TF1> fMinVarBiasedEnergySpectrum;
+    std::unique_ptr<TF1> fCustomBiasedEnergySpectrum;
 
     PrimaryCosmicRayGeneratorMessenger::Register<PrimaryCosmicRayGenerator> fMessengerRegister;
 };

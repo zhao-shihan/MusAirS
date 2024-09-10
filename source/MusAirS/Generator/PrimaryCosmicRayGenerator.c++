@@ -33,12 +33,12 @@ PrimaryCosmicRayGenerator::PrimaryCosmicRayGenerator() :
     G4VPrimaryGenerator{},
     fParticle{},
     fEnergySpectrum{},
-    fMinVarBiasedEnergySpectrum{std::make_unique<TF1>("MinVarBiasedEnergySpectrum",
-                                                      std::function{[this](const double* x, const double*) { return *x * (*fEnergySpectrum)(*x); }})},
     fNEnergySpectrumPoint{10000},
     fIntrinsicMinEnergy{},
     fIntrinsicMaxEnergy{std::numeric_limits<double>::max()},
     fEnergySampling{EnergySampling::Normal},
+    fMinVarBiasedEnergySpectrum{std::make_unique<TF1>("MinVarBiasedEnergySpectrum", std::function{[this](const double* x, const double*) { return *x * (*fEnergySpectrum)(*x); }})},
+    fCustomBiasedEnergySpectrum{},
     fMessengerRegister{this} {
     Particle("proton");
     EnergySpectrum("x^-2.7");
@@ -60,7 +60,7 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& formula) -> vo
                                             fEnergySpectrum ? fEnergySpectrum->GetXmin() : fIntrinsicMinEnergy,
                                             fEnergySpectrum ? fEnergySpectrum->GetXmax() : fIntrinsicMaxEnergy);
     fEnergySpectrum->SetNpx(fNEnergySpectrumPoint);
-    SyncMinVarBiasedEnergySpectrum();
+    SyncBiasedEnergySpectrum();
     fIntrinsicMinEnergy = 0;
     fIntrinsicMaxEnergy = std::numeric_limits<double>::max();
 }
@@ -80,7 +80,7 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(const TH1& histogram) -> void {
         }},
         fIntrinsicMinEnergy, fIntrinsicMaxEnergy);
     fEnergySpectrum->SetNpx(fNEnergySpectrumPoint);
-    SyncMinVarBiasedEnergySpectrum();
+    SyncBiasedEnergySpectrum();
 }
 
 auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& fileName, const std::string& th1Name) {
@@ -97,10 +97,41 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& fileName, cons
     EnergySpectrum(*histogram);
 }
 
+auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum(const std::string& formula) -> void {
+    fCustomBiasedEnergySpectrum = std::make_unique<TF1>("CustomBiasedEnergySpectrum", formula.c_str());
+    SyncBiasedEnergySpectrum();
+}
+
+auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum(const TH1& histogram) -> void {
+    std::shared_ptr<TH1> h{dynamic_cast<TH1*>(histogram.Clone())};
+    h->SetDirectory(nullptr);
+
+    fCustomBiasedEnergySpectrum = std::make_unique<TF1>(
+        "CustomBiasedEnergySpectrum",
+        std::function{[spectrum = std::move(h)](const double* x, const double*) {
+            return spectrum->Interpolate(*x);
+        }});
+    SyncBiasedEnergySpectrum();
+}
+
+auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum(const std::string& fileName, const std::string& th1Name) {
+    const auto file{std::unique_ptr<TFile>{TFile::Open(fileName.c_str())}};
+    if (file == nullptr) {
+        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum: Cannot open '{}'", fileName)};
+    }
+
+    const auto histogram{file->Get<TH1>(th1Name.c_str())};
+    if (histogram == nullptr) {
+        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum: Cannot find TH1 '{}' in '{}'", th1Name, fileName)};
+    }
+
+    CustomBiasedEnergySpectrum(*histogram);
+}
+
 auto PrimaryCosmicRayGenerator::NEnergySpectrumPoint(int n) -> void {
     if (fEnergySpectrum) {
         fEnergySpectrum->SetNpx(n);
-        SyncMinVarBiasedEnergySpectrum();
+        SyncBiasedEnergySpectrum();
     }
     fNEnergySpectrumPoint = n;
 }
@@ -108,13 +139,13 @@ auto PrimaryCosmicRayGenerator::NEnergySpectrumPoint(int n) -> void {
 auto PrimaryCosmicRayGenerator::MinEnergy(double val) -> void {
     fEnergySpectrum->SetRange(muc::clamp<"[]">(val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy),
                               fEnergySpectrum->GetXmax());
-    SyncMinVarBiasedEnergySpectrum();
+    SyncBiasedEnergySpectrum();
 }
 
 auto PrimaryCosmicRayGenerator::MaxEnergy(double val) -> void {
     fEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(),
                               muc::clamp<"[]">(val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy));
-    SyncMinVarBiasedEnergySpectrum();
+    SyncBiasedEnergySpectrum();
 }
 
 auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
@@ -141,9 +172,13 @@ auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
     event->AddPrimaryVertex(vertex);
 }
 
-auto PrimaryCosmicRayGenerator::SyncMinVarBiasedEnergySpectrum() -> void {
+auto PrimaryCosmicRayGenerator::SyncBiasedEnergySpectrum() -> void {
     fMinVarBiasedEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax());
     fMinVarBiasedEnergySpectrum->SetNpx(fEnergySpectrum->GetNpx());
+    if (fCustomBiasedEnergySpectrum) {
+        fCustomBiasedEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax());
+        fCustomBiasedEnergySpectrum->SetNpx(fEnergySpectrum->GetNpx());
+    }
 }
 
 auto PrimaryCosmicRayGenerator::SampleEnergy() const -> std::pair<double, double> {
@@ -151,13 +186,17 @@ auto PrimaryCosmicRayGenerator::SampleEnergy() const -> std::pair<double, double
     case EnergySampling::Normal: {
         return {fEnergySpectrum->GetRandom(), 1};
     }
-    case EnergySampling::WeightedUniform: {
+    case EnergySampling::UniformBiased: {
         const auto ek{G4RandFlat::shoot(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax())};
         return {ek, (*fEnergySpectrum)(ek)};
     }
-    case EnergySampling::WeightedMinVar: {
+    case EnergySampling::MinVarBiased: {
         const auto ek{fMinVarBiasedEnergySpectrum->GetRandom()};
         return {ek, 1 / ek};
+    }
+    case EnergySampling::CustomBiased: {
+        const auto ek{fCustomBiasedEnergySpectrum->GetRandom()};
+        return {ek, (*fEnergySpectrum)(ek) / (*fCustomBiasedEnergySpectrum)(ek)};
     }
     }
     muc::unreachable();

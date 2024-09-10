@@ -13,11 +13,12 @@
 /run/initialize
 
 /MusAirS/Action/SwitchToPCR
-/MusAirS/PCR/Particle                   proton
-/MusAirS/PCR/Energy/Spectrum/Formula    x^-2.7
-/MusAirS/PCR/Energy/Min                 2 GeV
-/MusAirS/PCR/Energy/Max                 10 TeV
-#/MusAirS/PCR/Energy/Sampling            WeightedMinVar
+/MusAirS/PCR/Particle                        proton
+/MusAirS/PCR/Energy/Spectrum/Formula         x^-2.7
+/MusAirS/PCR/Energy/Min                      2 GeV
+/MusAirS/PCR/Energy/Max                      10 TeV
+#/MusAirS/PCR/Energy/Sampling                 CustomBiased
+#/MusAirS/PCR/Energy/Sampling/Custom/Formula  1/x
 
 /run/setCut 10 m    # low cut for accurate EM shower shape
 /run/setCutForAGivenParticle proton 3 m

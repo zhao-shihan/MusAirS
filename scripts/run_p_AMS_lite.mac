@@ -10,10 +10,11 @@
 /run/initialize
 
 /MusAirS/Action/SwitchToPCR
-/MusAirS/PCR/Particle                   proton
-/MusAirS/PCR/Energy/Spectrum/Histogram  AMS_energy_spectrum.root Proton
-/MusAirS/PCR/Energy/Min                 3 GeV  # proton < 3 GeV contribute little to muon shower
-#/MusAirS/PCR/Energy/Sampling            WeightedMinVar
+/MusAirS/PCR/Particle                        proton
+/MusAirS/PCR/Energy/Spectrum/Histogram       AMS_energy_spectrum.root Proton
+/MusAirS/PCR/Energy/Min                      3 GeV  # proton < 3 GeV contribute little to muon shower
+#/MusAirS/PCR/Energy/Sampling                 CustomBiased
+#/MusAirS/PCR/Energy/Sampling/Custom/Formula  1/x
 
 /run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
 /run/setCutForAGivenParticle proton 3 m

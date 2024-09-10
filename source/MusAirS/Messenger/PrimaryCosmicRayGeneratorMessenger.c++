@@ -28,7 +28,9 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fNEnergySpectrumPoint{},
     fMinEnergy{},
     fMaxEnergy{},
-    fEnergySampling{} {
+    fEnergySampling{},
+    fCustomBiasedEnergySpectrumFormula{},
+    fCustomBiasedEnergySpectrumHistogram{} {
 
     fDirectory = std::make_unique<G4UIdirectory>("/MusAirS/PCR/");
     fDirectory->SetGuidance("MusAirS primary cosmic ray generator controller.");
@@ -72,8 +74,19 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fEnergySampling = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCR/Energy/Sampling", this);
     fEnergySampling->SetGuidance("Set energy importance sampling.");
     fEnergySampling->SetParameterName("mode", false);
-    fEnergySampling->SetCandidates("Normal WeightedUniform WeightedMinVar");
+    fEnergySampling->SetCandidates("Normal UniformBiased MinVarBiased CustomBiased");
     fEnergySampling->AvailableForStates(G4State_Idle);
+
+    fCustomBiasedEnergySpectrumFormula = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCR/Energy/Sampling/Custom/Formula", this);
+    fCustomBiasedEnergySpectrumFormula->SetGuidance("Set formula for custom-biased kinetic energy spectrum (ROOT TFormula form).");
+    fCustomBiasedEnergySpectrumFormula->SetParameterName("formula", false);
+    fCustomBiasedEnergySpectrumFormula->AvailableForStates(G4State_Idle);
+
+    fCustomBiasedEnergySpectrumHistogram = std::make_unique<G4UIcommand>("/MusAirS/PCR/Energy/Sampling/Custom/Histogram", this);
+    fCustomBiasedEnergySpectrumHistogram->SetGuidance("Set custom-biased kinetic energy histogram from a TH1 in a ROOT file.");
+    fCustomBiasedEnergySpectrumHistogram->SetParameter(new G4UIparameter{"file", 's', false});
+    fCustomBiasedEnergySpectrumHistogram->SetParameter(new G4UIparameter{"h", 's', false});
+    fCustomBiasedEnergySpectrumHistogram->AvailableForStates(G4State_Idle);
 }
 
 auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4String value) -> void {
@@ -118,12 +131,32 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
         });
     } else if (command == fEnergySampling.get()) {
         static const std::unordered_map<std::string_view, enum PrimaryCosmicRayGenerator::EnergySampling> energySamplingMap {
-            {"Normal",          PrimaryCosmicRayGenerator::EnergySampling::Normal         },
-            {"WeightedUniform", PrimaryCosmicRayGenerator::EnergySampling::WeightedUniform},
-            {"WeightedMinVar",  PrimaryCosmicRayGenerator::EnergySampling::WeightedMinVar }
+            {"Normal",        PrimaryCosmicRayGenerator::EnergySampling::Normal       },
+            {"UniformBiased", PrimaryCosmicRayGenerator::EnergySampling::UniformBiased},
+            {"MinVarBiased",  PrimaryCosmicRayGenerator::EnergySampling::MinVarBiased },
+            {"CustomBiased",  PrimaryCosmicRayGenerator::EnergySampling::CustomBiased }
         };
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
             r.EnergySampling(energySamplingMap.at(value));
+        });
+    } else if (command == fCustomBiasedEnergySpectrumFormula.get()) {
+        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
+            r.CustomBiasedEnergySpectrum(value);
+        });
+    } else if (command == fCustomBiasedEnergySpectrumHistogram.get()) {
+        std::vector<std::string> parameter;
+        parameter.reserve(2);
+        for (auto&& token : value | std::views::split(' ')) {
+            if (token.empty()) { continue; }
+            parameter.emplace_back(token.begin(), token.end());
+            if (parameter.size() == 2) { break; }
+        }
+        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
+            try {
+                r.CustomBiasedEnergySpectrum(parameter.front(), parameter.back());
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
         });
     }
 }
