@@ -32,6 +32,7 @@ public:
     auto EnergySpectrum(std::shared_ptr<TH1> h) -> void;
     auto EnergySpectrum(const std::string& fileName, const std::string& th1Name);
 
+    auto NEnergySpectrumPoint(int n) -> void;
     auto MinEnergy(double val) -> void;
     auto MaxEnergy(double val) -> void;
     auto EnergySampling(enum EnergySampling mode) -> void { fEnergySampling = mode; }
@@ -45,6 +46,7 @@ private:
     G4ParticleDefinition* fParticle;
 
     std::unique_ptr<TF1> fEnergySpectrum;
+    int fNEnergySpectrumPoint;
     double fIntrinsicMinEnergy;
     double fIntrinsicMaxEnergy;
     enum EnergySampling fEnergySampling;

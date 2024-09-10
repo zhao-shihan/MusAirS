@@ -4,6 +4,7 @@
 #include "G4ApplicationState.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithAString.hh"
+#include "G4UIcmdWithAnInteger.hh"
 #include "G4UIcommand.hh"
 #include "G4UIdirectory.hh"
 #include "G4UIparameter.hh"
@@ -24,6 +25,7 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fParticle{},
     fEnergySpectrumFormula{},
     fEnergySpectrumHistogram{},
+    fNEnergySpectrumPoint{},
     fMinEnergy{},
     fMaxEnergy{},
     fEnergySampling{} {
@@ -46,6 +48,12 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fEnergySpectrumHistogram->SetParameter(new G4UIparameter{"file", 's', false});
     fEnergySpectrumHistogram->SetParameter(new G4UIparameter{"h", 's', false});
     fEnergySpectrumHistogram->AvailableForStates(G4State_Idle);
+
+    fNEnergySpectrumPoint = std::make_unique<G4UIcmdWithAnInteger>("/MusAirS/PCR/Energy/Spectrum/NPoint", this);
+    fNEnergySpectrumPoint->SetGuidance("Set number of points in integration of spectrum.");
+    fNEnergySpectrumPoint->SetParameterName("n", false);
+    fNEnergySpectrumPoint->SetRange("n >= 10");
+    fNEnergySpectrumPoint->AvailableForStates(G4State_Idle);
 
     fMinEnergy = std::make_unique<G4UIcmdWithADoubleAndUnit>("/MusAirS/PCR/Energy/Min", this);
     fMinEnergy->SetGuidance("Set minimum kinetic energy.");
@@ -95,6 +103,10 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
             } catch (const std::runtime_error& e) {
                 G4cerr << e.what() << G4endl;
             }
+        });
+    } else if (command == fNEnergySpectrumPoint.get()) {
+        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
+            r.NEnergySpectrumPoint(fNEnergySpectrumPoint->GetNewIntValue(value));
         });
     } else if (command == fMinEnergy.get()) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {

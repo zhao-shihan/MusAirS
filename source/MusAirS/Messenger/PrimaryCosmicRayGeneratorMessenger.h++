@@ -7,6 +7,7 @@
 #include <memory>
 
 class G4UIcmdWithADoubleAndUnit;
+class G4UIcmdWithAnInteger;
 class G4UIcmdWithAString;
 class G4UIcommand;
 class G4UIdirectory;
@@ -35,6 +36,7 @@ private:
     std::unique_ptr<G4UIcmdWithAString> fParticle;
     std::unique_ptr<G4UIcmdWithAString> fEnergySpectrumFormula;
     std::unique_ptr<G4UIcommand> fEnergySpectrumHistogram;
+    std::unique_ptr<G4UIcmdWithAnInteger> fNEnergySpectrumPoint;
     std::unique_ptr<G4UIcmdWithADoubleAndUnit> fMinEnergy;
     std::unique_ptr<G4UIcmdWithADoubleAndUnit> fMaxEnergy;
     std::unique_ptr<G4UIcmdWithAString> fEnergySampling;

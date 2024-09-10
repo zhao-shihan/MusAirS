@@ -33,6 +33,7 @@ PrimaryCosmicRayGenerator::PrimaryCosmicRayGenerator() :
     G4VPrimaryGenerator{},
     fParticle{},
     fEnergySpectrum{},
+    fNEnergySpectrumPoint{10000},
     fIntrinsicMinEnergy{},
     fIntrinsicMaxEnergy{std::numeric_limits<double>::max()},
     fEnergySampling{EnergySampling::Normal},
@@ -56,6 +57,7 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& formula) -> vo
     fEnergySpectrum = std::make_unique<TF1>("EnergySpectrum", formula.c_str(),
                                             fEnergySpectrum ? fEnergySpectrum->GetXmin() : fIntrinsicMinEnergy,
                                             fEnergySpectrum ? fEnergySpectrum->GetXmax() : fIntrinsicMaxEnergy);
+    fEnergySpectrum->SetNpx(fNEnergySpectrumPoint);
     fIntrinsicMinEnergy = 0;
     fIntrinsicMaxEnergy = std::numeric_limits<double>::max();
 }
@@ -70,6 +72,7 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(std::shared_ptr<TH1> h) -> void {
         }};
     fEnergySpectrum = std::make_unique<TF1>("EnergySpectrum", spectrum,
                                             fIntrinsicMinEnergy, fIntrinsicMaxEnergy);
+    fEnergySpectrum->SetNpx(fNEnergySpectrumPoint);
 }
 
 auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& fileName, const std::string& th1Name) {
@@ -86,6 +89,13 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& fileName, cons
     std::shared_ptr<TH1> h{dynamic_cast<TH1*>(histogram->Clone())};
     h->SetDirectory(nullptr);
     EnergySpectrum(std::move(h));
+}
+
+auto PrimaryCosmicRayGenerator::NEnergySpectrumPoint(int n) -> void {
+    if (fEnergySpectrum) {
+        fEnergySpectrum->SetNpx(n);
+    }
+    fNEnergySpectrumPoint = n;
 }
 
 auto PrimaryCosmicRayGenerator::MinEnergy(double val) -> void {
