@@ -4,6 +4,7 @@
 
 #include "G4VPrimaryGenerator.hh"
 
+#include <concepts>
 #include <memory>
 #include <string>
 #include <utility>
@@ -11,6 +12,7 @@
 class G4Event;
 class G4ParticleDefinition;
 class TF1;
+class TGraph;
 class TH1;
 
 namespace MusAirS::inline Generator {
@@ -32,7 +34,9 @@ public:
 
     auto EnergySpectrum(const std::string& formula) -> void;
     auto EnergySpectrum(const TH1& histogram) -> void;
-    auto EnergySpectrum(const std::string& fileName, const std::string& th1Name);
+    auto EnergySpectrum(const std::same_as<TGraph> auto& graph) -> void;
+    template<typename T>
+    auto EnergySpectrum(const std::string& fileName, const std::string& name) -> void;
 
     auto NEnergySpectrumPoint(int n) -> void;
     auto MinEnergy(double val) -> void;
@@ -41,7 +45,9 @@ public:
 
     auto CustomBiasedEnergySpectrum(const std::string& formula) -> void;
     auto CustomBiasedEnergySpectrum(const TH1& histogram) -> void;
-    auto CustomBiasedEnergySpectrum(const std::string& fileName, const std::string& th1Name);
+    auto CustomBiasedEnergySpectrum(const std::same_as<TGraph> auto& graph) -> void;
+    template<typename T>
+    auto CustomBiasedEnergySpectrum(const std::string& fileName, const std::string& name) -> void;
 
     virtual auto GeneratePrimaryVertex(G4Event* event) -> void override;
 

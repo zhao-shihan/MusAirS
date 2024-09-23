@@ -11,7 +11,7 @@
 
 /MusAirS/Action/SwitchToPCR
 /MusAirS/PCR/Particle                        proton
-/MusAirS/PCR/Energy/Spectrum/Histogram       AMS_energy_spectrum.root Proton
+/MusAirS/PCR/Energy/Spectrum/Graph           primary_cosmic_ray.root AMS_Proton
 #/MusAirS/PCR/Energy/Sampling                 CustomBiased
 #/MusAirS/PCR/Energy/Sampling/Custom/Formula  1/x
 

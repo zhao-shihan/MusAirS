@@ -7,6 +7,7 @@
 #include "TAxis.h"
 #include "TF1.h"
 #include "TFile.h"
+#include "TGraph.h"
 #include "TH1.h"
 
 #include "G4Event.hh"
@@ -76,26 +77,47 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(const TH1& histogram) -> void {
     fEnergySpectrum = std::make_unique<TF1>(
         "EnergySpectrum",
         std::function{[spectrum = std::move(h)](const double* x, const double*) {
-            return spectrum->Interpolate(*x);
+            return spectrum->GetBinContent(spectrum->FindFixBin(*x));
         }},
         fIntrinsicMinEnergy, fIntrinsicMaxEnergy);
     fEnergySpectrum->SetNpx(fNEnergySpectrumPoint);
     SyncBiasedEnergySpectrum();
 }
 
-auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& fileName, const std::string& th1Name) {
+template<>
+auto PrimaryCosmicRayGenerator::EnergySpectrum<TGraph>(const TGraph& graph) -> void {
+    std::shared_ptr<TGraph> g{dynamic_cast<TGraph*>(graph.Clone())};
+
+    const auto spectrumAxis{g->GetXaxis()};
+    fIntrinsicMinEnergy = spectrumAxis->GetXmin();
+    fIntrinsicMaxEnergy = spectrumAxis->GetXmax();
+
+    fEnergySpectrum = std::make_unique<TF1>(
+        "EnergySpectrum",
+        std::function{[spectrum = std::move(g)](const double* x, const double*) {
+            return spectrum->Eval(*x);
+        }},
+        fIntrinsicMinEnergy, fIntrinsicMaxEnergy);
+    fEnergySpectrum->SetNpx(fNEnergySpectrumPoint);
+    SyncBiasedEnergySpectrum();
+}
+
+template<typename T>
+auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& fileName, const std::string& name) -> void {
     const auto file{std::unique_ptr<TFile>{TFile::Open(fileName.c_str())}};
     if (file == nullptr) {
         throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::EnergySpectrum: Cannot open '{}'", fileName)};
     }
 
-    const auto histogram{file->Get<TH1>(th1Name.c_str())};
-    if (histogram == nullptr) {
-        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::EnergySpectrum: Cannot find TH1 '{}' in '{}'", th1Name, fileName)};
+    const auto spectrum{file->Get<T>(name.c_str())};
+    if (spectrum == nullptr) {
+        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::EnergySpectrum: Cannot find TH1 '{}' in '{}'", name, fileName)};
     }
 
-    EnergySpectrum(*histogram);
+    EnergySpectrum(*spectrum);
 }
+template auto PrimaryCosmicRayGenerator::EnergySpectrum<TH1>(const std::string& fileName, const std::string& name) -> void;
+template auto PrimaryCosmicRayGenerator::EnergySpectrum<TGraph>(const std::string& fileName, const std::string& name) -> void;
 
 auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum(const std::string& formula) -> void {
     fCustomBiasedEnergySpectrum = std::make_unique<TF1>("CustomBiasedEnergySpectrum", formula.c_str());
@@ -109,24 +131,39 @@ auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum(const TH1& histogram)
     fCustomBiasedEnergySpectrum = std::make_unique<TF1>(
         "CustomBiasedEnergySpectrum",
         std::function{[spectrum = std::move(h)](const double* x, const double*) {
-            return spectrum->Interpolate(*x);
+            return spectrum->GetBinContent(spectrum->FindFixBin(*x));
         }});
     SyncBiasedEnergySpectrum();
 }
 
-auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum(const std::string& fileName, const std::string& th1Name) {
+template<>
+auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum<TGraph>(const TGraph& graph) -> void {
+    std::shared_ptr<TGraph> g{dynamic_cast<TGraph*>(graph.Clone())};
+
+    fCustomBiasedEnergySpectrum = std::make_unique<TF1>(
+        "CustomBiasedEnergySpectrum",
+        std::function{[spectrum = std::move(g)](const double* x, const double*) {
+            return spectrum->Eval(*x);
+        }});
+    SyncBiasedEnergySpectrum();
+}
+
+template<typename T>
+auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum(const std::string& fileName, const std::string& name) -> void {
     const auto file{std::unique_ptr<TFile>{TFile::Open(fileName.c_str())}};
     if (file == nullptr) {
         throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum: Cannot open '{}'", fileName)};
     }
 
-    const auto histogram{file->Get<TH1>(th1Name.c_str())};
-    if (histogram == nullptr) {
-        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum: Cannot find TH1 '{}' in '{}'", th1Name, fileName)};
+    const auto spectrum{file->Get<T>(name.c_str())};
+    if (spectrum == nullptr) {
+        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum: Cannot find TH1 '{}' in '{}'", name, fileName)};
     }
 
-    CustomBiasedEnergySpectrum(*histogram);
+    CustomBiasedEnergySpectrum(*spectrum);
 }
+template auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum<TH1>(const std::string& fileName, const std::string& name) -> void;
+template auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum<TGraph>(const std::string& fileName, const std::string& name) -> void;
 
 auto PrimaryCosmicRayGenerator::NEnergySpectrumPoint(int n) -> void {
     if (fEnergySpectrum) {

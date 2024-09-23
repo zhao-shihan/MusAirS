@@ -13,7 +13,6 @@
 #include <ranges>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -25,12 +24,14 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fParticle{},
     fEnergySpectrumFormula{},
     fEnergySpectrumHistogram{},
+    fEnergySpectrumGraph{},
     fNEnergySpectrumPoint{},
     fMinEnergy{},
     fMaxEnergy{},
     fEnergySampling{},
     fCustomBiasedEnergySpectrumFormula{},
-    fCustomBiasedEnergySpectrumHistogram{} {
+    fCustomBiasedEnergySpectrumHistogram{},
+    fCustomBiasedEnergySpectrumGraph{} {
 
     fDirectory = std::make_unique<G4UIdirectory>("/MusAirS/PCR/");
     fDirectory->SetGuidance("MusAirS primary cosmic ray generator controller.");
@@ -50,6 +51,12 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fEnergySpectrumHistogram->SetParameter(new G4UIparameter{"file", 's', false});
     fEnergySpectrumHistogram->SetParameter(new G4UIparameter{"h", 's', false});
     fEnergySpectrumHistogram->AvailableForStates(G4State_Idle);
+
+    fEnergySpectrumGraph = std::make_unique<G4UIcommand>("/MusAirS/PCR/Energy/Spectrum/Graph", this);
+    fEnergySpectrumGraph->SetGuidance("Set kinetic energy histogram from a TGraph in a ROOT file.");
+    fEnergySpectrumGraph->SetParameter(new G4UIparameter{"file", 's', false});
+    fEnergySpectrumGraph->SetParameter(new G4UIparameter{"g", 's', false});
+    fEnergySpectrumGraph->AvailableForStates(G4State_Idle);
 
     fNEnergySpectrumPoint = std::make_unique<G4UIcmdWithAnInteger>("/MusAirS/PCR/Energy/Spectrum/NPoint", this);
     fNEnergySpectrumPoint->SetGuidance("Set number of points in integration of spectrum.");
@@ -87,6 +94,12 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fCustomBiasedEnergySpectrumHistogram->SetParameter(new G4UIparameter{"file", 's', false});
     fCustomBiasedEnergySpectrumHistogram->SetParameter(new G4UIparameter{"h", 's', false});
     fCustomBiasedEnergySpectrumHistogram->AvailableForStates(G4State_Idle);
+
+    fCustomBiasedEnergySpectrumGraph = std::make_unique<G4UIcommand>("/MusAirS/PCR/Energy/Sampling/Custom/Graph", this);
+    fCustomBiasedEnergySpectrumGraph->SetGuidance("Set custom-biased kinetic energy histogram from a TGraph in a ROOT file.");
+    fCustomBiasedEnergySpectrumGraph->SetParameter(new G4UIparameter{"file", 's', false});
+    fCustomBiasedEnergySpectrumGraph->SetParameter(new G4UIparameter{"g", 's', false});
+    fCustomBiasedEnergySpectrumGraph->AvailableForStates(G4State_Idle);
 }
 
 auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4String value) -> void {
@@ -103,16 +116,19 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
             r.EnergySpectrum(value);
         });
     } else if (command == fEnergySpectrumHistogram.get()) {
-        std::vector<std::string> parameter;
-        parameter.reserve(2);
-        for (auto&& token : value | std::views::split(' ')) {
-            if (token.empty()) { continue; }
-            parameter.emplace_back(token.begin(), token.end());
-            if (parameter.size() == 2) { break; }
-        }
+        const auto [file, h]{ParseFileNameAndObjectName(value)};
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
             try {
-                r.EnergySpectrum(parameter.front(), parameter.back());
+                r.template EnergySpectrum<TH1>(std::string{file}, std::string{h});
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
+        });
+    } else if (command == fEnergySpectrumGraph.get()) {
+        const auto [file, g]{ParseFileNameAndObjectName(value)};
+        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
+            try {
+                r.template EnergySpectrum<TGraph>(std::string{file}, std::string{g});
             } catch (const std::runtime_error& e) {
                 G4cerr << e.what() << G4endl;
             }
@@ -144,21 +160,35 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
             r.CustomBiasedEnergySpectrum(value);
         });
     } else if (command == fCustomBiasedEnergySpectrumHistogram.get()) {
-        std::vector<std::string> parameter;
-        parameter.reserve(2);
-        for (auto&& token : value | std::views::split(' ')) {
-            if (token.empty()) { continue; }
-            parameter.emplace_back(token.begin(), token.end());
-            if (parameter.size() == 2) { break; }
-        }
+        const auto [file, h]{ParseFileNameAndObjectName(value)};
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
             try {
-                r.CustomBiasedEnergySpectrum(parameter.front(), parameter.back());
+                r.template CustomBiasedEnergySpectrum<TH1>(std::string{file}, std::string{h});
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
+        });
+    } else if (command == fCustomBiasedEnergySpectrumGraph.get()) {
+        const auto [file, g]{ParseFileNameAndObjectName(value)};
+        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
+            try {
+                r.template CustomBiasedEnergySpectrum<TH1>(std::string{file}, std::string{g});
             } catch (const std::runtime_error& e) {
                 G4cerr << e.what() << G4endl;
             }
         });
     }
+}
+
+auto PrimaryCosmicRayGeneratorMessenger::ParseFileNameAndObjectName(std::string_view value) -> std::pair<std::string_view, std::string_view> {
+    std::vector<std::string_view> parameter;
+    parameter.reserve(2);
+    for (auto&& token : value | std::views::split(' ')) {
+        if (token.empty()) { continue; }
+        parameter.emplace_back(token.begin(), token.end());
+        if (parameter.size() == 2) { return {parameter.front(), parameter.back()}; }
+    }
+    return {};
 }
 
 } // namespace MusAirS::inline Messenger
