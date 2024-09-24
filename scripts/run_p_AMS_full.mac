@@ -12,7 +12,7 @@
 /MusAirS/Action/SwitchToPCR
 /MusAirS/PCR/Particle                        proton
 /MusAirS/PCR/Energy/Spectrum/Graph           primary_cosmic_ray.root AMS_Proton
-#/MusAirS/PCR/Energy/Sampling                 MinVarBiased
+#/MusAirS/PCR/Energy/Sampling/Mode            MinVarBiased
 
 /run/setCut 10 m    # low cut for accurate EM shower shape
 /run/setCutForAGivenParticle proton 3 m

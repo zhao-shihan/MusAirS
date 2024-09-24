@@ -44,7 +44,7 @@ private:
     std::unique_ptr<G4UIcmdWithAnInteger> fNEnergySpectrumPoint;
     std::unique_ptr<G4UIcmdWithADoubleAndUnit> fMinEnergy;
     std::unique_ptr<G4UIcmdWithADoubleAndUnit> fMaxEnergy;
-    std::unique_ptr<G4UIcmdWithAString> fEnergySampling;
+    std::unique_ptr<G4UIcmdWithAString> fEnergySamplingMode;
     std::unique_ptr<G4UIcmdWithAString> fCustomBiasedEnergySpectrumFormula;
     std::unique_ptr<G4UIcommand> fCustomBiasedEnergySpectrumHistogram;
     std::unique_ptr<G4UIcommand> fCustomBiasedEnergySpectrumGraph;

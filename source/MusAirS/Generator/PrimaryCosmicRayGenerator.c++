@@ -37,7 +37,7 @@ PrimaryCosmicRayGenerator::PrimaryCosmicRayGenerator() :
     fNEnergySpectrumPoint{10000},
     fIntrinsicMinEnergy{},
     fIntrinsicMaxEnergy{std::numeric_limits<double>::max()},
-    fEnergySampling{EnergySampling::Normal},
+    fEnergySamplingMode{EnergySamplingMode::Normal},
     fMinVarBiasedEnergySpectrum{std::make_unique<TF1>("MinVarBiasedEnergySpectrum",
                                                       std::function{[this](const double* x, const double*) {
                                                           return (*x - fEnergySpectrum->GetXmin()) * (*fEnergySpectrum)(*x);
@@ -222,19 +222,19 @@ auto PrimaryCosmicRayGenerator::SyncBiasedEnergySpectrum() -> void {
 }
 
 auto PrimaryCosmicRayGenerator::SampleEnergy() const -> std::pair<double, double> {
-    switch (fEnergySampling) {
-    case EnergySampling::Normal: {
+    switch (fEnergySamplingMode) {
+    case EnergySamplingMode::Normal: {
         return {fEnergySpectrum->GetRandom(), 1};
     }
-    case EnergySampling::UniformBiased: {
+    case EnergySamplingMode::UniformBiased: {
         const auto ek{G4RandFlat::shoot(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax())};
         return {ek, (*fEnergySpectrum)(ek)};
     }
-    case EnergySampling::MinVarBiased: {
+    case EnergySamplingMode::MinVarBiased: {
         const auto ek{fMinVarBiasedEnergySpectrum->GetRandom()};
         return {ek, 1 / ek};
     }
-    case EnergySampling::CustomBiased: {
+    case EnergySamplingMode::CustomBiased: {
         const auto ek{fCustomBiasedEnergySpectrum->GetRandom()};
         return {ek, (*fEnergySpectrum)(ek) / (*fCustomBiasedEnergySpectrum)(ek)};
     }

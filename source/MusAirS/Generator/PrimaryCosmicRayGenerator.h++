@@ -19,7 +19,7 @@ namespace MusAirS::inline Generator {
 
 class PrimaryCosmicRayGenerator : public G4VPrimaryGenerator {
 public:
-    enum struct EnergySampling {
+    enum struct EnergySamplingMode {
         Normal,
         UniformBiased,
         MinVarBiased,
@@ -41,7 +41,7 @@ public:
     auto NEnergySpectrumPoint(int n) -> void;
     auto MinEnergy(double val) -> void;
     auto MaxEnergy(double val) -> void;
-    auto EnergySampling(enum EnergySampling mode) -> void { fEnergySampling = mode; }
+    auto EnergySamplingMode(enum EnergySamplingMode mode) -> void { fEnergySamplingMode = mode; }
 
     auto CustomBiasedEnergySpectrum(const std::string& formula) -> void;
     auto CustomBiasedEnergySpectrum(const TH1& histogram) -> void;
@@ -63,7 +63,7 @@ private:
     int fNEnergySpectrumPoint;
     double fIntrinsicMinEnergy;
     double fIntrinsicMaxEnergy;
-    enum EnergySampling fEnergySampling;
+    enum EnergySamplingMode fEnergySamplingMode;
     std::unique_ptr<TF1> fMinVarBiasedEnergySpectrum;
     std::unique_ptr<TF1> fCustomBiasedEnergySpectrum;
 
