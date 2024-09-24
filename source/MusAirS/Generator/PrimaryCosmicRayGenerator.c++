@@ -38,7 +38,10 @@ PrimaryCosmicRayGenerator::PrimaryCosmicRayGenerator() :
     fIntrinsicMinEnergy{},
     fIntrinsicMaxEnergy{std::numeric_limits<double>::max()},
     fEnergySampling{EnergySampling::Normal},
-    fMinVarBiasedEnergySpectrum{std::make_unique<TF1>("MinVarBiasedEnergySpectrum", std::function{[this](const double* x, const double*) { return *x * (*fEnergySpectrum)(*x); }})},
+    fMinVarBiasedEnergySpectrum{std::make_unique<TF1>("MinVarBiasedEnergySpectrum",
+                                                      std::function{[this](const double* x, const double*) {
+                                                          return (*x - fEnergySpectrum->GetXmin()) * (*fEnergySpectrum)(*x);
+                                                      }})},
     fCustomBiasedEnergySpectrum{},
     fMessengerRegister{this} {
     Particle("proton");
