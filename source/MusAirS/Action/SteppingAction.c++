@@ -1,6 +1,6 @@
 #include "MusAirS/Action/SteppingAction.h++"
 
-#include "Mustard/Env/Print.h++"
+#include "Mustard/Utility/PrettyLog.h++"
 
 #include "G4Event.hh"
 #include "G4EventManager.hh"
@@ -16,6 +16,8 @@
 #include "G4UnitsTable.hh"
 
 #include "muc/math"
+
+#include "fmt/core.h"
 
 #include <string_view>
 
@@ -56,10 +58,11 @@ auto SteppingAction::UserSteppingAction(const G4Step* step) -> void {
 
     if (track->GetCurrentStepNumber() >= fgNStepLimit) [[unlikely]] {
         track->SetTrackStatus(fStopAndKill);
-        Mustard::Env::PrintLnWarning("Warning: Event {} track {} (PDG ID: {}) has more than {} steps, killing it (Ek = {})",
-                                     G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID(),
-                                     track->GetTrackID(), pdgID, fgNStepLimit,
-                                     std::string_view{G4String{G4BestUnit{track->GetKineticEnergy(), "Energy"}}});
+        Mustard::PrintWarning(
+            fmt::format("Warning: Event {} track {} (PDG ID: {}) has more than {} steps, killing it (Ek = {})",
+                        G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID(),
+                        track->GetTrackID(), pdgID, fgNStepLimit,
+                        std::string_view{G4String{G4BestUnit{track->GetKineticEnergy(), "Energy"}}}));
         return;
     }
 

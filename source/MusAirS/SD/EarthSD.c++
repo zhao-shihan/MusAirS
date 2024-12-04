@@ -24,7 +24,7 @@ EarthSD::EarthSD(const G4String& sdName) :
     collectionName.insert(sdName + "HC");
 }
 
-auto EarthSD::Initialize(G4HCofThisEvent* hitsCollectionOfThisEvent) -> void {
+auto EarthSD::Initialize(G4HCofThisEvent*) -> void {
     fHitTrackIDData.clear();
 }
 

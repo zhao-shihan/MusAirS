@@ -41,7 +41,7 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
 
     fWorld = std::make_unique<Detector::Definition::World>();
     auto& earth{fWorld->NewDaughter<Detector::Definition::Earth>(fCheckOverlap)};
-    auto& atmosphere{fWorld->NewDaughter<Detector::Definition::Atmosphere>(fCheckOverlap)};
+    fWorld->NewDaughter<Detector::Definition::Atmosphere>(fCheckOverlap);
 
     // Register SD
 
