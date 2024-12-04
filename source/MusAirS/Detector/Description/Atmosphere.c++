@@ -1,8 +1,8 @@
 #include "MusAirS/Detector/Description/Atmosphere.h++"
 #include "MusAirS/Detector/Description/Earth.h++"
 
-#include "Mustard/Env/Print.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
+#include "Mustard/Utility/PrettyLog.h++"
 
 #include "G4SystemOfUnits.hh"
 
@@ -213,7 +213,7 @@ auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
             const auto [alt, converged]{
                 muc::find_root::zbrent([&, p = pressure[i]](auto z) { return CalculateP(z) - p; },
                                        zGround, *fMaxAltitude)};
-            if (not converged) { Mustard::Env::PrintLnWarning("Warning: Slice altitude not converged"); }
+            if (not converged) { Mustard::PrintWarning("Warning: Slice altitude not converged"); }
             altitude[i] = alt;
         }
         altitude.back() = fMaxAltitude;
@@ -249,7 +249,7 @@ void Atmosphere::ImportAllValue(const YAML::Node& node) {
             } else if (mode == "Pressure") {
                 fSliceMode = SliceMode::Pressure;
             } else {
-                Mustard::Env::PrintLnError("MusAirS::Detector::Description::Atmosphere::ImportAllValue: Unknown slice mode '{}', skipping", mode);
+                Mustard::PrintError(fmt::format("MusAirS::Detector::Description::Atmosphere::ImportAllValue: Unknown slice mode '{}', skipping", mode));
             } }, "SliceMode");
     ImportValue(node, fNSlice, "NSlice");
 }
