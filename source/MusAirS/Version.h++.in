@@ -1,0 +1,10 @@
+#pragma once
+
+// ===========================================================================
+// This file is auto generated, any modification to it will lost. DO NOT EDIT.
+// ===========================================================================
+
+#define MUSAIRS_VERSION_MAJOR static_cast<int>(@MusAirS_VERSION_MAJOR@.)
+#define MUSAIRS_VERSION_MINOR static_cast<int>(@MusAirS_VERSION_MINOR@.)
+#define MUSAIRS_VERSION_PATCH static_cast<int>(@MusAirS_VERSION_PATCH@.)
+#define MUSAIRS_VERSION_STRING "@MusAirS_VERSION@"

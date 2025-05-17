@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.21)
 
-set(MusAirS_VERSION 0.0.1)
+set(MusAirS_VERSION_MAJOR 0)
+set(MusAirS_VERSION_MINOR 25)
+set(MusAirS_VERSION_PATCH 517)
+set(MusAirS_VERSION ${MusAirS_VERSION_MAJOR}.${MusAirS_VERSION_MINOR}.${MusAirS_VERSION_PATCH})
 
 project(MusAirS VERSION ${MusAirS_VERSION}
                 LANGUAGES C CXX)
@@ -48,6 +51,11 @@ set(BUILD_SHARED_LIBS OFF)
 # Find or build-in Mustard.
 # ROOT, Geant4, and MPI, etc. are also found here.
 include(cmake/LookForMustard.cmake)
+
+# Generate version header
+configure_package_config_file(${CMAKE_CURRENT_SOURCE_DIR}/source/MusAirS/Version.h++.in
+                              ${CMAKE_CURRENT_SOURCE_DIR}/source/MusAirS/Version.h++
+                              INSTALL_DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/source/MusAirS)
 
 # Add sources and declare the target executable.
 file(GLOB_RECURSE MusAirS_srcs ${CMAKE_CURRENT_SOURCE_DIR}/source/*.c++)

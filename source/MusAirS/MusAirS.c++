@@ -3,6 +3,7 @@
 #include "MusAirS/Analysis.h++"
 #include "MusAirS/DefaultMacro.h++"
 #include "MusAirS/Physics/SpinDecayPhysicsWithKaon.h++"
+#include "MusAirS/Version.h++"
 
 #include "Mustard/Env/CLI/Geant4CLI.h++"
 #include "Mustard/Env/CLI/Module/Geant4ReferencePhysicsListModule.h++"
@@ -10,6 +11,7 @@
 #include "Mustard/Extension/Geant4X/Interface/MPIExecutive.h++"
 #include "Mustard/Extension/Geant4X/Run/MPIRunManager.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
+#include "Mustard/Utility/Print.h++"
 #include "Mustard/Utility/UseXoshiro.h++"
 
 #include "G4EmStandardPhysics_option1.hh"
@@ -17,12 +19,23 @@
 
 #include "muc/utility"
 
+#include "fmt/color.h"
+
 #include <algorithm>
 
 auto main(int argc, char* argv[]) -> int {
     // Use default Geant4 CLI and extends it with reference physics list interface
     Mustard::Env::CLI::Geant4CLI<Mustard::Env::CLI::Geant4ReferencePhysicsListModule<"FTFP_BERT">> cli;
     Mustard::Env::MPIEnv env{argc, argv, cli};
+
+    Mustard::Print(fmt::emphasis::bold, R"(
+--------------------------------------------------
+ |\/|   _ /|.  (`  An air shower simulation tool
+ |  |L|_\/-|||`_)  Version {}
+ Copyright 2024-2025  Shihan Zhao
+--------------------------------------------------
+)",
+                   MUSAIRS_VERSION_STRING);
 
     Mustard::UseXoshiro<256> random;
     // First set random seed here

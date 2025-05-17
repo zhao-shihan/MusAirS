@@ -30,3 +30,4 @@ document/doxygen/rtf/
 document/doxygen/xml/
 install/
 thirdparty/
+source/MusAirS/Version.h++
