@@ -20,8 +20,8 @@ if(BUILTIN_MUSTARD)
         cmake_policy(SET CMP0135 NEW)
     endif()
     # set download dest and URL
-    set(BUILTIN_MUSTARD_SRC_DIR "${PROJECT_SOURCE_DIR}/thirdparty/Mustard-main")
-    set(BUILTIN_MUSTARD_URL "https://github.com/zhao-shihan/Mustard/archive/refs/heads/main.zip")
+    set(BUILTIN_MUSTARD_SRC_DIR "${PROJECT_SOURCE_DIR}/thirdparty/Mustard-0.25.508")
+    set(BUILTIN_MUSTARD_URL "https://github.com/zhao-shihan/Mustard/archive/refs/tags/v0.25.508.tar.gz")
     # reuse or download
     include(FetchContent)
     if(EXISTS "${BUILTIN_MUSTARD_SRC_DIR}/CMakeLists.txt")

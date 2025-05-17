@@ -24,6 +24,8 @@
 namespace MusAirS::inline Action {
 
 SteppingAction::SteppingAction() :
+    PassiveSingleton{this},
+    G4UserSteppingAction{},
     fKillEMShower{false},
     fKillNeutrino{true},
     fKillChargedPion{false},

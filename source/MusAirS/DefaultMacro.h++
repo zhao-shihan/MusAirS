@@ -26,8 +26,8 @@ constexpr auto defaultMacro = {
     "/run/setCutForAGivenParticle proton 3 m",
     "/MusAirS/SD/EarthSD/DetectNeutrino yes",
     "",
-    "/MusAirS/Analysis/FilePath MusAirS_vis",
-    "/MusAirS/Analysis/FileMode RECREATE",
+    "/Mustard/Analysis/FilePath MusAirS_vis",
+    "/Mustard/Analysis/FileMode RECREATE",
     "",
 
 #if MUSTARD_USE_G4VIS

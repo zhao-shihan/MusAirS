@@ -26,7 +26,7 @@
 # Run
 #############################################################################
 
-/MusAirS/Analysis/FilePath MusAirS_p_AMS_wo_pipm
-/MusAirS/Analysis/FileMode NEW
+/Mustard/Analysis/FilePath MusAirS_p_AMS_wo_pipm
+/Mustard/Analysis/FileMode NEW
 /run/beamOn 10000
 /Mustard/Run/PrintRunSummary

@@ -26,7 +26,7 @@ namespace MusAirS::inline Action {
 using namespace Mustard::LiteralUnit::Length;
 
 DetectorConstruction::DetectorConstruction(bool checkOverlap) :
-    PassiveSingleton{},
+    PassiveSingleton{this},
     G4VUserDetectorConstruction{},
     fCheckOverlap{checkOverlap},
     fMinDriverStep{1_cm},

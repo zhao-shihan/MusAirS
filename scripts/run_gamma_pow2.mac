@@ -28,7 +28,7 @@
 # Run
 #############################################################################
 
-/MusAirS/Analysis/FilePath MusAirS_gamma_pow2
-/MusAirS/Analysis/FileMode NEW
+/Mustard/Analysis/FilePath MusAirS_gamma_pow2
+/Mustard/Analysis/FileMode NEW
 /run/beamOn 1000000
 /Mustard/Run/PrintRunSummary

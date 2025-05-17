@@ -19,7 +19,7 @@
 namespace MusAirS::inline Action {
 
 TrackingAction::TrackingAction() :
-    PassiveSingleton{},
+    PassiveSingleton{this},
     G4UserTrackingAction{},
     fVertexSigma{},
     fMemoryPool{},

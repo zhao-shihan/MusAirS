@@ -23,8 +23,8 @@
 /run/setCutForAGivenParticle proton 3 m
 /MusAirS/SD/EarthSD/DetectNeutrino yes
 
-/MusAirS/Analysis/FilePath MusAirS_vis
-/MusAirS/Analysis/FileMode RECREATE
+/Mustard/Analysis/FilePath MusAirS_vis
+/Mustard/Analysis/FileMode RECREATE
 
 #############################################################################
 # Visualization settings

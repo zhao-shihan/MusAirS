@@ -8,7 +8,7 @@
 
 #include "Mustard/Data/Output.h++"
 #include "Mustard/Data/Tuple.h++"
-#include "Mustard/Env/Memory/PassiveSingleton.h++"
+#include "Mustard/Simulation/AnalysisBase.h++"
 
 #include "G4Types.hh"
 
@@ -24,35 +24,26 @@ class TFile;
 
 namespace MusAirS {
 
-class Analysis final : public Mustard::Env::Memory::PassiveSingleton<Analysis> {
+class Analysis final : public Mustard::Simulation::AnalysisBase<Analysis, "MusAirs"> {
 public:
     Analysis();
-
-    auto FilePath(std::filesystem::path path) -> void { fFilePath = std::move(path); }
-    auto FileMode(std::string mode) -> void { fFileMode = std::move(mode); }
-
-    auto RunBegin(int runID) -> void;
 
     auto SubmitPrimaryVertexData(const typename PrimaryGeneratorAction::PrimaryVertexDataType& data) -> void { fPrimaryVertexData = &data; }
     auto SubmitTrackData(typename TrackingAction::TrackDataType& data) -> void { fTrackData = &data; }
     auto SubmitEarthSDHitTrackID(const typename EarthSD::HitTrackIDDataType& hc) -> void { fEarthSDHitTrackIDData = &hc; }
-    auto EventEnd() -> void;
-
-    auto RunEnd(Option_t* option = {}) -> void;
 
 private:
+    auto RunBeginUserAction(int runID) -> void override;
+    auto EventEndUserAction() -> void override;
+    auto RunEndUserAction(int) -> void override;
+
     using ReactionChain = std::unordered_set<Mustard::Data::Tuple<Data::Track>*>;
     auto BuildReactionChain() const -> std::unordered_map<int, ReactionChain>;
     auto BuildReactionChainImpl(Mustard::Data::Tuple<Data::Track>& track, ReactionChain& chain) const -> void;
 
 private:
-    std::filesystem::path fFilePath;
-    std::string fFileMode;
-
     int fCurrentRunID;
-    std::filesystem::path fLastUsedFullFilePath;
 
-    gsl::owner<TFile*> fFile;
     std::optional<Mustard::Data::Output<Data::PrimaryVertex>> fPrimaryVertexOutput;
     std::unordered_map<int, Mustard::Data::Output<Data::Track>> fReactionChainOutput;
 

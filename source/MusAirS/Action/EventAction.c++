@@ -7,6 +7,10 @@
 
 namespace MusAirS::inline Action {
 
+EventAction::EventAction() :
+    PassiveSingleton{this},
+    G4UserEventAction{} {}
+
 auto EventAction::BeginOfEventAction(const G4Event*) -> void {
     TrackingAction::Instance().ClearTrackData();
 }
@@ -14,7 +18,7 @@ auto EventAction::BeginOfEventAction(const G4Event*) -> void {
 auto EventAction::EndOfEventAction(const G4Event*) -> void {
     auto& analysis{Analysis::Instance()};
     analysis.SubmitTrackData(TrackingAction::Instance().TrackData());
-    analysis.EventEnd();
+    analysis.EventEndAction();
 }
 
 } // namespace MusAirS::inline Action

@@ -24,12 +24,8 @@
 namespace MusAirS {
 
 Analysis::Analysis() :
-    PassiveSingleton{},
-    fFilePath{"MusAirS_untitled"},
-    fFileMode{"NEW"},
+    AnalysisBase{this},
     fCurrentRunID{},
-    fLastUsedFullFilePath{},
-    fFile{},
     fPrimaryVertexOutput{},
     fReactionChainOutput{},
     fPrimaryVertexData{},
@@ -37,27 +33,12 @@ Analysis::Analysis() :
     fEarthSDHitTrackIDData{},
     fMessengerRegister{this} {}
 
-auto Analysis::RunBegin(int runID) -> void {
+auto Analysis::RunBeginUserAction(int runID) -> void {
     fCurrentRunID = runID;
-    // open ROOT file
-    auto fullFilePath{Mustard::MPIX::ParallelizePath(fFilePath).replace_extension(".root").generic_string()};
-    const auto filePathChanged{fullFilePath != fLastUsedFullFilePath};
-    fFile = TFile::Open(fullFilePath.c_str(), filePathChanged ? fFileMode.c_str() : "UPDATE",
-                        "", ROOT::RCompressionSetting::EDefaults::kUseGeneralPurpose);
-    if (fFile == nullptr) {
-        throw std::runtime_error{fmt::format("MusAirS::Analysis::RunBegin: Cannot open file '{}' with mode '{}'",
-                                             fullFilePath, fFileMode)};
-    }
-    fLastUsedFullFilePath = std::move(fullFilePath);
-    // save geometry
-    if (filePathChanged and Mustard::Env::MPIEnv::Instance().OnCommWorldMaster()) {
-        Mustard::Geant4X::ConvertGeometryToTMacro("MusAirS_gdml", "MusAirS.gdml")->Write();
-    }
-    // initialize outputs
     if (PrimaryGeneratorAction::Instance().SavePrimaryVertexData()) { fPrimaryVertexOutput.emplace(fmt::format("G4Run{}/PrimaryVertex", runID)); }
 }
 
-auto Analysis::EventEnd() -> void {
+auto Analysis::EventEndUserAction() -> void {
     if (fPrimaryVertexOutput) { fPrimaryVertexOutput->Fill(*fPrimaryVertexData); }
     for (auto&& [pdgID, chain] : BuildReactionChain()) {
         const auto [it, _]{fReactionChainOutput.try_emplace(pdgID, fmt::format("G4Run{}/ReactionChain({})", fCurrentRunID, pdgID))};
@@ -69,13 +50,10 @@ auto Analysis::EventEnd() -> void {
     fEarthSDHitTrackIDData = {};
 }
 
-auto Analysis::RunEnd(Option_t* option) -> void {
+auto Analysis::RunEndUserAction(int) -> void {
     // write data
     if (fPrimaryVertexOutput) { fPrimaryVertexOutput->Write(); }
     for (auto&& [_, output] : fReactionChainOutput) { output.Write(); }
-    // close file
-    fFile->Close(option);
-    delete fFile;
     // reset output
     fPrimaryVertexOutput.reset();
     fReactionChainOutput.clear();
