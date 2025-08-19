@@ -1,0 +1,29 @@
+#############################################################################
+# Initialization settings
+#############################################################################
+
+/control/verbose 0
+/run/verbose 0
+
+#/Mustard/Detector/Description/Ixport MusAirS.yaml
+
+/run/initialize
+
+/MusAirS/Action/SwitchToPCR
+/MusAirS/PCR/Particle                        proton
+/MusAirS/PCR/Energy/Spectrum/Graph           primary_cosmic_ray.root AMS_GSL_Combine_proton
+#/MusAirS/PCR/Energy/Sampling/Mode            MinVarBiased
+
+/run/setCut 10 m    # arbitrarily high cut is enough for just muon shower
+/run/setCutForAGivenParticle proton 3 m
+/MusAirS/SD/EarthSD/DetectNeutrino no
+/MusAirS/Analysis/SavePrimaryVertexData no
+
+#############################################################################
+# Run
+#############################################################################
+
+/Mustard/Analysis/FilePath MusAirS_p_combine_full
+/Mustard/Analysis/FileMode NEW
+/run/beamOn 10000
+/Mustard/Run/PrintRunSummary
