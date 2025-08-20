@@ -20,7 +20,7 @@
 #include "MusAirS/Detector/Description/Earth.h++"
 
 #include "Mustard/Utility/LiteralUnit.h++"
-#include "Mustard/Utility/PrettyLog.h++"
+#include "Mustard/IO/PrettyLog.h++"
 
 #include "G4SystemOfUnits.hh"
 

@@ -212,7 +212,7 @@ auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
     const auto hMax{Detector::Description::Atmosphere::Instance().MaxAltitude()};
     particle_position = {0, 0, hMax};
     const auto wo2h{Detector::Description::World::Instance().Width() / (2 * hMax)};
-    const auto maxCosTheta{-1 / std::sqrt(1 + muc::pow<2>(wo2h))};
+    const auto maxCosTheta{-1 / std::sqrt(1 + muc::pow(wo2h, 2))};
 
     const auto [ek, weight]{SampleEnergy()};
     const auto pHat{[&maxCosTheta] {

@@ -21,8 +21,7 @@
 #include "MusAirS/Analysis.h++"
 
 #include "Mustard/Env/MPIEnv.h++"
-#include "Mustard/Extension/Geant4X/Utility/ConvertGeometry.h++"
-#include "Mustard/Extension/MPIX/ParallelizePath.h++"
+#include "Mustard/Geant4X/Utility/ConvertGeometry.h++"
 #include "Mustard/Utility/VectorCast.h++"
 
 #include "TFile.h"

@@ -34,7 +34,7 @@
 namespace MusAirS::inline SD {
 
 EarthSD::EarthSD(const G4String& sdName) :
-    Mustard::NonMoveableBase{},
+    Mustard::NonCopyableBase{},
     G4VSensitiveDetector{sdName},
     fDetectNeutrino{false},
     fHitTrackIDData{},

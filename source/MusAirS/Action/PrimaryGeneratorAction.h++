@@ -25,11 +25,11 @@
 
 #include "Mustard/Data/Tuple.h++"
 #include "Mustard/Env/Memory/PassiveSingleton.h++"
-#include "Mustard/Extension/Geant4X/Generator/GeneralParticleSourceX.h++"
+#include "Mustard/Geant4X/Generator/GeneralParticleSourceX.h++"
 
 #include "G4VUserPrimaryGeneratorAction.hh"
 
-#include "muc/ptr_vector"
+#include "muc/ptrvec"
 
 #include <memory>
 #include <vector>
@@ -39,7 +39,7 @@ namespace MusAirS::inline Action {
 class PrimaryGeneratorAction final : public Mustard::Env::Memory::PassiveSingleton<PrimaryGeneratorAction>,
                                      public G4VUserPrimaryGeneratorAction {
 public:
-    using PrimaryVertexDataType = muc::unique_ptr_vector<Mustard::Data::Tuple<Data::PrimaryVertex>>;
+    using PrimaryVertexDataType = muc::unique_ptrvec<Mustard::Data::Tuple<Data::PrimaryVertex>>;
 
 public:
     PrimaryGeneratorAction();

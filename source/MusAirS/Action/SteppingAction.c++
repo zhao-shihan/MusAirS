@@ -18,7 +18,7 @@
 
 #include "MusAirS/Action/SteppingAction.h++"
 
-#include "Mustard/Utility/PrettyLog.h++"
+#include "Mustard/IO/PrettyLog.h++"
 
 #include "G4Event.hh"
 #include "G4EventManager.hh"
