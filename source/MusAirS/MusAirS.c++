@@ -32,8 +32,10 @@
 #include "Mustard/Utility/LiteralUnit.h++"
 #include "Mustard/Utility/UseXoshiro.h++"
 
+#include "G4EmParameters.hh"
 #include "G4EmStandardPhysics_option1.hh"
 #include "G4GeometryManager.hh"
+#include "G4HadronicParameters.hh"
 
 #include "muc/utility"
 
@@ -71,6 +73,10 @@ auto main(int argc, char* argv[]) -> int {
     physicsList->ReplacePhysics(new G4EmStandardPhysics_option1{muc::to_underlying(env.VerboseLevel())}); // force to EMV
     physicsList->RegisterPhysics(new MusAirS::SpinDecayPhysicsWithKaon{muc::to_underlying(env.VerboseLevel())});
     runManager.SetUserInitialization(physicsList);
+    // Raise max energy
+    using namespace Mustard::LiteralUnit::Energy;
+    G4HadronicParameters::Instance()->SetMaxEnergy(1000_PeV);
+    G4EmParameters::Instance()->SetMaxEnergy(1000_PeV);
 
     // Register detector construction
     runManager.SetUserInitialization(new MusAirS::DetectorConstruction{env.VerboseLevelReach<'I'>()});
