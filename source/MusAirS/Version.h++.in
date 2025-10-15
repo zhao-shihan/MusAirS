@@ -22,7 +22,17 @@
 
 #pragma once
 
-#define MUSAIRS_VERSION_MAJOR static_cast<int>(@MusAirS_VERSION_MAJOR@.)
-#define MUSAIRS_VERSION_MINOR static_cast<int>(@MusAirS_VERSION_MINOR@.)
-#define MUSAIRS_VERSION_PATCH static_cast<int>(@MusAirS_VERSION_PATCH@.)
-#define MUSAIRS_VERSION_STRING "@MusAirS_VERSION@"
+namespace MusAirS {
+
+enum struct Version : int {
+    Major = @MusAirS_VERSION_MAJOR@,
+    Minor = @MusAirS_VERSION_MINOR@,
+    Patch = @MusAirS_VERSION_PATCH@
+};
+
+constexpr inline const char versionString[]{"@MusAirS_VERSION@"};
+
+constexpr inline const char compilerIDString[]{"@CMAKE_CXX_COMPILER_ID@"};
+constexpr inline const char compilerVersionString[]{"@CMAKE_CXX_COMPILER_VERSION@"};
+
+} // namespace MusAirS

@@ -56,7 +56,7 @@ auto main(int argc, char* argv[]) -> int {
  Copyright 2024-2025  Shihan Zhao
 --------------------------------------------------
 )",
-                         MUSAIRS_VERSION_STRING);
+                         MusAirS::versionString);
 
     // Set geometry tolerance
     using namespace Mustard::LiteralUnit::Length;
