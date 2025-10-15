@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.21)
 
 set(MusAirS_VERSION_MAJOR 0)
 set(MusAirS_VERSION_MINOR 25)
-set(MusAirS_VERSION_PATCH 517)
+set(MusAirS_VERSION_PATCH 1015)
 set(MusAirS_VERSION ${MusAirS_VERSION_MAJOR}.${MusAirS_VERSION_MINOR}.${MusAirS_VERSION_PATCH})
 
 project(MusAirS VERSION ${MusAirS_VERSION}
