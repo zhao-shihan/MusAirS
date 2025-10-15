@@ -1250,9 +1250,7 @@ auto CreateEnergySpectrum() -> int {
                              1.245253181147396E-25,
                              9.36791436192893E-26,
                              6.698613565898723E-26,
-                             4.9840197835178356E-26,
-                             3.96202403147998E-26,
-                             3.1150429144888496E-26};
+                             4.9840197835178356E-26};
         MakeGraph("AMS_GSL_Combine_proton", "Combined proton energy spectrum", x, y)->Write();
     }
     {
