@@ -25,7 +25,7 @@
 # Run
 #############################################################################
 
-/Mustard/Analysis/FilePath MusAirS_p_combine_lite
+/Mustard/Analysis/FilePath MusAirS_p_combine_lite.root
 /Mustard/Analysis/FileMode NEW
 /run/beamOn 10000
 /Mustard/Run/PrintRunSummary

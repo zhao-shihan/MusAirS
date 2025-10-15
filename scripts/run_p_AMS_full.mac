@@ -23,7 +23,7 @@
 # Run
 #############################################################################
 
-/Mustard/Analysis/FilePath MusAirS_p_AMS_full
+/Mustard/Analysis/FilePath MusAirS_p_AMS_full.root
 /Mustard/Analysis/FileMode NEW
 /run/beamOn 10000
 /Mustard/Run/PrintRunSummary
