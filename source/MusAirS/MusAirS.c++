@@ -48,14 +48,14 @@ auto main(int argc, char* argv[]) -> int {
     Mustard::Env::CLI::Geant4CLI<Mustard::Env::CLI::Geant4ReferencePhysicsListModule<"FTFP_BERT">> cli;
     Mustard::Env::MPIEnv env{argc, argv, cli};
 
-    Mustard::Print(fmt::emphasis::bold, R"(
+    Mustard::MasterPrint(fmt::emphasis::bold, R"(
 --------------------------------------------------
  |\/|   _ /|.  (`  An air shower simulation tool
  |  |L|_\/-|||`_)  Version {}
  Copyright 2024-2025  Shihan Zhao
 --------------------------------------------------
 )",
-                   MUSAIRS_VERSION_STRING);
+                         MUSAIRS_VERSION_STRING);
 
     Mustard::UseXoshiro<256> random;
     // First set random seed here
