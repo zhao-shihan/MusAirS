@@ -23,8 +23,8 @@
 #include "MusAirS/Physics/SpinDecayPhysicsWithKaon.h++"
 #include "MusAirS/Version.h++"
 
-#include "Mustard/Env/CLI/Geant4CLI.h++"
-#include "Mustard/Env/CLI/Module/Geant4ReferencePhysicsListModule.h++"
+#include "Mustard/CLI/Geant4CLI.h++"
+#include "Mustard/CLI/Module/Geant4ReferencePhysicsListModule.h++"
 #include "Mustard/Env/MPIEnv.h++"
 #include "Mustard/Geant4X/Interface/MPIExecutive.h++"
 #include "Mustard/Geant4X/Run/MPIRunManager.h++"
@@ -45,8 +45,9 @@
 
 auto main(int argc, char* argv[]) -> int {
     // Use default Geant4 CLI and extends it with reference physics list interface
-    Mustard::Env::CLI::Geant4CLI<Mustard::Env::CLI::Geant4ReferencePhysicsListModule<"FTFP_BERT">> cli;
+    Mustard::CLI::Geant4CLI<Mustard::CLI::Geant4ReferencePhysicsListModule<"FTFP_BERT">> cli;
     Mustard::Env::MPIEnv env{argc, argv, cli};
+    Mustard::UseXoshiro<256> random{cli};
 
     Mustard::MasterPrint(fmt::emphasis::bold, R"(
 --------------------------------------------------
@@ -56,10 +57,6 @@ auto main(int argc, char* argv[]) -> int {
 --------------------------------------------------
 )",
                          MUSAIRS_VERSION_STRING);
-
-    Mustard::UseXoshiro<256> random;
-    // First set random seed here
-    cli.SeedRandomIfFlagged();
 
     // Set geometry tolerance
     using namespace Mustard::LiteralUnit::Length;

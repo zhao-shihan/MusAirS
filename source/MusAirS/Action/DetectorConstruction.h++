@@ -53,7 +53,7 @@ public:
     auto Construct() -> G4VPhysicalVolume* override;
 
 public:
-    using DescriptionInUse = std::tuple<Detector::Description::Atmosphere,
+    using ProminentDescription = std::tuple<Detector::Description::Atmosphere,
                                         Detector::Description::Earth,
                                         Detector::Description::Field,
                                         Detector::Description::World>;
