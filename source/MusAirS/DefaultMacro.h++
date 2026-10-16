@@ -27,7 +27,7 @@ constexpr auto defaultMacro = {
     "#/control/saveHistory",
     "/run/verbose 2",
     "",
-    "#/Mustard/Detector/Description/Ixport MusAirS.yaml",
+    "#/Mustard/Detector/Description/Emport MusAirS.yaml",
     "",
     "/MusAirS/Numeric/MinDriverStep    1 cm",
     "/MusAirS/Numeric/DeltaChord       1 m",

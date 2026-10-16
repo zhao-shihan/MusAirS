@@ -20,6 +20,8 @@
 #include "MusAirS/Action/TrackingAction.h++"
 #include "MusAirS/Analysis.h++"
 
+#include "Mustard/IO/PrettyLog.h++"
+
 #include "G4Event.hh"
 #include "G4EventManager.hh"
 #include "G4ProcessType.hh"
@@ -41,7 +43,7 @@ TrackingAction::TrackingAction() :
     G4UserTrackingAction{},
     fVertexSigma{},
     fMemoryPool{},
-    fTrackData{&fMemoryPool},
+    fTrackData{TrackDataType::allocator_type{&fMemoryPool}},
     fMessengerRegister{this} {}
 
 auto TrackingAction::PreUserTrackingAction(const G4Track* track) -> void {
@@ -63,7 +65,7 @@ auto TrackingAction::UpdateTrackData(const G4Track& g4Track) -> void {
 
     const auto [it, inserted]{fTrackData.insert({trackID, {}})};
     if (not inserted) {
-        throw std::runtime_error{fmt::format("MusAirS::TrackingAction: Track {} appeared twice. This should not happen.", trackID)};
+        Mustard::Throw<std::runtime_error>(fmt::format("Track {} appeared twice. This should not happen.", trackID));
     }
 
     auto& track{it->second};

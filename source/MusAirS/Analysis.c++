@@ -24,6 +24,8 @@
 #include "Mustard/Geant4X/Utility/ConvertGeometry.h++"
 #include "Mustard/Utility/VectorCast.h++"
 
+#include "muc/algorithm"
+
 #include "TFile.h"
 #include "TMacro.h"
 
@@ -37,6 +39,7 @@
 #include <stdexcept>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 namespace MusAirS {
 
@@ -60,7 +63,11 @@ auto Analysis::EventEndUserAction() -> void {
     for (auto&& [pdgID, chain] : BuildReactionChain()) {
         const auto [it, _]{fReactionChainOutput.try_emplace(pdgID, fmt::format("G4Run{}/ReactionChain({})", fCurrentRunID, pdgID))};
         auto&& [__, output]{*it};
-        output.Fill(std::move(chain));
+        // Sort by track ID so that the parents always precede their children
+        // and the output does not depend on the hash container's iteration order
+        std::vector<Mustard::Data::Tuple<Data::Track>*> sorted{chain.cbegin(), chain.cend()};
+        muc::timsort(sorted, [](auto* lhs, auto* rhs) { return Get<"TrkID">(*lhs) < Get<"TrkID">(*rhs); });
+        output.Fill(sorted);
     }
     fPrimaryVertexData = {};
     fTrackData = {};

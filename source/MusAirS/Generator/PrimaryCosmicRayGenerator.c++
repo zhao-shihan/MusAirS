@@ -20,6 +20,7 @@
 #include "MusAirS/Detector/Description/World.h++"
 #include "MusAirS/Generator/PrimaryCosmicRayGenerator.h++"
 
+#include "Mustard/IO/PrettyLog.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
 
 #include "TAxis.h"
@@ -69,7 +70,7 @@ auto PrimaryCosmicRayGenerator::Particle(const std::string& particle) -> void {
     if (p) {
         Particle(p);
     } else {
-        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::Particle: No particle named '{}'", particle)};
+        Mustard::Throw<std::runtime_error>(fmt::format("No particle named '{}'", particle));
     }
 }
 
@@ -123,12 +124,12 @@ template<typename T>
 auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& fileName, const std::string& name) -> void {
     const auto file{std::unique_ptr<TFile>{TFile::Open(fileName.c_str())}};
     if (file == nullptr) {
-        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::EnergySpectrum: Cannot open '{}'", fileName)};
+        Mustard::Throw<std::runtime_error>(fmt::format("Cannot open '{}'", fileName));
     }
 
     const auto spectrum{file->Get<T>(name.c_str())};
     if (spectrum == nullptr) {
-        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::EnergySpectrum: Cannot find TH1 '{}' in '{}'", name, fileName)};
+        Mustard::Throw<std::runtime_error>(fmt::format("Cannot find object '{}' in '{}'", name, fileName));
     }
 
     EnergySpectrum(*spectrum);
@@ -169,12 +170,12 @@ template<typename T>
 auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum(const std::string& fileName, const std::string& name) -> void {
     const auto file{std::unique_ptr<TFile>{TFile::Open(fileName.c_str())}};
     if (file == nullptr) {
-        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum: Cannot open '{}'", fileName)};
+        Mustard::Throw<std::runtime_error>(fmt::format("Cannot open '{}'", fileName));
     }
 
     const auto spectrum{file->Get<T>(name.c_str())};
     if (spectrum == nullptr) {
-        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum: Cannot find TH1 '{}' in '{}'", name, fileName)};
+        Mustard::Throw<std::runtime_error>(fmt::format("Cannot find object '{}' in '{}'", name, fileName));
     }
 
     CustomBiasedEnergySpectrum(*spectrum);
@@ -204,7 +205,7 @@ auto PrimaryCosmicRayGenerator::MaxEnergy(double val) -> void {
 
 auto PrimaryCosmicRayGenerator::EnergySamplingMode(enum EnergySamplingMode mode) -> void {
     if (mode == EnergySamplingMode::LogUniformBiased and not(fEnergySpectrum->GetXmin() > 0)) {
-        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::EnergySamplingMode: LogUniformBiased sampling requires E_min > 0, but E_min = {}", fEnergySpectrum->GetXmin())};
+        Mustard::Throw<std::runtime_error>(fmt::format("LogUniformBiased sampling requires E_min > 0, but E_min = {}", fEnergySpectrum->GetXmin()));
     }
     fEnergySamplingMode = mode;
 }
@@ -215,14 +216,15 @@ auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
     const auto hMax{Detector::Description::Atmosphere::Instance().MaxAltitude()};
     particle_position = {0, 0, hMax};
     const auto wo2h{Detector::Description::World::Instance().Width() / (2 * hMax)};
-    const auto maxCosTheta{-1 / std::sqrt(1 + muc::pow(wo2h, 2))};
+    const auto maxCosTheta{-1 / muc::hypot(1., wo2h)};
 
     const auto [ek, weight]{SampleEnergy()};
     const auto pHat{[&maxCosTheta] {
         const auto z{G4RandFlat::shoot(-1, maxCosTheta)};
         const auto rho{std::sqrt((1 + z) * (1 - z))};
         const auto phi{G4RandFlat::shoot(0., 2_pi)};
-        return G4ThreeVector{rho * std::cos(phi), rho * std::sin(phi), z};
+        const auto [sinPhi, cosPhi]{muc::sincos(phi)};
+        return G4ThreeVector{rho * cosPhi, rho * sinPhi, z};
     }()};
     const auto p{std::sqrt((2 * fParticle->GetPDGMass() + ek) * ek) * pHat};
 
@@ -254,7 +256,7 @@ auto PrimaryCosmicRayGenerator::SampleEnergy() const -> std::pair<double, double
         const auto eMin{fEnergySpectrum->GetXmin()};
         const auto eMax{fEnergySpectrum->GetXmax()};
         if (not(eMin > 0)) [[unlikely]] {
-            throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::SampleEnergy: LogUniformBiased sampling requires E_min > 0, but E_min = {}", eMin)};
+            Mustard::Throw<std::runtime_error>(fmt::format("LogUniformBiased sampling requires E_min > 0, but E_min = {}", eMin));
         }
         const auto ek{eMin * std::pow(eMax / eMin, G4RandFlat::shoot(0., 1.))};
         const auto fk{(*fEnergySpectrum)(ek)};

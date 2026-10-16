@@ -28,6 +28,8 @@
 #include "Mustard/Data/Tuple.h++"
 #include "Mustard/Simulation/AnalysisBase.h++"
 
+#include "muc/hash_set"
+
 #include "G4Types.hh"
 
 #include "gsl/gsl"
@@ -35,7 +37,6 @@
 #include <filesystem>
 #include <memory>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 
 class TFile;
@@ -55,7 +56,7 @@ private:
     auto EventEndUserAction() -> void override;
     auto RunEndUserAction(int) -> void override;
 
-    using ReactionChain = std::unordered_set<Mustard::Data::Tuple<Data::Track>*>;
+    using ReactionChain = muc::flat_hash_set<Mustard::Data::Tuple<Data::Track>*>;
     auto BuildReactionChain() const -> std::unordered_map<int, ReactionChain>;
     auto BuildReactionChainImpl(Mustard::Data::Tuple<Data::Track>& track, ReactionChain& chain) const -> void;
 

@@ -24,12 +24,15 @@
 #include "Mustard/Data/Tuple.h++"
 #include "Mustard/Env/Memory/PassiveSingleton.h++"
 
+#include "muc/hash_map"
+
 #include "G4ThreeVector.hh"
 #include "G4UserTrackingAction.hh"
 
+#include <functional>
 #include <memory>
 #include <memory_resource>
-#include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace MusAirS::inline Action {
@@ -37,7 +40,9 @@ namespace MusAirS::inline Action {
 class TrackingAction final : public Mustard::Env::Memory::PassiveSingleton<TrackingAction>,
                              public G4UserTrackingAction {
 public:
-    using TrackDataType = std::pmr::unordered_map<int, Mustard::Data::Tuple<Data::Track>>;
+    using TrackDataType = muc::flat_hash_map<int, Mustard::Data::Tuple<Data::Track>,
+                                             std::hash<int>, std::equal_to<int>,
+                                             std::pmr::polymorphic_allocator<std::pair<const int, Mustard::Data::Tuple<Data::Track>>>>;
 
 public:
     TrackingAction();

@@ -33,6 +33,7 @@
 #include <cstddef>
 #include <exception>
 #include <optional>
+#include <stdexcept>
 
 namespace MusAirS::Detector::Description {
 
@@ -193,6 +194,28 @@ private:
 using namespace Mustard::LiteralUnit::Length;
 using namespace Mustard::LiteralUnit::Pressure;
 
+namespace {
+
+constexpr auto ISAMaxAltitude{90'000.0}; // [m] upper limit of the ISA model below
+
+/// @brief Solve the ISA model at the given altitude in meter.
+/// @note The ISA model used here is only valid up to ISAMaxAltitude.
+auto ISASolve(double altitude) -> LouiEriksson::ISA<>::State {
+    if (altitude > ISAMaxAltitude) [[unlikely]] {
+        const auto message{fmt::format("Altitude {} m is above the upper limit of the ISA atmosphere model ({} m). "
+                                       "Lower Atmosphere::MaxAltitude or use SliceMode Altitude.",
+                                       altitude, ISAMaxAltitude)};
+        // The message of the following exception is printed by Mustard's terminate
+        // handler to stdout, which is buffered and lost on abort when the output is
+        // redirected, so report it to stderr as well
+        Mustard::PrintError(message);
+        Mustard::Throw<std::runtime_error>(message);
+    }
+    return LouiEriksson::ISA<>::TrySolve(altitude).value();
+}
+
+} // namespace
+
 Atmosphere::Atmosphere() :
     DescriptionWithCacheBase{"Atmosphere"},
     fMaxAltitude{this, 90_km},
@@ -215,7 +238,7 @@ auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
     case SliceMode::Pressure: {
         constexpr auto CalculateP{
             [](double alt) {
-                return LouiEriksson::ISA<>::TrySolve(alt / m).value().m_Pressure * pascal;
+                return ISASolve(alt / m).m_Pressure * pascal;
             }};
         const auto zGround{Earth::Instance().GroundAltitude()};
         const auto pGround{CalculateP(zGround)};
@@ -229,9 +252,14 @@ auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
         std::vector<double> altitude(fNSlice);
         for (gsl::index i{}; i < fNSlice - 1; ++i) {
             const auto [alt, converged]{
-                muc::find_root::zbrent([&, p = pressure[i]](auto z) { return CalculateP(z) - p; },
-                                       zGround, *fMaxAltitude)};
-            if (not converged) { Mustard::PrintWarning("Warning: Slice altitude not converged"); }
+                muc::find_root::brent([&, p = pressure[i]](auto z) { return CalculateP(z) - p; },
+                                      zGround, *fMaxAltitude)};
+            if (not converged) [[unlikely]] {
+                const auto message{fmt::format("No altitude solution for atmosphere slice {} (P = {:.6g} Pa) in [{} m, {} m]",
+                                               i, pressure[i] / pascal, zGround / m, *fMaxAltitude / m)};
+                Mustard::PrintError(message);
+                Mustard::Throw<std::runtime_error>(message);
+            }
             altitude[i] = alt;
         }
         altitude.back() = fMaxAltitude;
@@ -245,7 +273,7 @@ auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
 auto Atmosphere::CalculateStateSlice() const -> std::vector<AtmoState> {
     constexpr auto CalculateState{
         [](double alt) -> AtmoState {
-            const auto [p, rho, t]{LouiEriksson::ISA<>::TrySolve(alt / m).value()};
+            const auto [p, rho, t]{ISASolve(alt / m)};
             return {p * pascal, rho * (kg / m3), t * kelvin};
         }};
 
@@ -267,7 +295,7 @@ void Atmosphere::ImportAllValue(const YAML::Node& node) {
             } else if (mode == "Pressure") {
                 fSliceMode = SliceMode::Pressure;
             } else {
-                Mustard::PrintError(fmt::format("MusAirS::Detector::Description::Atmosphere::ImportAllValue: Unknown slice mode '{}', skipping", mode));
+                Mustard::PrintError(fmt::format("Unknown slice mode '{}', skipping", mode));
             } }, "SliceMode");
     ImportValue(node, fNSlice, "NSlice");
 }

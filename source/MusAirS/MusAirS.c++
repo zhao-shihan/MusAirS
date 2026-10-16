@@ -20,22 +20,23 @@
 #include "MusAirS/Action/DetectorConstruction.h++"
 #include "MusAirS/Analysis.h++"
 #include "MusAirS/DefaultMacro.h++"
-#include "MusAirS/Physics/SpinDecayPhysicsWithKaon.h++"
 #include "MusAirS/Version.h++"
 
 #include "Mustard/CLI/Geant4CLI.h++"
+#include "Mustard/CLI/Module/DetectorDescriptionModule.h++"
 #include "Mustard/CLI/Module/Geant4ReferencePhysicsListModule.h++"
-#include "Mustard/Env/MPIEnv.h++"
+#include "Mustard/Env/Geant4Env.h++"
 #include "Mustard/Geant4X/Interface/MPIExecutive.h++"
+#include "Mustard/Geant4X/Physics/PionKaonDecayMakeSpinPhysics.h++"
 #include "Mustard/Geant4X/Run/MPIRunManager.h++"
 #include "Mustard/IO/Print.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
-#include "Mustard/Utility/UseXoshiro.h++"
 
 #include "G4EmParameters.hh"
 #include "G4EmStandardPhysics_option1.hh"
 #include "G4GeometryManager.hh"
 #include "G4HadronicParameters.hh"
+#include "G4SpinDecayPhysics.hh"
 
 #include "muc/utility"
 
@@ -44,10 +45,12 @@
 #include <algorithm>
 
 auto main(int argc, char* argv[]) -> int {
-    // Use default Geant4 CLI and extends it with reference physics list interface
-    Mustard::CLI::Geant4CLI<Mustard::CLI::Geant4ReferencePhysicsListModule<"FTFP_BERT">> cli;
-    Mustard::Env::MPIEnv env{argc, argv, cli};
-    Mustard::UseXoshiro<256> random{cli};
+    // Use default Geant4 CLI and extends it with detector description interface
+    // and reference physics list interface
+    Mustard::CLI::Geant4CLI<Mustard::CLI::DetectorDescriptionModule<MusAirS::DetectorConstruction::ProminentDescription>,
+                            Mustard::CLI::Geant4ReferencePhysicsListModule<"FTFP_BERT">>
+        cli;
+    Mustard::Env::Geant4Env env{argc, argv, cli};
 
     Mustard::MasterPrint(fmt::emphasis::bold, R"(
 --------------------------------------------------
@@ -68,7 +71,9 @@ auto main(int argc, char* argv[]) -> int {
     // Physics lists
     const auto physicsList{cli.PhysicsList()};
     physicsList->ReplacePhysics(new G4EmStandardPhysics_option1{muc::to_underlying(env.VerboseLevel())}); // force to EMV
-    physicsList->RegisterPhysics(new MusAirS::SpinDecayPhysicsWithKaon{muc::to_underlying(env.VerboseLevel())});
+    physicsList->RegisterPhysics(new G4SpinDecayPhysics{muc::to_underlying(env.VerboseLevel())});
+    // Extend decay-with-spin to kaons
+    physicsList->RegisterPhysics(new Mustard::Geant4X::PionKaonDecayMakeSpinPhysics{muc::to_underlying(env.VerboseLevel())});
     runManager.SetUserInitialization(physicsList);
     // Raise max energy
     using namespace Mustard::LiteralUnit::Energy;
