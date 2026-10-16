@@ -56,10 +56,6 @@ PrimaryCosmicRayGenerator::PrimaryCosmicRayGenerator() :
     fIntrinsicMinEnergy{},
     fIntrinsicMaxEnergy{std::numeric_limits<double>::max()},
     fEnergySamplingMode{EnergySamplingMode::Normal},
-    fMinVarBiasedEnergySpectrum{std::make_unique<TF1>("MinVarBiasedEnergySpectrum",
-                                                      std::function{[this](const double* x, const double*) {
-                                                          return (*x - fEnergySpectrum->GetXmin()) * (*fEnergySpectrum)(*x);
-                                                      }})},
     fCustomBiasedEnergySpectrum{},
     fMessengerRegister{this} {
     Particle("proton");
@@ -206,6 +202,13 @@ auto PrimaryCosmicRayGenerator::MaxEnergy(double val) -> void {
     SyncBiasedEnergySpectrum();
 }
 
+auto PrimaryCosmicRayGenerator::EnergySamplingMode(enum EnergySamplingMode mode) -> void {
+    if (mode == EnergySamplingMode::LogUniformBiased and not(fEnergySpectrum->GetXmin() > 0)) {
+        throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::EnergySamplingMode: LogUniformBiased sampling requires E_min > 0, but E_min = {}", fEnergySpectrum->GetXmin())};
+    }
+    fEnergySamplingMode = mode;
+}
+
 auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
     using namespace Mustard::LiteralUnit::MathConstantSuffix;
 
@@ -231,8 +234,6 @@ auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
 }
 
 auto PrimaryCosmicRayGenerator::SyncBiasedEnergySpectrum() -> void {
-    fMinVarBiasedEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax());
-    fMinVarBiasedEnergySpectrum->SetNpx(fEnergySpectrum->GetNpx());
     if (fCustomBiasedEnergySpectrum) {
         fCustomBiasedEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax());
         fCustomBiasedEnergySpectrum->SetNpx(fEnergySpectrum->GetNpx());
@@ -240,20 +241,27 @@ auto PrimaryCosmicRayGenerator::SyncBiasedEnergySpectrum() -> void {
 }
 
 auto PrimaryCosmicRayGenerator::SampleEnergy() const -> std::pair<double, double> {
+    const auto option{fEnergySpectrum->GetXmin() > 0 ? "LOG" : nullptr};
     switch (fEnergySamplingMode) {
     case EnergySamplingMode::Normal: {
-        return {fEnergySpectrum->GetRandom(), 1};
+        return {fEnergySpectrum->GetRandom(nullptr, option), 1};
     }
     case EnergySamplingMode::UniformBiased: {
         const auto ek{G4RandFlat::shoot(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax())};
         return {ek, (*fEnergySpectrum)(ek)};
     }
-    case EnergySamplingMode::MinVarBiased: {
-        const auto ek{fMinVarBiasedEnergySpectrum->GetRandom()};
-        return {ek, 1 / ek};
+    case EnergySamplingMode::LogUniformBiased: {
+        const auto eMin{fEnergySpectrum->GetXmin()};
+        const auto eMax{fEnergySpectrum->GetXmax()};
+        if (not(eMin > 0)) [[unlikely]] {
+            throw std::runtime_error{fmt::format("MusAirS::PrimaryCosmicRayGenerator::SampleEnergy: LogUniformBiased sampling requires E_min > 0, but E_min = {}", eMin)};
+        }
+        const auto ek{eMin * std::pow(eMax / eMin, G4RandFlat::shoot(0., 1.))};
+        const auto fk{(*fEnergySpectrum)(ek)};
+        return {ek, fk * ek * std::log(eMax / eMin)};
     }
     case EnergySamplingMode::CustomBiased: {
-        const auto ek{fCustomBiasedEnergySpectrum->GetRandom()};
+        const auto ek{fCustomBiasedEnergySpectrum->GetRandom(nullptr, option)};
         return {ek, (*fEnergySpectrum)(ek) / (*fCustomBiasedEnergySpectrum)(ek)};
     }
     }

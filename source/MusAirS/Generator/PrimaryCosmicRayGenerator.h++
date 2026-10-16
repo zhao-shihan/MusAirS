@@ -40,7 +40,7 @@ public:
     enum struct EnergySamplingMode {
         Normal,
         UniformBiased,
-        MinVarBiased,
+        LogUniformBiased,
         CustomBiased
     };
 
@@ -59,7 +59,7 @@ public:
     auto NEnergySpectrumPoint(int n) -> void;
     auto MinEnergy(double val) -> void;
     auto MaxEnergy(double val) -> void;
-    auto EnergySamplingMode(enum EnergySamplingMode mode) -> void { fEnergySamplingMode = mode; }
+    auto EnergySamplingMode(enum EnergySamplingMode mode) -> void;
 
     auto CustomBiasedEnergySpectrum(const std::string& formula) -> void;
     auto CustomBiasedEnergySpectrum(const TH1& histogram) -> void;
@@ -82,7 +82,6 @@ private:
     double fIntrinsicMinEnergy;
     double fIntrinsicMaxEnergy;
     enum EnergySamplingMode fEnergySamplingMode;
-    std::unique_ptr<TF1> fMinVarBiasedEnergySpectrum;
     std::unique_ptr<TF1> fCustomBiasedEnergySpectrum;
 
     PrimaryCosmicRayGeneratorMessenger::Register<PrimaryCosmicRayGenerator> fMessengerRegister;

@@ -99,7 +99,7 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fEnergySamplingMode = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCR/Energy/Sampling/Mode", this);
     fEnergySamplingMode->SetGuidance("Set energy importance sampling.");
     fEnergySamplingMode->SetParameterName("mode", false);
-    fEnergySamplingMode->SetCandidates("Normal UniformBiased MinVarBiased CustomBiased");
+    fEnergySamplingMode->SetCandidates("Normal UniformBiased LogUniformBiased CustomBiased");
     fEnergySamplingMode->AvailableForStates(G4State_Idle);
 
     fCustomBiasedEnergySpectrumFormula = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCR/Energy/Sampling/Custom/Formula", this);
@@ -165,13 +165,17 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
         });
     } else if (command == fEnergySamplingMode.get()) {
         static const std::unordered_map<std::string_view, enum PrimaryCosmicRayGenerator::EnergySamplingMode> energySamplingMap {
-            {"Normal",        PrimaryCosmicRayGenerator::EnergySamplingMode::Normal       },
-            {"UniformBiased", PrimaryCosmicRayGenerator::EnergySamplingMode::UniformBiased},
-            {"MinVarBiased",  PrimaryCosmicRayGenerator::EnergySamplingMode::MinVarBiased },
-            {"CustomBiased",  PrimaryCosmicRayGenerator::EnergySamplingMode::CustomBiased }
+            {"Normal",           PrimaryCosmicRayGenerator::EnergySamplingMode::Normal          },
+            {"UniformBiased",    PrimaryCosmicRayGenerator::EnergySamplingMode::UniformBiased   },
+            {"LogUniformBiased", PrimaryCosmicRayGenerator::EnergySamplingMode::LogUniformBiased},
+            {"CustomBiased",     PrimaryCosmicRayGenerator::EnergySamplingMode::CustomBiased    }
         };
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            r.EnergySamplingMode(energySamplingMap.at(value));
+            try {
+                r.EnergySamplingMode(energySamplingMap.at(value));
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
         });
     } else if (command == fCustomBiasedEnergySpectrumFormula.get()) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {

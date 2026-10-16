@@ -12,7 +12,7 @@
 /MusAirS/Action/SwitchToPCR
 /MusAirS/PCR/Particle                        proton
 /MusAirS/PCR/Energy/Spectrum/Graph           primary_cosmic_ray.root AMS_GSL_Combine_proton
-#/MusAirS/PCR/Energy/Sampling/Mode            MinVarBiased
+#/MusAirS/PCR/Energy/Sampling/Mode            LogUniformBiased
 
 /run/setCut 10 m    # arbitrarily high cut is enough for just muon shower
 /run/setCutForAGivenParticle proton 3 m

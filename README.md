@@ -27,6 +27,8 @@ Simulation of cosmic ray air shower.
     - [Geomagnetic field](#geomagnetic-field)
     - [Elevating the ground](#elevating-the-ground)
   - [Primary particles](#primary-particles)
+    - [Primary cosmic ray generator](#primary-cosmic-ray-generator)
+      - [Units](#units)
   - [Save primary vertex data](#save-primary-vertex-data)
   - [Who ordered neutrino?](#who-ordered-neutrino)
   - [Interpret the result](#interpret-the-result)
@@ -161,6 +163,46 @@ We use Geant4 [General Particle Source (GPS)](https://geant4-userdoc.web.cern.ch
 /gps/ene/max          10 TeV
 ```
 Detailed usage can be found in the [Geant4 Book For Application Developers](https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/GettingStarted/generalParticleSource.html).
+
+### Primary cosmic ray generator
+
+For air showers, switch to the built-in primary cosmic ray generator:
+
+```sh
+/MusAirS/Action/SwitchToPCR
+```
+
+It accepts any particle of the Geant4 particle table, and takes the kinetic energy spectrum either from a formula, from a histogram in a ROOT file, or from a graph in a ROOT file:
+
+```sh
+/MusAirS/PCR/Particle              proton
+/MusAirS/PCR/Energy/Spectrum/Graph primary_cosmic_ray.root AMS_Proton
+/MusAirS/PCR/Energy/Min            3 GeV
+/MusAirS/PCR/Energy/Max            10 TeV
+```
+
+Primary vertices are placed on the top of the atmosphere and the direction is sampled isotropically over the range of zenith angles that the world volume accepts.
+
+The spectrum is sampled with one of four modes, selected by
+
+```sh
+/MusAirS/PCR/Energy/Sampling/Mode  LogUniformBiased
+```
+
+With $f(E)$ the physical spectrum and $g(E)$ the distribution that is sampled, an event carries the weight $w = f(E)/g(E)$, and the weights are stored in the output so that every distribution can be reweighted afterwards.
+
+| Mode | $g(E)$ | $w(E)$ | Use |
+| ---- | ------ | ------ | --- |
+| `Normal` | $f$ | $1$ | reference; best for the lowest decade, cheapest per event |
+| `UniformBiased` | const | $f$ | exploring a wide range quickly |
+| `LogUniformBiased` | $1/E$ | $fE\ln(E_{\max}/E_{\min})$ | recommended for production: equal statistics per decade of energy |
+| `CustomBiased` | user | $f/g$ | shaping the sample towards the observable of interest |
+
+`LogUniformBiased` requires $E_{\min} > 0$.
+
+#### Units
+
+The unit system is the Geant4 one (MeV, mm, ns). In particular **the variable of a spectrum formula is the kinetic energy in MeV**, so a formula containing an explicit energy scale must be written in MeV: a spectrum with a cutoff at 10 TeV is `exp(-x/1e7)`, not `exp(-x/1e4)`. Scale-free power laws such as `x^-2.7` are unaffected. The same applies to a formula given to `/MusAirS/PCR/Energy/Sampling/Custom/Formula`. The `/MusAirS/PCR/Energy/Min` and `/MusAirS/PCR/Energy/Max` commands, in contrast, take a value with a unit.
 
 ## Save primary vertex data
 
