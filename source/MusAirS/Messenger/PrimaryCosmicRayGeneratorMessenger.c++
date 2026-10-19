@@ -131,7 +131,11 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
         });
     } else if (command == fEnergySpectrumFormula.get()) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            r.EnergySpectrum(value);
+            try {
+                r.EnergySpectrum(value);
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
         });
     } else if (command == fEnergySpectrumHistogram.get()) {
         const auto [file, h]{ParseFileNameAndObjectName(value)};
@@ -157,7 +161,11 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
         });
     } else if (command == fMinEnergy.get()) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            r.MinEnergy(fMinEnergy->GetNewDoubleValue(value));
+            try {
+                r.MinEnergy(fMinEnergy->GetNewDoubleValue(value));
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
         });
     } else if (command == fMaxEnergy.get()) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {

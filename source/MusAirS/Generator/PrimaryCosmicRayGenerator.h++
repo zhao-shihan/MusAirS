@@ -71,6 +71,7 @@ public:
 
 private:
     auto ValidateEnergySpectrumForSampling(enum EnergySamplingMode mode) const -> void;
+    auto ValidateEnergyRangeForSampling(enum EnergySamplingMode mode, double eMin) const -> void;
 
     auto SyncBiasedEnergySpectrum() -> void;
 

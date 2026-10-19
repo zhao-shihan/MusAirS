@@ -75,9 +75,10 @@ auto PrimaryCosmicRayGenerator::Particle(const std::string& particle) -> void {
 }
 
 auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& formula) -> void {
-    fEnergySpectrum = std::make_unique<TF1>("EnergySpectrum", formula.c_str(),
-                                            fEnergySpectrum ? fEnergySpectrum->GetXmin() : fIntrinsicMinEnergy,
-                                            fEnergySpectrum ? fEnergySpectrum->GetXmax() : fIntrinsicMaxEnergy);
+    const auto eMin{fEnergySpectrum ? fEnergySpectrum->GetXmin() : fIntrinsicMinEnergy};
+    const auto eMax{fEnergySpectrum ? fEnergySpectrum->GetXmax() : fIntrinsicMaxEnergy};
+    ValidateEnergyRangeForSampling(fEnergySamplingMode, eMin);
+    fEnergySpectrum = std::make_unique<TF1>("EnergySpectrum", formula.c_str(), eMin, eMax);
     fEnergySpectrum->SetNpx(fNEnergySpectrumPoint);
     SyncBiasedEnergySpectrum();
     fIntrinsicMinEnergy = 0;
@@ -89,8 +90,11 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(const TH1& histogram) -> void {
     h->SetDirectory(nullptr);
 
     const auto spectrumAxis{h->GetXaxis()};
-    fIntrinsicMinEnergy = spectrumAxis->GetXmin();
-    fIntrinsicMaxEnergy = spectrumAxis->GetXmax();
+    const auto eMin{spectrumAxis->GetXmin()};
+    const auto eMax{spectrumAxis->GetXmax()};
+    ValidateEnergyRangeForSampling(fEnergySamplingMode, eMin);
+    fIntrinsicMinEnergy = eMin;
+    fIntrinsicMaxEnergy = eMax;
 
     fEnergySpectrum = std::make_unique<TF1>(
         "EnergySpectrum",
@@ -107,8 +111,11 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum<TGraph>(const TGraph& graph) -> v
     std::shared_ptr<TGraph> g{dynamic_cast<TGraph*>(graph.Clone())};
 
     const auto spectrumAxis{g->GetXaxis()};
-    fIntrinsicMinEnergy = spectrumAxis->GetXmin();
-    fIntrinsicMaxEnergy = spectrumAxis->GetXmax();
+    const auto eMin{spectrumAxis->GetXmin()};
+    const auto eMax{spectrumAxis->GetXmax()};
+    ValidateEnergyRangeForSampling(fEnergySamplingMode, eMin);
+    fIntrinsicMinEnergy = eMin;
+    fIntrinsicMaxEnergy = eMax;
 
     fEnergySpectrum = std::make_unique<TF1>(
         "EnergySpectrum",
@@ -192,8 +199,9 @@ auto PrimaryCosmicRayGenerator::NEnergySpectrumPoint(int n) -> void {
 }
 
 auto PrimaryCosmicRayGenerator::MinEnergy(double val) -> void {
-    fEnergySpectrum->SetRange(muc::clamp<"[]">(val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy),
-                              fEnergySpectrum->GetXmax());
+    const auto eMin{muc::clamp<"[]">(val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy)};
+    ValidateEnergyRangeForSampling(fEnergySamplingMode, eMin);
+    fEnergySpectrum->SetRange(eMin, fEnergySpectrum->GetXmax());
     SyncBiasedEnergySpectrum();
 }
 
@@ -203,6 +211,15 @@ auto PrimaryCosmicRayGenerator::MaxEnergy(double val) -> void {
     SyncBiasedEnergySpectrum();
 }
 
+auto PrimaryCosmicRayGenerator::ValidateEnergyRangeForSampling(enum EnergySamplingMode mode, double eMin) const -> void {
+    if (mode != EnergySamplingMode::LogUniformBiased) {
+        return;
+    }
+    if (not(eMin > 0)) {
+        Mustard::Throw<std::runtime_error>(fmt::format("LogUniformBiased sampling requires E_min > 0, but E_min = {}", eMin));
+    }
+}
+
 auto PrimaryCosmicRayGenerator::ValidateEnergySpectrumForSampling(enum EnergySamplingMode mode) const -> void {
     if (mode != EnergySamplingMode::LogUniformBiased) {
         return;
@@ -210,10 +227,7 @@ auto PrimaryCosmicRayGenerator::ValidateEnergySpectrumForSampling(enum EnergySam
     if (not fEnergySpectrum) {
         Mustard::Throw<std::runtime_error>("LogUniformBiased sampling requires an energy spectrum; set the spectrum before selecting the mode");
     }
-    const auto eMin{fEnergySpectrum->GetXmin()};
-    if (not(eMin > 0)) {
-        Mustard::Throw<std::runtime_error>(fmt::format("LogUniformBiased sampling requires E_min > 0, but E_min = {}", eMin));
-    }
+    ValidateEnergyRangeForSampling(mode, fEnergySpectrum->GetXmin());
 }
 
 auto PrimaryCosmicRayGenerator::EnergySamplingMode(enum EnergySamplingMode mode) -> void {
@@ -247,7 +261,6 @@ auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
 }
 
 auto PrimaryCosmicRayGenerator::SyncBiasedEnergySpectrum() -> void {
-    ValidateEnergySpectrumForSampling(fEnergySamplingMode);
     if (fCustomBiasedEnergySpectrum) {
         fCustomBiasedEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax());
         fCustomBiasedEnergySpectrum->SetNpx(fEnergySpectrum->GetNpx());
