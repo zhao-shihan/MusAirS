@@ -70,6 +70,8 @@ public:
     virtual auto GeneratePrimaryVertex(G4Event* event) -> void override;
 
 private:
+    auto ValidateEnergySpectrumForSampling(enum EnergySamplingMode mode) const -> void;
+
     auto SyncBiasedEnergySpectrum() -> void;
 
     auto SampleEnergy() const -> std::pair<double, double>;

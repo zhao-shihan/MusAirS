@@ -203,10 +203,21 @@ auto PrimaryCosmicRayGenerator::MaxEnergy(double val) -> void {
     SyncBiasedEnergySpectrum();
 }
 
-auto PrimaryCosmicRayGenerator::EnergySamplingMode(enum EnergySamplingMode mode) -> void {
-    if (mode == EnergySamplingMode::LogUniformBiased and not(fEnergySpectrum->GetXmin() > 0)) {
-        Mustard::Throw<std::runtime_error>(fmt::format("LogUniformBiased sampling requires E_min > 0, but E_min = {}", fEnergySpectrum->GetXmin()));
+auto PrimaryCosmicRayGenerator::ValidateEnergySpectrumForSampling(enum EnergySamplingMode mode) const -> void {
+    if (mode != EnergySamplingMode::LogUniformBiased) {
+        return;
     }
+    if (not fEnergySpectrum) {
+        Mustard::Throw<std::runtime_error>("LogUniformBiased sampling requires an energy spectrum; set the spectrum before selecting the mode");
+    }
+    const auto eMin{fEnergySpectrum->GetXmin()};
+    if (not(eMin > 0)) {
+        Mustard::Throw<std::runtime_error>(fmt::format("LogUniformBiased sampling requires E_min > 0, but E_min = {}", eMin));
+    }
+}
+
+auto PrimaryCosmicRayGenerator::EnergySamplingMode(enum EnergySamplingMode mode) -> void {
+    ValidateEnergySpectrumForSampling(mode);
     fEnergySamplingMode = mode;
 }
 
@@ -236,6 +247,7 @@ auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
 }
 
 auto PrimaryCosmicRayGenerator::SyncBiasedEnergySpectrum() -> void {
+    ValidateEnergySpectrumForSampling(fEnergySamplingMode);
     if (fCustomBiasedEnergySpectrum) {
         fCustomBiasedEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax());
         fCustomBiasedEnergySpectrum->SetNpx(fEnergySpectrum->GetNpx());
