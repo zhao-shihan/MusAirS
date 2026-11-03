@@ -175,13 +175,15 @@ For air showers, switch to the built-in primary cosmic ray generator:
 It accepts any particle of the Geant4 particle table, and takes the kinetic energy spectrum either from a formula, from a histogram in a ROOT file, or from a graph in a ROOT file:
 
 ```sh
-/MusAirS/PCR/Particle              proton
-/MusAirS/PCR/Energy/Spectrum/Graph primary_cosmic_ray.root AMS_Proton
-/MusAirS/PCR/Energy/Min            3 GeV
-/MusAirS/PCR/Energy/Max            10 TeV
+/MusAirS/PCR/Particle                    proton
+/MusAirS/PCR/Energy/Spectrum/Histogram   primary_cosmic_ray.root AMS_Proton
+/MusAirS/PCR/Energy/Min                  3 GeV
+/MusAirS/PCR/Energy/Max                  10 TeV
 ```
 
 Primary vertices are placed on the top of the atmosphere and the direction is sampled isotropically over the range of zenith angles that the world volume accepts.
+
+The example file `primary_cosmic_ray.root` is built by `scripts/CreateEnergySpectrum.cxx` and holds the seven-year AMS-02 proton and helium fluxes [Phys. Rept. **894** (2021) 1] as the histograms `AMS_Proton` and `AMS_Helium`.  Their bins are the rigidity bins of the measurement converted to the kinetic energy of the primary in MeV, which for helium is the total kinetic energy of the nucleus and not the energy per nucleon, and their content is the measured flux divided by the bin width, so that the integral over a bin is the measured number of particles in that bin.  Because the normalisation is physical, the two spectra can be combined with weights proportional to their integral fluxes when a mixed composition is wanted.
 
 The spectrum is sampled with one of four modes, selected by
 
@@ -202,7 +204,7 @@ With $f(E)$ the physical spectrum and $g(E)$ the distribution that is sampled, a
 
 #### Units
 
-The unit system is the Geant4 one (MeV, mm, ns). In particular **the variable of a spectrum formula is the kinetic energy in MeV**, so a formula containing an explicit energy scale must be written in MeV: a spectrum with a cutoff at 10 TeV is `exp(-x/1e7)`, not `exp(-x/1e4)`. Scale-free power laws such as `x^-2.7` are unaffected. The same applies to a formula given to `/MusAirS/PCR/Energy/Sampling/Custom/Formula`. The `/MusAirS/PCR/Energy/Min` and `/MusAirS/PCR/Energy/Max` commands, in contrast, take a value with a unit.
+The unit system is the Geant4 one (MeV, mm, ns). In particular **the variable of a spectrum formula is the kinetic energy in MeV**, so a formula containing an explicit energy scale must be written in MeV: a spectrum with a cutoff at 10 TeV is `exp(-x/1e7)`, not `exp(-x/1e4)`. Scale-free power laws such as `x^-2.7` are unaffected. The same applies to a formula given to `/MusAirS/PCR/Energy/Sampling/Custom/Formula`, and to a spectrum read from a graph or a histogram, whose abscissa is also the kinetic energy in MeV. The `/MusAirS/PCR/Energy/Min` and `/MusAirS/PCR/Energy/Max` commands, in contrast, take a value with a unit; a value outside the range of the spectrum is clamped to the nearest end of that range, with a warning, and a minimum that is not below the current maximum is an error.
 
 ## Save primary vertex data
 

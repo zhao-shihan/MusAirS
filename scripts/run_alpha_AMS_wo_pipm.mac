@@ -10,12 +10,15 @@
 /run/initialize
 
 /MusAirS/Action/SwitchToPCR
-/MusAirS/PCR/Particle                        proton
-/MusAirS/PCR/Energy/Spectrum/Graph           primary_cosmic_ray.root AMS_GSL_Combine_proton
+/MusAirS/PCR/Particle                        alpha
+/MusAirS/PCR/Energy/Spectrum/Histogram       primary_cosmic_ray.root AMS_Helium
+/MusAirS/PCR/Energy/Min                      12 GeV  # alpha < 12 GeV contribute little to muon shower
 #/MusAirS/PCR/Energy/Sampling/Mode            LogUniformBiased
 
-/run/setCut 10 m    # arbitrarily high cut is enough for just muon shower
-/run/setCutForAGivenParticle proton 3 m
+/run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
+/run/setCutForAGivenParticle proton 10 m
+/MusAirS/Action/KillEMShower yes
+/MusAirS/Action/KillChargedPion yes
 /MusAirS/SD/EarthSD/DetectNeutrino no
 /MusAirS/Analysis/SavePrimaryVertexData no
 
@@ -23,7 +26,7 @@
 # Run
 #############################################################################
 
-/Mustard/Analysis/FilePath MusAirS_p_combine_full.root
+/Mustard/Analysis/FilePath MusAirS_alpha_AMS_wo_pipm.root
 /Mustard/Analysis/FileMode NEW
 /run/beamOn 10000
 /Mustard/Run/PrintRunSummary

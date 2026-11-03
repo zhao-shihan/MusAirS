@@ -11,7 +11,7 @@
 
 /MusAirS/Action/SwitchToPCR
 /MusAirS/PCR/Particle                        proton
-/MusAirS/PCR/Energy/Spectrum/Graph           primary_cosmic_ray.root AMS_Proton
+/MusAirS/PCR/Energy/Spectrum/Histogram       primary_cosmic_ray.root AMS_Proton
 #/MusAirS/PCR/Energy/Sampling/Mode            LogUniformBiased
 
 /run/setCut 10 m    # low cut for accurate EM shower shape

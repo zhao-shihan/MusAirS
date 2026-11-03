@@ -109,10 +109,12 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(const TH1& histogram) -> void {
 template<>
 auto PrimaryCosmicRayGenerator::EnergySpectrum<TGraph>(const TGraph& graph) -> void {
     std::shared_ptr<TGraph> g{dynamic_cast<TGraph*>(graph.Clone())};
+    if (g->GetN() < 2) {
+        Mustard::Throw<std::runtime_error>(fmt::format("A spectrum graph needs at least two points, but '{}' has {}", g->GetName(), g->GetN()));
+    }
 
-    const auto spectrumAxis{g->GetXaxis()};
-    const auto eMin{spectrumAxis->GetXmin()};
-    const auto eMax{spectrumAxis->GetXmax()};
+    const auto eMin{g->GetX()[0]};
+    const auto eMax{g->GetX()[g->GetN() - 1]};
     ValidateEnergyRangeForSampling(fEnergySamplingMode, eMin);
     fIntrinsicMinEnergy = eMin;
     fIntrinsicMaxEnergy = eMax;
@@ -200,14 +202,30 @@ auto PrimaryCosmicRayGenerator::NEnergySpectrumPoint(int n) -> void {
 
 auto PrimaryCosmicRayGenerator::MinEnergy(double val) -> void {
     const auto eMin{muc::clamp<"[]">(val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy)};
+    if (eMin != val) {
+        Mustard::MasterPrintWarning(fmt::format("Minimum kinetic energy {} MeV is outside the spectrum range [{}, {}] MeV and is clamped to {} MeV",
+                                                val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy, eMin));
+    }
+    if (not(eMin < fEnergySpectrum->GetXmax())) {
+        Mustard::Throw<std::runtime_error>(fmt::format("Minimum kinetic energy {} MeV is not below the maximum kinetic energy {} MeV",
+                                                       eMin, fEnergySpectrum->GetXmax()));
+    }
     ValidateEnergyRangeForSampling(fEnergySamplingMode, eMin);
     fEnergySpectrum->SetRange(eMin, fEnergySpectrum->GetXmax());
     SyncBiasedEnergySpectrum();
 }
 
 auto PrimaryCosmicRayGenerator::MaxEnergy(double val) -> void {
-    fEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(),
-                              muc::clamp<"[]">(val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy));
+    const auto eMax{muc::clamp<"[]">(val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy)};
+    if (eMax != val) {
+        Mustard::MasterPrintWarning(fmt::format("Maximum kinetic energy {} MeV is outside the spectrum range [{}, {}] MeV and is clamped to {} MeV",
+                                                val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy, eMax));
+    }
+    if (not(fEnergySpectrum->GetXmin() < eMax)) {
+        Mustard::Throw<std::runtime_error>(fmt::format("Maximum kinetic energy {} MeV is not above the minimum kinetic energy {} MeV",
+                                                       eMax, fEnergySpectrum->GetXmin()));
+    }
+    fEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(), eMax);
     SyncBiasedEnergySpectrum();
 }
 
