@@ -63,7 +63,7 @@ auto main(int argc, char* argv[]) -> int {
                          MusAirS::versionString);
 
     // Set geometry tolerance
-    using namespace Mustard::LiteralUnit::Length;
+    using namespace Mustard::LiteralUnit;
     G4GeometryManager::GetInstance()->SetWorldMaximumExtent(100_km); // just a scale
 
     // Mutually exclusive random seeds are distributed to all processes upon each BeamOn.
@@ -83,11 +83,10 @@ auto main(int argc, char* argv[]) -> int {
     if (const auto neutronTrackingCut{const_cast<G4NeutronTrackingCut*>(
             dynamic_cast<const G4NeutronTrackingCut*>(
                 physicsList->GetPhysics("neutronTrackingCut")))}) {
-        using namespace Mustard::LiteralUnit::Time;
         neutronTrackingCut->SetTimeLimit(10_ms);
+        neutronTrackingCut->SetKineticEnergyLimit(300_MeV);
     }
     // Raise max energy
-    using namespace Mustard::LiteralUnit::Energy;
     G4HadronicParameters::Instance()->SetMaxEnergy(1000_PeV);
     G4EmParameters::Instance()->SetMaxEnergy(1000_PeV);
 
