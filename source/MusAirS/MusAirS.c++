@@ -32,6 +32,7 @@
 #include "Mustard/IO/Print.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
 
+#include "G4EmExtraPhysics.hh"
 #include "G4EmParameters.hh"
 #include "G4EmStandardPhysics_option1.hh"
 #include "G4GeometryManager.hh"
@@ -75,10 +76,17 @@ auto main(int argc, char* argv[]) -> int {
     physicsList->RegisterPhysics(new G4SpinDecayPhysics{muc::to_underlying(env.VerboseLevel())});
     // Extend decay-with-spin to kaons
     physicsList->RegisterPhysics(new Mustard::Geant4X::PionKaonDecayMakeSpinPhysics{muc::to_underlying(env.VerboseLevel())});
-    // Default production cuts: gamma/e-/e+ 10 m, proton 3 m.
-    physicsList->SetDefaultCutValue(10_m);
+    // Default production cuts: gamma/e-/e+ 1 km, proton 3 m.
+    physicsList->SetDefaultCutValue(1_km);
     physicsList->SetCutValue(3_m, "proton");
-    runManager.SetUserInitialization(physicsList);
+    // Enable the optional G4EmExtraPhysics conversion processes (off by default).
+    if (const auto emExtra{const_cast<G4EmExtraPhysics*>(
+            dynamic_cast<const G4EmExtraPhysics*>(
+                physicsList->GetPhysics("G4GammaLeptoNuclearPhys")))}) {
+        emExtra->GammaToMuMu(true);
+        emExtra->MuonToMuMu(true);
+        emExtra->PositronToMuMu(true);
+    }
     // The default 10 us neutron tracking cut would kill every neutron in an air shower; use 10 ms instead
     if (const auto neutronTrackingCut{const_cast<G4NeutronTrackingCut*>(
             dynamic_cast<const G4NeutronTrackingCut*>(
@@ -89,6 +97,7 @@ auto main(int argc, char* argv[]) -> int {
     // Raise max energy
     G4HadronicParameters::Instance()->SetMaxEnergy(1000_PeV);
     G4EmParameters::Instance()->SetMaxEnergy(1000_PeV);
+    runManager.SetUserInitialization(physicsList);
 
     // Register detector construction
     runManager.SetUserInitialization(new MusAirS::DetectorConstruction{env.VerboseLevelReach<'I'>()});
