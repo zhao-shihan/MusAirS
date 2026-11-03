@@ -32,7 +32,6 @@
 #include "Mustard/IO/Print.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
 
-#include "G4EmExtraPhysics.hh"
 #include "G4EmParameters.hh"
 #include "G4EmStandardPhysics_option1.hh"
 #include "G4GeometryManager.hh"
@@ -79,14 +78,6 @@ auto main(int argc, char* argv[]) -> int {
     // Default production cuts: gamma/e-/e+ 1 km, proton 3 m.
     physicsList->SetDefaultCutValue(1_km);
     physicsList->SetCutValue(3_m, "proton");
-    // Enable the optional G4EmExtraPhysics conversion processes (off by default).
-    if (const auto emExtra{const_cast<G4EmExtraPhysics*>(
-            dynamic_cast<const G4EmExtraPhysics*>(
-                physicsList->GetPhysics("G4GammaLeptoNuclearPhys")))}) {
-        emExtra->GammaToMuMu(true);
-        emExtra->MuonToMuMu(true);
-        emExtra->PositronToMuMu(true);
-    }
     // The default 10 us neutron tracking cut would kill every neutron in an air shower; use 10 ms instead
     if (const auto neutronTrackingCut{const_cast<G4NeutronTrackingCut*>(
             dynamic_cast<const G4NeutronTrackingCut*>(
@@ -95,8 +86,8 @@ auto main(int argc, char* argv[]) -> int {
         neutronTrackingCut->SetKineticEnergyLimit(300_MeV);
     }
     // Raise max energy
-    G4HadronicParameters::Instance()->SetMaxEnergy(1000_PeV);
-    G4EmParameters::Instance()->SetMaxEnergy(1000_PeV);
+    G4HadronicParameters::Instance()->SetMaxEnergy(1_PeV);
+    G4EmParameters::Instance()->SetMaxEnergy(1_PeV);
     runManager.SetUserInitialization(physicsList);
 
     // Register detector construction
