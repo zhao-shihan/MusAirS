@@ -36,6 +36,7 @@
 #include "G4EmStandardPhysics_option1.hh"
 #include "G4GeometryManager.hh"
 #include "G4HadronicParameters.hh"
+#include "G4NeutronTrackingCut.hh"
 #include "G4SpinDecayPhysics.hh"
 
 #include "muc/utility"
@@ -74,7 +75,17 @@ auto main(int argc, char* argv[]) -> int {
     physicsList->RegisterPhysics(new G4SpinDecayPhysics{muc::to_underlying(env.VerboseLevel())});
     // Extend decay-with-spin to kaons
     physicsList->RegisterPhysics(new Mustard::Geant4X::PionKaonDecayMakeSpinPhysics{muc::to_underlying(env.VerboseLevel())});
+    // Default production cuts: gamma/e-/e+ 10 m, proton 3 m.
+    physicsList->SetDefaultCutValue(10_m);
+    physicsList->SetCutValue(3_m, "proton");
     runManager.SetUserInitialization(physicsList);
+    // The default 10 us neutron tracking cut would kill every neutron in an air shower; use 10 ms instead
+    if (const auto neutronTrackingCut{const_cast<G4NeutronTrackingCut*>(
+            dynamic_cast<const G4NeutronTrackingCut*>(
+                physicsList->GetPhysics("neutronTrackingCut")))}) {
+        using namespace Mustard::LiteralUnit::Time;
+        neutronTrackingCut->SetTimeLimit(10_ms);
+    }
     // Raise max energy
     using namespace Mustard::LiteralUnit::Energy;
     G4HadronicParameters::Instance()->SetMaxEnergy(1000_PeV);

@@ -15,8 +15,9 @@
 /MusAirS/PCR/Energy/Min                      3 GeV  # proton < 3 GeV contribute little to muon shower
 #/MusAirS/PCR/Energy/Sampling/Mode            LogUniformBiased
 
-/run/setCut 1 pc    # arbitrarily high cut is enough for just muon shower
-/run/setCutForAGivenParticle proton 10 m
+/run/setCutForAGivenParticle e+ 1 pc
+/run/setCutForAGivenParticle e- 1 pc
+/run/setCutForAGivenParticle gamma 1 pc
 /MusAirS/Action/KillEMShower yes
 /MusAirS/Action/KillChargedPion yes
 /MusAirS/SD/EarthSD/DetectNeutrino no

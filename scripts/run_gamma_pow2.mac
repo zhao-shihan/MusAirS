@@ -19,8 +19,6 @@
 /MusAirS/PCR/Energy/Max                      10 TeV
 #/MusAirS/PCR/Energy/Sampling/Mode            LogUniformBiased
 
-/run/setCut 10 m    # low cut for accurate EM shower shape
-/run/setCutForAGivenParticle proton 3 m
 /MusAirS/SD/EarthSD/DetectNeutrino yes
 /MusAirS/Analysis/SavePrimaryVertexData no
 
