@@ -17,6 +17,7 @@
 // MusAirS. If not, see <https://www.gnu.org/licenses/>.
 
 #include "MusAirS/Detector/Description/Atmosphere.h++"
+#include "MusAirS/Detector/Description/Earth.h++"
 #include "MusAirS/Detector/Description/World.h++"
 #include "MusAirS/Generator/PrimaryCosmicRayGenerator.h++"
 
@@ -257,18 +258,21 @@ auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
     using namespace Mustard::LiteralUnit::MathConstantSuffix;
 
     const auto hMax{Detector::Description::Atmosphere::Instance().MaxAltitude()};
-    particle_position = {0, 0, hMax};
-    const auto wo2h{Detector::Description::World::Instance().Width() / (2 * hMax)};
-    const auto maxCosTheta{-1 / muc::hypot(1., wo2h)};
+    const auto zGround{Detector::Description::Earth::Instance().GroundAltitude()};
+    const auto height{hMax - zGround};
+    const auto halfWidth{Detector::Description::World::Instance().Width() / 2};
+    const auto minCosTheta{height / muc::hypot(height, halfWidth)};
 
     const auto [ek, weight]{SampleEnergy()};
-    const auto pHat{[&maxCosTheta] {
-        const auto z{G4RandFlat::shoot(-1, maxCosTheta)};
-        const auto rho{std::sqrt((1 + z) * (1 - z))};
+    const auto pHat{[&minCosTheta] {
+        const auto cosTheta{std::sqrt(G4RandFlat::shoot(minCosTheta * minCosTheta, 1.))};
+        const auto sinTheta{std::sqrt((1 - cosTheta) * (1 + cosTheta))};
         const auto phi{G4RandFlat::shoot(0., 2_pi)};
         const auto [sinPhi, cosPhi]{muc::sincos(phi)};
-        return G4ThreeVector{rho * cosPhi, rho * sinPhi, z};
+        return G4ThreeVector{sinTheta * cosPhi, sinTheta * sinPhi, -cosTheta};
     }()};
+    const auto pathLength{height / -pHat.z()};
+    particle_position = {-pathLength * pHat.x(), -pathLength * pHat.y(), hMax};
     const auto p{std::sqrt((2 * fParticle->GetPDGMass() + ek) * ek) * pHat};
 
     // clang-format off

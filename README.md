@@ -21,7 +21,7 @@ Simulation of cosmic ray air shower.
     - [Physics configuration](#physics-configuration)
   - [Run macro](#run-macro)
   - [Geometry and field](#geometry-and-field)
-    - [Atmosphere modelling](#atmosphere-modelling)
+    - [Atmosphere modeling](#atmosphere-modeling)
       - [States](#states)
       - [Components](#components)
       - [Slicing](#slicing)
@@ -147,11 +147,11 @@ You can adjust these parameters by importing the YAML file through macro command
 /Mustard/Detector/Description/Ixport another.yaml
 ```
 
-### Atmosphere modelling
+### Atmosphere modeling
 
 #### States
 
-The atmosphere is modelled by [The International Standard Atmosphere (ISA)](https://en.wikipedia.org/wiki/International_Standard_Atmosphere). It is a static atmospheric model of how the pressure, temperature and density of the Earth's atmosphere change over a range of altitudes up to 85 km above sea level. The altitude range should be enough for studying air shower up to 10 TeV.
+The atmosphere is modeled by [The International Standard Atmosphere (ISA)](https://en.wikipedia.org/wiki/International_Standard_Atmosphere). It is a static atmospheric model of how the pressure, temperature and density of the Earth's atmosphere change over a range of altitudes up to 85 km above sea level. The altitude range should be enough for studying air shower up to 10 TeV.
 
 #### Components
 
@@ -159,7 +159,7 @@ The components of atmosphere within the available range of ISA are almost the sa
 
 #### Slicing
 
-Geant4 does not allow basic material properties (density, pressures, etc.) to change continuously. So the atmosphere should be modelled by many slices of air with different pressures. There are 2 slicing scheme: by altitude or by pressure. The former slices the atmosphere with adjcent layers have the same thickness, while the latter slices with adjcent layers have (almost) the same pressure difference. The atmosphere top (max altitude), slicing scheme and the number of slices can be changed in the geometry description YAML file.
+Geant4 does not allow basic material properties (density, pressures, etc.) to change continuously. So the atmosphere should be modeled by many slices of air with different pressures. There are 2 slicing scheme: by altitude or by pressure. The former slices the atmosphere with adjacent layers have the same thickness, while the latter slices with adjacent layers have (almost) the same pressure difference. The atmosphere top (max altitude), slicing scheme and the number of slices can be changed in the geometry description YAML file.
 
 ### Geomagnetic field
 
@@ -200,9 +200,9 @@ It accepts any particle of the Geant4 particle table, and takes the kinetic ener
 /MusAirS/PCR/Energy/Max                  10 TeV
 ```
 
-Primary vertices are placed on the top of the atmosphere and the direction is sampled isotropically over the range of zenith angles that the world volume accepts.
+Primary vertices are placed on the top of the atmosphere at the point where the initial primary direction points at the ground center `(0, 0, GroundAltitude)`.  The zenith angle $\theta$ is sampled with probability density proportional to $\cos\theta$ over the range of angles accepted by the world volume, and the azimuth angle is uniform.  This is the angular distribution of an isotropic cosmic-ray flux crossing the horizontal ground: the $\cos\theta$ factor is the projected area of the ground, not an extra event weight.  The event weight therefore still accounts only for the energy sampling.  Only the initial direction is aimed; a charged primary is subsequently deflected by the geomagnetic field during tracking.
 
-The example file `primary_cosmic_ray.root` is built by `scripts/CreateEnergySpectrum.cxx` and holds the seven-year AMS-02 proton and helium fluxes [Phys. Rept. **894** (2021) 1] as the histograms `AMS_Proton` and `AMS_Helium`.  Their bins are the rigidity bins of the measurement converted to the kinetic energy of the primary in MeV, which for helium is the total kinetic energy of the nucleus and not the energy per nucleon, and their content is the measured flux divided by the bin width, so that the integral over a bin is the measured number of particles in that bin.  Because the normalisation is physical, the two spectra can be combined with weights proportional to their integral fluxes when a mixed composition is wanted.
+The example file `primary_cosmic_ray.root` is built by `scripts/CreateEnergySpectrum.cxx` and holds the seven-year AMS-02 proton and helium fluxes [Phys. Rept. **894** (2021) 1] as the histograms `AMS_Proton` and `AMS_Helium`.  Their bins are the rigidity bins of the measurement converted to the kinetic energy of the primary in MeV, which for helium is the total kinetic energy of the nucleus and not the energy per nucleon, and their content is the measured flux divided by the bin width, so that the integral over a bin is the measured number of particles in that bin.  Because the normalization is physical, the two spectra can be combined with weights proportional to their integral fluxes when a mixed composition is wanted.
 
 The spectrum is sampled with one of four modes, selected by
 
@@ -210,7 +210,7 @@ The spectrum is sampled with one of four modes, selected by
 /MusAirS/PCR/Energy/Sampling/Mode  LogUniformBiased
 ```
 
-With $f(E)$ the physical spectrum and $g(E)$ the distribution that is sampled, an event carries the weight $w = f(E)/g(E)$, and the weights are stored in the output so that every distribution can be reweighted afterwards.
+With $f(E)$ the physical spectrum and $g(E)$ the distribution that is sampled, an event carries the weight $w = f(E)/g(E)$, and the weights are stored in the output so that every distribution can be reweighted afterwards.  The direction sampling already includes the $\cos\theta$ projection of the horizontal ground, so no direction weight is applied; the event weight is solely the energy-sampling weight.
 
 | Mode               | $g(E)$ | $w(E)$                     | Use                                                               |
 | ------------------ | ------ | -------------------------- | ----------------------------------------------------------------- |
