@@ -18,6 +18,7 @@ Simulation of cosmic ray air shower.
     - [Coordinate system](#coordinate-system)
     - [Angular Coordinate (in result)](#angular-coordinate-in-result)
   - [Choose an alternative physics list](#choose-an-alternative-physics-list)
+    - [Physics configuration](#physics-configuration)
   - [Run macro](#run-macro)
   - [Geometry and field](#geometry-and-field)
     - [Atmosphere modelling](#atmosphere-modelling)
@@ -111,6 +112,24 @@ MusAirS --physics-list QGSP_BERT
 ```
 It accepts a [Geant4 reference physics list](https://geant4-userdoc.web.cern.ch/UsersGuides/PhysicsListGuide/html/reference_PL/index.html) name as its argument. Note that electromagnetic physics is forced to `EM Opt1`, so EM physics suffix won't work.
 
+### Physics configuration
+
+The rest of the physics configuration is set by the program itself, so that every run uses it even if the macro says nothing about it:
+
+- The spin-dependent decay process of Geant4 is registered for pions by `G4SpinDecayPhysics` and extended to kaons and $K^0_L$ by `PionKaonDecayMakeSpinPhysics` of [Mustard](https://github.com/zhaoshihan/Mustard).
+- The default production cuts are **1 km** for gamma, e- and e+ and **3 m** for the proton. The proton cut is the kinetic-energy threshold of the recoiling nucleus in an elastic scatter, not a threshold for producing protons: in Geant4's linear range-to-energy convention 3 m corresponds to 300 MeV, and inelastic final states are not filtered.
+- The neutron tracking cut that comes with the reference lists (10 us, measured from the primary) is replaced by **10 ms** and a **300 MeV** kinetic-energy limit. The default cut would stop every neutron at its first step in an air shower, because a primary that starts at 100 km reaches its first interaction about 280 us later. 10 ms is longer than the longest transit through the world volume, and 300 MeV is at the threshold for pion production on a nucleus, below which a neutron cannot feed the muon component.
+- The hadronic and electromagnetic tables are extended to **1 PeV**.
+- The optional conversion processes of `G4EmExtraPhysics` (gamma to muon pair, positron to muon pair, muon to muon pair, positron to hadrons) are left at their default disabled state; the electromagnetic production of muons proceeds through the photonuclear processes, which are always on.
+
+The cuts can still be overridden in the macro. For example, the `lite` and `wo_pipm` example macros lower the electromagnetic cuts to 1 pc and kill the electromagnetic shower, which is appropriate when only the muons from pion and kaon decay are of interest:
+```sh
+/run/setCutForAGivenParticle gamma 1 pc
+/run/setCutForAGivenParticle e- 1 pc
+/run/setCutForAGivenParticle e+ 1 pc
+```
+A range cut of 1 pc saturates the range-to-energy conversion at 9.55 GeV; it is a way of switching off the electromagnetic shower, not a physical range of one parsec.
+
 ## Run macro
 
 We provided a few example Geant4 macros in `scripts/` directory. Based on them you can write your own.
@@ -193,14 +212,12 @@ The spectrum is sampled with one of four modes, selected by
 
 With $f(E)$ the physical spectrum and $g(E)$ the distribution that is sampled, an event carries the weight $w = f(E)/g(E)$, and the weights are stored in the output so that every distribution can be reweighted afterwards.
 
-| Mode | $g(E)$ | $w(E)$ | Use |
-| ---- | ------ | ------ | --- |
-| `Normal` | $f$ | $1$ | reference; best for the lowest decade, cheapest per event |
-| `UniformBiased` | const | $f$ | exploring a wide range quickly |
-| `LogUniformBiased` | $1/E$ | $fE\ln(E_{\max}/E_{\min})$ | recommended for production: equal statistics per decade of energy |
-| `CustomBiased` | user | $f/g$ | shaping the sample towards the observable of interest |
-
-`LogUniformBiased` requires $E_{\min} > 0$.
+| Mode               | $g(E)$ | $w(E)$                     | Use                                                               |
+| ------------------ | ------ | -------------------------- | ----------------------------------------------------------------- |
+| `Normal`           | $f$    | $1$                        | reference; best for the lowest decade, cheapest per event         |
+| `UniformBiased`    | const  | $f$                        | exploring a wide range quickly                                    |
+| `LogUniformBiased` | $1/E$  | $fE\ln(E_{\max}/E_{\min})$ | recommended for production: equal statistics per decade of energy |
+| `CustomBiased`     | user   | $f/g$                      | shaping the sample towards the observable of interest             |
 
 #### Units
 
