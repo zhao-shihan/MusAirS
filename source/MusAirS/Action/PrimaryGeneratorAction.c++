@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2024-2025  Shihan Zhao
+// Copyright 2024-2026  Shihan Zhao
 //
 // This file is part of MusAirS, an air shower simulation tool.
 //

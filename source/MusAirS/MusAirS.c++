@@ -1,6 +1,6 @@
 // -*- C++ -*-
 //
-// Copyright 2024-2025  Shihan Zhao
+// Copyright 2024-2026  Shihan Zhao
 //
 // This file is part of MusAirS, an air shower simulation tool.
 //
@@ -57,7 +57,7 @@ auto main(int argc, char* argv[]) -> int {
 --------------------------------------------------
  |\/|   _ /|.  (`  An air shower simulation tool
  |  |L|_\/-|||`_)  Version {}
- Copyright 2024-2025  Shihan Zhao
+ Copyright 2024-2026  Shihan Zhao
 --------------------------------------------------
 )",
                          MusAirS::versionString);
