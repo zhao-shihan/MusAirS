@@ -15,7 +15,7 @@
 /MusAirS/Action/SwitchToPCR
 /MusAirS/PCR/Particle                        proton
 /MusAirS/PCR/Energy/Spectrum/Formula         x^-2.7
-/MusAirS/PCR/Energy/Min                      2 GeV
+/MusAirS/PCR/Energy/Min                      12.4 GeV  # vertical geomagnetic cutoff at Zhaoqing (13.3 GV)
 /MusAirS/PCR/Energy/Max                      10 TeV
 /MusAirS/PCR/Energy/Sampling/Mode            LogUniformBiased
 /MusAirS/PCR/Direction/Sampling/Mode         ZenithPowerBiased

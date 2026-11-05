@@ -12,7 +12,7 @@
 /MusAirS/Action/SwitchToPCR
 /MusAirS/PCR/Particle                        alpha
 /MusAirS/PCR/Energy/Spectrum/Histogram       primary_cosmic_ray.root AMS_Helium
-/MusAirS/PCR/Energy/Min                      12 GeV  # alpha < 12 GeV contribute little to muon shower
+/MusAirS/PCR/Energy/Min                      23.1 GeV  # vertical geomagnetic cutoff at Zhaoqing (13.3 GV)
 /MusAirS/PCR/Energy/Sampling/Mode            LogUniformBiased
 /MusAirS/PCR/Direction/Sampling/Mode         ZenithPowerBiased
 
