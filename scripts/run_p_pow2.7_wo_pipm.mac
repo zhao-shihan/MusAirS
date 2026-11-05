@@ -17,7 +17,8 @@
 /MusAirS/PCR/Energy/Spectrum/Formula         x^-2.7
 /MusAirS/PCR/Energy/Min                      3 GeV  # proton < 3 GeV contribute little to muon shower
 /MusAirS/PCR/Energy/Max                      10 TeV
-#/MusAirS/PCR/Energy/Sampling/Mode            LogUniformBiased
+/MusAirS/PCR/Energy/Sampling/Mode            LogUniformBiased
+/MusAirS/PCR/Direction/Sampling/Mode         ZenithPowerBiased
 
 /run/setCutForAGivenParticle e+ 1 pc
 /run/setCutForAGivenParticle e- 1 pc

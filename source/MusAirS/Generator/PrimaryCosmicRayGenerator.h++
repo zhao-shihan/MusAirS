@@ -20,6 +20,7 @@
 
 #include "MusAirS/Messenger/PrimaryCosmicRayGeneratorMessenger.h++"
 
+#include "G4ThreeVector.hh"
 #include "G4VPrimaryGenerator.hh"
 
 #include <concepts>
@@ -43,6 +44,11 @@ public:
         LogUniformBiased,
         CustomBiased
     };
+    enum struct DirectionSamplingMode {
+        Normal,
+        ZenithPowerBiased,
+        CustomBiased
+    };
 
 public:
     PrimaryCosmicRayGenerator();
@@ -60,6 +66,9 @@ public:
     auto MinEnergy(double val) -> void;
     auto MaxEnergy(double val) -> void;
     auto EnergySamplingMode(enum EnergySamplingMode mode) -> void;
+    auto DirectionSamplingMode(enum DirectionSamplingMode mode) -> void;
+    auto ZenithBiasExponent(double n) -> void;
+    auto NDirectionSpectrumPoint(int n) -> void;
 
     auto CustomBiasedEnergySpectrum(const std::string& formula) -> void;
     auto CustomBiasedEnergySpectrum(const TH1& histogram) -> void;
@@ -67,15 +76,20 @@ public:
     template<typename T>
     auto CustomBiasedEnergySpectrum(const std::string& fileName, const std::string& name) -> void;
 
+    auto CustomBiasedDirectionSpectrum(const std::string& formula) -> void;
+    auto CustomBiasedDirectionSpectrum(const TH1& histogram) -> void;
+    auto CustomBiasedDirectionSpectrum(const std::same_as<TGraph> auto& graph) -> void;
+    template<typename T>
+    auto CustomBiasedDirectionSpectrum(const std::string& fileName, const std::string& name) -> void;
+
     virtual auto GeneratePrimaryVertex(G4Event* event) -> void override;
 
 private:
     auto ValidateEnergySpectrumForSampling(enum EnergySamplingMode mode) const -> void;
     auto ValidateEnergyRangeForSampling(enum EnergySamplingMode mode, double eMin) const -> void;
 
-    auto SyncBiasedEnergySpectrum() -> void;
-
-    auto SampleEnergy() const -> std::pair<double, double>;
+    auto SampleEnergy() -> std::pair<double, double>;
+    auto SampleDirection(double minCosTheta) -> std::pair<G4ThreeVector, double>;
 
 private:
     G4ParticleDefinition* fParticle;
@@ -86,6 +100,11 @@ private:
     double fIntrinsicMaxEnergy;
     enum EnergySamplingMode fEnergySamplingMode;
     std::unique_ptr<TF1> fCustomBiasedEnergySpectrum;
+
+    enum DirectionSamplingMode fDirectionSamplingMode;
+    double fZenithBiasExponent;
+    int fNDirectionSpectrumPoint;
+    std::unique_ptr<TF1> fCustomBiasedDirectionSpectrum;
 
     PrimaryCosmicRayGeneratorMessenger::Register<PrimaryCosmicRayGenerator> fMessengerRegister;
 };

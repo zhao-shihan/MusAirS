@@ -41,6 +41,7 @@
 
 #include "fmt/core.h"
 
+#include <algorithm>
 #include <cmath>
 #include <functional>
 #include <limits>
@@ -49,6 +50,68 @@
 namespace MusAirS::inline Generator {
 
 using namespace Mustard::LiteralUnit::Energy;
+
+namespace {
+
+auto MakeCustomSpectrum(const std::string& name, const std::string& formula, int nPoint) -> std::unique_ptr<TF1> {
+    auto spectrum{std::make_unique<TF1>(name.c_str(), formula.c_str())};
+    spectrum->SetNpx(nPoint);
+    return spectrum;
+}
+
+auto MakeCustomSpectrum(const std::string& name, const TH1& histogram, int nPoint) -> std::unique_ptr<TF1> {
+    std::shared_ptr<TH1> h{dynamic_cast<TH1*>(histogram.Clone())};
+    h->SetDirectory(nullptr);
+
+    auto spectrum{std::make_unique<TF1>(
+        name.c_str(),
+        std::function{[spectrum = std::move(h)](const double* x, const double*) {
+            return spectrum->GetBinContent(spectrum->FindFixBin(*x));
+        }})};
+    spectrum->SetNpx(nPoint);
+    return spectrum;
+}
+
+auto MakeCustomSpectrum(const std::string& name, const TGraph& graph, int nPoint) -> std::unique_ptr<TF1> {
+    std::shared_ptr<TGraph> g{dynamic_cast<TGraph*>(graph.Clone())};
+    if (g->GetN() < 2) {
+        Mustard::Throw<std::runtime_error>(fmt::format("A custom spectrum graph needs at least two points, but '{}' has {}", g->GetName(), g->GetN()));
+    }
+
+    auto spectrum{std::make_unique<TF1>(
+        name.c_str(),
+        std::function{[spectrum = std::move(g)](const double* x, const double*) {
+            return spectrum->Eval(*x);
+        }})};
+    spectrum->SetNpx(nPoint);
+    return spectrum;
+}
+
+template<typename T>
+auto LoadCustomSpectrum(const std::string& name, const std::string& fileName, const std::string& objectName, int nPoint) -> std::unique_ptr<TF1> {
+    const auto file{std::unique_ptr<TFile>{TFile::Open(fileName.c_str())}};
+    if (file == nullptr) {
+        Mustard::Throw<std::runtime_error>(fmt::format("Cannot open '{}'", fileName));
+    }
+
+    const auto spectrum{file->Get<T>(objectName.c_str())};
+    if (spectrum == nullptr) {
+        Mustard::Throw<std::runtime_error>(fmt::format("Cannot find object '{}' in '{}'", objectName, fileName));
+    }
+
+    return MakeCustomSpectrum(name, *spectrum, nPoint);
+}
+
+auto SyncCustomSpectrum(TF1& spectrum, double xMin, double xMax, int nPoint) -> void {
+    if (spectrum.GetXmin() != xMin or spectrum.GetXmax() != xMax) {
+        spectrum.SetRange(xMin, xMax);
+    }
+    if (spectrum.GetNpx() != nPoint) {
+        spectrum.SetNpx(nPoint);
+    }
+}
+
+} // namespace
 
 PrimaryCosmicRayGenerator::PrimaryCosmicRayGenerator() :
     G4VPrimaryGenerator{},
@@ -59,6 +122,10 @@ PrimaryCosmicRayGenerator::PrimaryCosmicRayGenerator() :
     fIntrinsicMaxEnergy{std::numeric_limits<double>::max()},
     fEnergySamplingMode{EnergySamplingMode::Normal},
     fCustomBiasedEnergySpectrum{},
+    fDirectionSamplingMode{DirectionSamplingMode::Normal},
+    fZenithBiasExponent{2},
+    fNDirectionSpectrumPoint{10000},
+    fCustomBiasedDirectionSpectrum{},
     fMessengerRegister{this} {
     Particle("proton");
     EnergySpectrum("x^-2.7");
@@ -81,7 +148,6 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(const std::string& formula) -> vo
     ValidateEnergyRangeForSampling(fEnergySamplingMode, eMin);
     fEnergySpectrum = std::make_unique<TF1>("EnergySpectrum", formula.c_str(), eMin, eMax);
     fEnergySpectrum->SetNpx(fNEnergySpectrumPoint);
-    SyncBiasedEnergySpectrum();
     fIntrinsicMinEnergy = 0;
     fIntrinsicMaxEnergy = std::numeric_limits<double>::max();
 }
@@ -104,7 +170,6 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum(const TH1& histogram) -> void {
         }},
         fIntrinsicMinEnergy, fIntrinsicMaxEnergy);
     fEnergySpectrum->SetNpx(fNEnergySpectrumPoint);
-    SyncBiasedEnergySpectrum();
 }
 
 template<>
@@ -127,7 +192,6 @@ auto PrimaryCosmicRayGenerator::EnergySpectrum<TGraph>(const TGraph& graph) -> v
         }},
         fIntrinsicMinEnergy, fIntrinsicMaxEnergy);
     fEnergySpectrum->SetNpx(fNEnergySpectrumPoint);
-    SyncBiasedEnergySpectrum();
 }
 
 template<typename T>
@@ -148,55 +212,51 @@ template auto PrimaryCosmicRayGenerator::EnergySpectrum<TH1>(const std::string& 
 template auto PrimaryCosmicRayGenerator::EnergySpectrum<TGraph>(const std::string& fileName, const std::string& name) -> void;
 
 auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum(const std::string& formula) -> void {
-    fCustomBiasedEnergySpectrum = std::make_unique<TF1>("CustomBiasedEnergySpectrum", formula.c_str());
-    SyncBiasedEnergySpectrum();
+    fCustomBiasedEnergySpectrum = MakeCustomSpectrum("CustomBiasedEnergySpectrum", formula, fEnergySpectrum->GetNpx());
 }
 
 auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum(const TH1& histogram) -> void {
-    std::shared_ptr<TH1> h{dynamic_cast<TH1*>(histogram.Clone())};
-    h->SetDirectory(nullptr);
-
-    fCustomBiasedEnergySpectrum = std::make_unique<TF1>(
-        "CustomBiasedEnergySpectrum",
-        std::function{[spectrum = std::move(h)](const double* x, const double*) {
-            return spectrum->GetBinContent(spectrum->FindFixBin(*x));
-        }});
-    SyncBiasedEnergySpectrum();
+    fCustomBiasedEnergySpectrum = MakeCustomSpectrum("CustomBiasedEnergySpectrum", histogram, fEnergySpectrum->GetNpx());
 }
 
 template<>
 auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum<TGraph>(const TGraph& graph) -> void {
-    std::shared_ptr<TGraph> g{dynamic_cast<TGraph*>(graph.Clone())};
-
-    fCustomBiasedEnergySpectrum = std::make_unique<TF1>(
-        "CustomBiasedEnergySpectrum",
-        std::function{[spectrum = std::move(g)](const double* x, const double*) {
-            return spectrum->Eval(*x);
-        }});
-    SyncBiasedEnergySpectrum();
+    fCustomBiasedEnergySpectrum = MakeCustomSpectrum("CustomBiasedEnergySpectrum", graph, fEnergySpectrum->GetNpx());
 }
 
 template<typename T>
 auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum(const std::string& fileName, const std::string& name) -> void {
-    const auto file{std::unique_ptr<TFile>{TFile::Open(fileName.c_str())}};
-    if (file == nullptr) {
-        Mustard::Throw<std::runtime_error>(fmt::format("Cannot open '{}'", fileName));
-    }
-
-    const auto spectrum{file->Get<T>(name.c_str())};
-    if (spectrum == nullptr) {
-        Mustard::Throw<std::runtime_error>(fmt::format("Cannot find object '{}' in '{}'", name, fileName));
-    }
-
-    CustomBiasedEnergySpectrum(*spectrum);
+    fCustomBiasedEnergySpectrum = LoadCustomSpectrum<T>("CustomBiasedEnergySpectrum", fileName, name, fEnergySpectrum->GetNpx());
 }
 template auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum<TH1>(const std::string& fileName, const std::string& name) -> void;
 template auto PrimaryCosmicRayGenerator::CustomBiasedEnergySpectrum<TGraph>(const std::string& fileName, const std::string& name) -> void;
 
+auto PrimaryCosmicRayGenerator::CustomBiasedDirectionSpectrum(const std::string& formula) -> void {
+    fCustomBiasedDirectionSpectrum = MakeCustomSpectrum("CustomBiasedDirectionSpectrum", formula, fNDirectionSpectrumPoint);
+}
+
+auto PrimaryCosmicRayGenerator::CustomBiasedDirectionSpectrum(const TH1& histogram) -> void {
+    fCustomBiasedDirectionSpectrum = MakeCustomSpectrum("CustomBiasedDirectionSpectrum", histogram, fNDirectionSpectrumPoint);
+}
+
+template<>
+auto PrimaryCosmicRayGenerator::CustomBiasedDirectionSpectrum<TGraph>(const TGraph& graph) -> void {
+    fCustomBiasedDirectionSpectrum = MakeCustomSpectrum("CustomBiasedDirectionSpectrum", graph, fNDirectionSpectrumPoint);
+}
+
+template<typename T>
+auto PrimaryCosmicRayGenerator::CustomBiasedDirectionSpectrum(const std::string& fileName, const std::string& name) -> void {
+    fCustomBiasedDirectionSpectrum = LoadCustomSpectrum<T>("CustomBiasedDirectionSpectrum", fileName, name, fNDirectionSpectrumPoint);
+}
+template auto PrimaryCosmicRayGenerator::CustomBiasedDirectionSpectrum<TH1>(const std::string& fileName, const std::string& name) -> void;
+template auto PrimaryCosmicRayGenerator::CustomBiasedDirectionSpectrum<TGraph>(const std::string& fileName, const std::string& name) -> void;
+
 auto PrimaryCosmicRayGenerator::NEnergySpectrumPoint(int n) -> void {
+    if (not(n >= 10 and n <= 10'000'000)) {
+        Mustard::Throw<std::runtime_error>(fmt::format("Energy spectrum NPoint must be between 10 and 10000000, but n = {}", n));
+    }
     if (fEnergySpectrum) {
         fEnergySpectrum->SetNpx(n);
-        SyncBiasedEnergySpectrum();
     }
     fNEnergySpectrumPoint = n;
 }
@@ -213,7 +273,6 @@ auto PrimaryCosmicRayGenerator::MinEnergy(double val) -> void {
     }
     ValidateEnergyRangeForSampling(fEnergySamplingMode, eMin);
     fEnergySpectrum->SetRange(eMin, fEnergySpectrum->GetXmax());
-    SyncBiasedEnergySpectrum();
 }
 
 auto PrimaryCosmicRayGenerator::MaxEnergy(double val) -> void {
@@ -227,7 +286,6 @@ auto PrimaryCosmicRayGenerator::MaxEnergy(double val) -> void {
                                                        eMax, fEnergySpectrum->GetXmin()));
     }
     fEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(), eMax);
-    SyncBiasedEnergySpectrum();
 }
 
 auto PrimaryCosmicRayGenerator::ValidateEnergyRangeForSampling(enum EnergySamplingMode mode, double eMin) const -> void {
@@ -254,6 +312,24 @@ auto PrimaryCosmicRayGenerator::EnergySamplingMode(enum EnergySamplingMode mode)
     fEnergySamplingMode = mode;
 }
 
+auto PrimaryCosmicRayGenerator::DirectionSamplingMode(enum DirectionSamplingMode mode) -> void {
+    fDirectionSamplingMode = mode;
+}
+
+auto PrimaryCosmicRayGenerator::ZenithBiasExponent(double n) -> void {
+    if (not(std::isfinite(n) and n >= 0)) {
+        Mustard::Throw<std::runtime_error>(fmt::format("Zenith bias exponent must be finite and non-negative, but n = {}", n));
+    }
+    fZenithBiasExponent = n;
+}
+
+auto PrimaryCosmicRayGenerator::NDirectionSpectrumPoint(int n) -> void {
+    if (not(n >= 10 and n <= 10'000'000)) {
+        Mustard::Throw<std::runtime_error>(fmt::format("Direction spectrum NPoint must be between 10 and 10000000, but n = {}", n));
+    }
+    fNDirectionSpectrumPoint = n;
+}
+
 auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
     using namespace Mustard::LiteralUnit::MathConstantSuffix;
 
@@ -264,40 +340,78 @@ auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
     const auto minCosTheta{height / muc::hypot(height, halfWidth)};
 
     const auto [ek, weight]{SampleEnergy()};
-    const auto pHat{[&minCosTheta] {
-        const auto cosTheta{std::sqrt(G4RandFlat::shoot(minCosTheta * minCosTheta, 1.))};
-        const auto sinTheta{std::sqrt((1 - cosTheta) * (1 + cosTheta))};
-        const auto phi{G4RandFlat::shoot(0., 2_pi)};
-        const auto [sinPhi, cosPhi]{muc::sincos(phi)};
-        return G4ThreeVector{sinTheta * cosPhi, sinTheta * sinPhi, -cosTheta};
-    }()};
+    const auto [pHat, directionWeight]{SampleDirection(minCosTheta)};
     const auto pathLength{height / -pHat.z()};
     particle_position = {-pathLength * pHat.x(), -pathLength * pHat.y(), hMax};
     const auto p{std::sqrt((2 * fParticle->GetPDGMass() + ek) * ek) * pHat};
 
     // clang-format off
     const auto vertex{new G4PrimaryVertex{particle_position, particle_time}}; // clang-format on
-    vertex->SetWeight(weight);
+    vertex->SetWeight(weight * directionWeight);
     vertex->SetPrimary(new G4PrimaryParticle{fParticle, p.x(), p.y(), p.z()});
     event->AddPrimaryVertex(vertex);
 }
 
-auto PrimaryCosmicRayGenerator::SyncBiasedEnergySpectrum() -> void {
-    if (fCustomBiasedEnergySpectrum) {
-        fCustomBiasedEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax());
-        fCustomBiasedEnergySpectrum->SetNpx(fEnergySpectrum->GetNpx());
+auto PrimaryCosmicRayGenerator::SampleDirection(double minCosTheta) -> std::pair<G4ThreeVector, double> {
+    using namespace Mustard::LiteralUnit::MathConstantSuffix;
+
+    const auto minCosThetaSquared{minCosTheta * minCosTheta};
+    const auto acceptance{1 - minCosThetaSquared};
+    double cosTheta{};
+    double directionWeight{1};
+    switch (fDirectionSamplingMode) {
+    case DirectionSamplingMode::Normal: {
+        cosTheta = std::sqrt(G4RandFlat::shoot(minCosThetaSquared, 1.));
+        directionWeight = acceptance;
+    } break;
+    case DirectionSamplingMode::ZenithPowerBiased: {
+        const auto n{fZenithBiasExponent};
+        const auto uMinPow{std::pow(minCosTheta, n + 1)};
+        cosTheta = std::pow(uMinPow + G4RandFlat::shoot(0., 1.) * (1 - uMinPow), 1. / (n + 1));
+        directionWeight = 2. / (n + 1) * (1 - uMinPow) * std::pow(cosTheta, 1 - n);
+    } break;
+    case DirectionSamplingMode::CustomBiased: {
+        if (not fCustomBiasedDirectionSpectrum) [[unlikely]] {
+            Mustard::Throw<std::runtime_error>("CustomBiased direction sampling requires a custom direction spectrum");
+        }
+        SyncCustomSpectrum(*fCustomBiasedDirectionSpectrum, minCosTheta, 1., fNDirectionSpectrumPoint);
+        cosTheta = fCustomBiasedDirectionSpectrum->GetRandom();
+        if (not std::isfinite(cosTheta)) [[unlikely]] {
+            Mustard::Throw<std::runtime_error>("CustomBiased direction spectrum returned a non-finite value");
+        }
+        cosTheta = std::min(std::max(cosTheta, minCosTheta), 1.);
+        const auto biased{(*fCustomBiasedDirectionSpectrum)(cosTheta)};
+        if (not(biased > 0)) [[unlikely]] {
+            Mustard::Throw<std::runtime_error>(fmt::format("CustomBiased direction spectrum must be positive, but g({}) = {}", cosTheta, biased));
+        }
+        directionWeight = acceptance * cosTheta / biased;
+    } break;
+    default: {
+        muc::unreachable();
     }
+    }
+    const auto sinTheta{std::sqrt((1 - cosTheta) * (1 + cosTheta))};
+    const auto phi{G4RandFlat::shoot(0., 2_pi)};
+    const auto [sinPhi, cosPhi]{muc::sincos(phi)};
+    const G4ThreeVector pHat{sinTheta * cosPhi, sinTheta * sinPhi, -cosTheta};
+    return {pHat, directionWeight};
 }
 
-auto PrimaryCosmicRayGenerator::SampleEnergy() const -> std::pair<double, double> {
+auto PrimaryCosmicRayGenerator::SampleEnergy() -> std::pair<double, double> {
     const auto option{fEnergySpectrum->GetXmin() > 0 ? "LOG" : nullptr};
     switch (fEnergySamplingMode) {
     case EnergySamplingMode::Normal: {
-        return {fEnergySpectrum->GetRandom(nullptr, option), 1};
+        const auto ek{fEnergySpectrum->GetRandom(nullptr, option)};
+        if (not std::isfinite(ek)) [[unlikely]] {
+            Mustard::Throw<std::runtime_error>("Energy spectrum returned a non-finite value");
+        }
+        return {ek, 1};
     }
     case EnergySamplingMode::UniformBiased: {
-        const auto ek{G4RandFlat::shoot(fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax())};
-        return {ek, (*fEnergySpectrum)(ek)};
+        const auto eMin{fEnergySpectrum->GetXmin()};
+        const auto eMax{fEnergySpectrum->GetXmax()};
+        const auto ek{G4RandFlat::shoot(eMin, eMax)};
+        return {ek, (*fEnergySpectrum)(ek) * (eMax - eMin)};
     }
     case EnergySamplingMode::LogUniformBiased: {
         const auto eMin{fEnergySpectrum->GetXmin()};
@@ -310,8 +424,19 @@ auto PrimaryCosmicRayGenerator::SampleEnergy() const -> std::pair<double, double
         return {ek, fk * ek * std::log(eMax / eMin)};
     }
     case EnergySamplingMode::CustomBiased: {
+        if (not fCustomBiasedEnergySpectrum) [[unlikely]] {
+            Mustard::Throw<std::runtime_error>("CustomBiased energy sampling requires a custom energy spectrum");
+        }
+        SyncCustomSpectrum(*fCustomBiasedEnergySpectrum, fEnergySpectrum->GetXmin(), fEnergySpectrum->GetXmax(), fEnergySpectrum->GetNpx());
         const auto ek{fCustomBiasedEnergySpectrum->GetRandom(nullptr, option)};
-        return {ek, (*fEnergySpectrum)(ek) / (*fCustomBiasedEnergySpectrum)(ek)};
+        if (not std::isfinite(ek)) [[unlikely]] {
+            Mustard::Throw<std::runtime_error>("CustomBiased energy spectrum returned a non-finite value");
+        }
+        const auto g{(*fCustomBiasedEnergySpectrum)(ek)};
+        if (not(g > 0)) [[unlikely]] {
+            Mustard::Throw<std::runtime_error>(fmt::format("CustomBiased energy spectrum must be positive, but g({}) = {}", ek, g));
+        }
+        return {ek, (*fEnergySpectrum)(ek) / g};
     }
     }
     muc::unreachable();

@@ -20,6 +20,7 @@
 #include "MusAirS/Messenger/PrimaryCosmicRayGeneratorMessenger.h++"
 
 #include "G4ApplicationState.hh"
+#include "G4UIcmdWithADouble.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"
 #include "G4UIcmdWithAString.hh"
 #include "G4UIcmdWithAnInteger.hh"
@@ -28,6 +29,7 @@
 #include "G4UIparameter.hh"
 #include "G4ios.hh"
 
+#include <exception>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -49,7 +51,13 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fEnergySamplingMode{},
     fCustomBiasedEnergySpectrumFormula{},
     fCustomBiasedEnergySpectrumHistogram{},
-    fCustomBiasedEnergySpectrumGraph{} {
+    fCustomBiasedEnergySpectrumGraph{},
+    fDirectionSamplingMode{},
+    fZenithBiasExponent{},
+    fCustomBiasedDirectionSpectrumFormula{},
+    fCustomBiasedDirectionSpectrumHistogram{},
+    fCustomBiasedDirectionSpectrumGraph{},
+    fNDirectionSpectrumPoint{} {
 
     fDirectory = std::make_unique<G4UIdirectory>("/MusAirS/PCR/");
     fDirectory->SetGuidance("MusAirS primary cosmic ray generator controller.");
@@ -71,7 +79,7 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fEnergySpectrumHistogram->AvailableForStates(G4State_Idle);
 
     fEnergySpectrumGraph = std::make_unique<G4UIcommand>("/MusAirS/PCR/Energy/Spectrum/Graph", this);
-    fEnergySpectrumGraph->SetGuidance("Set kinetic energy histogram from a TGraph in a ROOT file.");
+    fEnergySpectrumGraph->SetGuidance("Set kinetic energy graph from a TGraph in a ROOT file.");
     fEnergySpectrumGraph->SetParameter(new G4UIparameter{"file", 's', false});
     fEnergySpectrumGraph->SetParameter(new G4UIparameter{"g", 's', false});
     fEnergySpectrumGraph->AvailableForStates(G4State_Idle);
@@ -79,7 +87,7 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fNEnergySpectrumPoint = std::make_unique<G4UIcmdWithAnInteger>("/MusAirS/PCR/Energy/Spectrum/NPoint", this);
     fNEnergySpectrumPoint->SetGuidance("Set number of points in integration of spectrum.");
     fNEnergySpectrumPoint->SetParameterName("n", false);
-    fNEnergySpectrumPoint->SetRange("n >= 10");
+    fNEnergySpectrumPoint->SetRange("n >= 10 && n <= 10000000");
     fNEnergySpectrumPoint->AvailableForStates(G4State_Idle);
 
     fMinEnergy = std::make_unique<G4UIcmdWithADoubleAndUnit>("/MusAirS/PCR/Energy/Min", this);
@@ -114,10 +122,45 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fCustomBiasedEnergySpectrumHistogram->AvailableForStates(G4State_Idle);
 
     fCustomBiasedEnergySpectrumGraph = std::make_unique<G4UIcommand>("/MusAirS/PCR/Energy/Sampling/Custom/Graph", this);
-    fCustomBiasedEnergySpectrumGraph->SetGuidance("Set custom-biased kinetic energy histogram from a TGraph in a ROOT file.");
+    fCustomBiasedEnergySpectrumGraph->SetGuidance("Set custom-biased kinetic energy graph from a TGraph in a ROOT file.");
     fCustomBiasedEnergySpectrumGraph->SetParameter(new G4UIparameter{"file", 's', false});
     fCustomBiasedEnergySpectrumGraph->SetParameter(new G4UIparameter{"g", 's', false});
     fCustomBiasedEnergySpectrumGraph->AvailableForStates(G4State_Idle);
+
+    fDirectionSamplingMode = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCR/Direction/Sampling/Mode", this);
+    fDirectionSamplingMode->SetGuidance("Set primary direction importance sampling.");
+    fDirectionSamplingMode->SetParameterName("mode", false);
+    fDirectionSamplingMode->SetCandidates("Normal ZenithPowerBiased CustomBiased");
+    fDirectionSamplingMode->AvailableForStates(G4State_Idle);
+
+    fZenithBiasExponent = std::make_unique<G4UIcmdWithADouble>("/MusAirS/PCR/Direction/Sampling/Power", this);
+    fZenithBiasExponent->SetGuidance("Set the power n of the cos^n(theta) direction bias.");
+    fZenithBiasExponent->SetParameterName("n", false);
+    fZenithBiasExponent->SetRange("n >= 0");
+    fZenithBiasExponent->AvailableForStates(G4State_Idle);
+
+    fCustomBiasedDirectionSpectrumFormula = std::make_unique<G4UIcmdWithAString>("/MusAirS/PCR/Direction/Sampling/Custom/Formula", this);
+    fCustomBiasedDirectionSpectrumFormula->SetGuidance("Set formula for custom-biased cos(theta) distribution (ROOT TFormula form, x = cos(theta)).");
+    fCustomBiasedDirectionSpectrumFormula->SetParameterName("formula", false);
+    fCustomBiasedDirectionSpectrumFormula->AvailableForStates(G4State_Idle);
+
+    fCustomBiasedDirectionSpectrumHistogram = std::make_unique<G4UIcommand>("/MusAirS/PCR/Direction/Sampling/Custom/Histogram", this);
+    fCustomBiasedDirectionSpectrumHistogram->SetGuidance("Set custom-biased cos(theta) histogram from a TH1 in a ROOT file.");
+    fCustomBiasedDirectionSpectrumHistogram->SetParameter(new G4UIparameter{"file", 's', false});
+    fCustomBiasedDirectionSpectrumHistogram->SetParameter(new G4UIparameter{"h", 's', false});
+    fCustomBiasedDirectionSpectrumHistogram->AvailableForStates(G4State_Idle);
+
+    fCustomBiasedDirectionSpectrumGraph = std::make_unique<G4UIcommand>("/MusAirS/PCR/Direction/Sampling/Custom/Graph", this);
+    fCustomBiasedDirectionSpectrumGraph->SetGuidance("Set custom-biased cos(theta) graph from a TGraph in a ROOT file.");
+    fCustomBiasedDirectionSpectrumGraph->SetParameter(new G4UIparameter{"file", 's', false});
+    fCustomBiasedDirectionSpectrumGraph->SetParameter(new G4UIparameter{"g", 's', false});
+    fCustomBiasedDirectionSpectrumGraph->AvailableForStates(G4State_Idle);
+
+    fNDirectionSpectrumPoint = std::make_unique<G4UIcmdWithAnInteger>("/MusAirS/PCR/Direction/Sampling/Custom/NPoint", this);
+    fNDirectionSpectrumPoint->SetGuidance("Set number of points in the custom direction spectrum.");
+    fNDirectionSpectrumPoint->SetParameterName("n", false);
+    fNDirectionSpectrumPoint->SetRange("n >= 10 && n <= 10000000");
+    fNDirectionSpectrumPoint->AvailableForStates(G4State_Idle);
 }
 
 auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4String value) -> void {
@@ -157,7 +200,11 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
         });
     } else if (command == fNEnergySpectrumPoint.get()) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            r.NEnergySpectrumPoint(fNEnergySpectrumPoint->GetNewIntValue(value));
+            try {
+                r.NEnergySpectrumPoint(fNEnergySpectrumPoint->GetNewIntValue(value));
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
         });
     } else if (command == fMinEnergy.get()) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
@@ -169,10 +216,14 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
         });
     } else if (command == fMaxEnergy.get()) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            r.MaxEnergy(fMaxEnergy->GetNewDoubleValue(value));
+            try {
+                r.MaxEnergy(fMaxEnergy->GetNewDoubleValue(value));
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
         });
     } else if (command == fEnergySamplingMode.get()) {
-        static const std::unordered_map<std::string_view, enum PrimaryCosmicRayGenerator::EnergySamplingMode> energySamplingMap {
+        static const std::unordered_map<std::string_view, enum PrimaryCosmicRayGenerator::EnergySamplingMode> energySamplingMap{
             {"Normal",           PrimaryCosmicRayGenerator::EnergySamplingMode::Normal          },
             {"UniformBiased",    PrimaryCosmicRayGenerator::EnergySamplingMode::UniformBiased   },
             {"LogUniformBiased", PrimaryCosmicRayGenerator::EnergySamplingMode::LogUniformBiased},
@@ -187,7 +238,11 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
         });
     } else if (command == fCustomBiasedEnergySpectrumFormula.get()) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            r.CustomBiasedEnergySpectrum(value);
+            try {
+                r.CustomBiasedEnergySpectrum(value);
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
         });
     } else if (command == fCustomBiasedEnergySpectrumHistogram.get()) {
         const auto [file, h]{ParseFileNameAndObjectName(value)};
@@ -202,7 +257,62 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
         const auto [file, g]{ParseFileNameAndObjectName(value)};
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
             try {
-                r.template CustomBiasedEnergySpectrum<TH1>(std::string{file}, std::string{g});
+                r.template CustomBiasedEnergySpectrum<TGraph>(std::string{file}, std::string{g});
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
+        });
+    } else if (command == fDirectionSamplingMode.get()) {
+        static const std::unordered_map<std::string_view, enum PrimaryCosmicRayGenerator::DirectionSamplingMode> directionSamplingMap{
+            {"Normal",            PrimaryCosmicRayGenerator::DirectionSamplingMode::Normal           },
+            {"ZenithPowerBiased", PrimaryCosmicRayGenerator::DirectionSamplingMode::ZenithPowerBiased},
+            {"CustomBiased",      PrimaryCosmicRayGenerator::DirectionSamplingMode::CustomBiased     }
+        };
+        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
+            try {
+                r.DirectionSamplingMode(directionSamplingMap.at(value));
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
+        });
+    } else if (command == fZenithBiasExponent.get()) {
+        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
+            try {
+                r.ZenithBiasExponent(fZenithBiasExponent->GetNewDoubleValue(value));
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
+        });
+    } else if (command == fCustomBiasedDirectionSpectrumFormula.get()) {
+        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
+            try {
+                r.CustomBiasedDirectionSpectrum(value);
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
+        });
+    } else if (command == fCustomBiasedDirectionSpectrumHistogram.get()) {
+        const auto [file, h]{ParseFileNameAndObjectName(value)};
+        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
+            try {
+                r.template CustomBiasedDirectionSpectrum<TH1>(std::string{file}, std::string{h});
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
+        });
+    } else if (command == fCustomBiasedDirectionSpectrumGraph.get()) {
+        const auto [file, g]{ParseFileNameAndObjectName(value)};
+        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
+            try {
+                r.template CustomBiasedDirectionSpectrum<TGraph>(std::string{file}, std::string{g});
+            } catch (const std::runtime_error& e) {
+                G4cerr << e.what() << G4endl;
+            }
+        });
+    } else if (command == fNDirectionSpectrumPoint.get()) {
+        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
+            try {
+                r.NDirectionSpectrumPoint(fNDirectionSpectrumPoint->GetNewIntValue(value));
             } catch (const std::runtime_error& e) {
                 G4cerr << e.what() << G4endl;
             }

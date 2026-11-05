@@ -29,6 +29,7 @@ Simulation of cosmic ray air shower.
     - [Elevating the ground](#elevating-the-ground)
   - [Primary particles](#primary-particles)
     - [Primary cosmic ray generator](#primary-cosmic-ray-generator)
+      - [Direction sampling](#direction-sampling)
       - [Units](#units)
   - [Save primary vertex data](#save-primary-vertex-data)
   - [Who ordered neutrino?](#who-ordered-neutrino)
@@ -200,7 +201,7 @@ It accepts any particle of the Geant4 particle table, and takes the kinetic ener
 /MusAirS/PCR/Energy/Max                  10 TeV
 ```
 
-Primary vertices are placed on the top of the atmosphere at the point where the initial primary direction points at the ground center `(0, 0, GroundAltitude)`.  The zenith angle $\theta$ is sampled with probability density proportional to $\cos\theta$ over the range of angles accepted by the world volume, and the azimuth angle is uniform.  This is the angular distribution of an isotropic cosmic-ray flux crossing the horizontal ground: the $\cos\theta$ factor is the projected area of the ground, not an extra event weight.  The event weight therefore still accounts only for the energy sampling.  Only the initial direction is aimed; a charged primary is subsequently deflected by the geomagnetic field during tracking.
+Primary vertices are placed on the top of the atmosphere at the point where the initial primary direction points at the ground center `(0, 0, GroundAltitude)`.  By default, the zenith angle $\theta$ is sampled with probability density proportional to $\cos\theta$ over the range of angles accepted by the world volume, and the azimuth angle is uniform.  This is the angular distribution of an isotropic cosmic-ray flux crossing the horizontal ground: the $\cos\theta$ factor is the projected area of the ground, and the finite acceptance of the world volume is included in the direction weight.  The direction sampling can be biased; see [Direction sampling](#direction-sampling).  Only the initial direction is aimed; a charged primary is subsequently deflected by the geomagnetic field during tracking.
 
 The example file `primary_cosmic_ray.root` is built by `scripts/CreateEnergySpectrum.cxx` and holds the seven-year AMS-02 proton and helium fluxes [Phys. Rept. **894** (2021) 1] as the histograms `AMS_Proton` and `AMS_Helium`.  Their bins are the rigidity bins of the measurement converted to the kinetic energy of the primary in MeV, which for helium is the total kinetic energy of the nucleus and not the energy per nucleon, and their content is the measured flux divided by the bin width, so that the integral over a bin is the measured number of particles in that bin.  Because the normalization is physical, the two spectra can be combined with weights proportional to their integral fluxes when a mixed composition is wanted.
 
@@ -210,18 +211,50 @@ The spectrum is sampled with one of four modes, selected by
 /MusAirS/PCR/Energy/Sampling/Mode  LogUniformBiased
 ```
 
-With $f(E)$ the physical spectrum and $g(E)$ the distribution that is sampled, an event carries the weight $w = f(E)/g(E)$, and the weights are stored in the output so that every distribution can be reweighted afterwards.  The direction sampling already includes the $\cos\theta$ projection of the horizontal ground, so no direction weight is applied; the event weight is solely the energy-sampling weight.
+With $f(E)$ the physical spectrum and $g(E)$ the distribution that is sampled, the energy weight of an event is $w_E = f(E)/g(E)$.  The direction sampling contributes an additional weight $w_\Omega$ for every mode, and the total event weight stored in the output is $w_E w_\Omega$; in the default `Normal` direction mode $w_\Omega = 1-u_{\min}^2$.  The weights are stored in the output so that every distribution can be reweighted afterwards.
 
-| Mode               | $g(E)$ | $w(E)$                     | Use                                                               |
-| ------------------ | ------ | -------------------------- | ----------------------------------------------------------------- |
-| `Normal`           | $f$    | $1$                        | reference; best for the lowest decade, cheapest per event         |
-| `UniformBiased`    | const  | $f$                        | exploring a wide range quickly                                    |
-| `LogUniformBiased` | $1/E$  | $fE\ln(E_{\max}/E_{\min})$ | recommended for production: equal statistics per decade of energy |
-| `CustomBiased`     | user   | $f/g$                      | shaping the sample towards the observable of interest             |
+| Mode               | $g(E)$ | $w_E(E)$                    | Use                                                               |
+| ------------------ | ------ | --------------------------- | ----------------------------------------------------------------- |
+| `Normal`           | $f$    | $1$                         | reference; best for the lowest decade, cheapest per event         |
+| `UniformBiased`    | const  | $f(E)(E_{\max}-E_{\min})$   | exploring a wide range quickly                                    |
+| `LogUniformBiased` | $1/E$  | $fE\ln(E_{\max}/E_{\min})$  | recommended for production: equal statistics per decade of energy |
+| `CustomBiased`     | user   | $f/g$                       | shaping the sample toward the observable of interest              |
+
+The `Normal`, `UniformBiased`, and `LogUniformBiased` modes use normalized sampling distributions, so their weights are exact ratios.  `CustomBiased` uses the user-supplied distribution as is for its weight, so its weight is defined up to an overall constant; the sampling distribution itself is normalized internally.  Custom energy histograms and graphs are interpreted as densities with respect to $E$; counts in non-uniform bins must be divided by the bin width, and the histogram or graph must cover the sampling range.  The `Normal` and `CustomBiased` energy samplers use the CDF cached internally by `TF1`; `UniformBiased` and `LogUniformBiased` sample analytically.
+
+#### Direction sampling
+
+The zenith angle of the primary is sampled over $\cos\theta \in [\cos\theta_{\max}, 1]$, where $\theta_{\max}$ is set by the world width and the atmosphere/ground geometry (the inscribed cylinder of the world box is used, a conservative truncation of the box corners), and the azimuth angle is uniform.  The mode is selected by
+
+```sh
+/MusAirS/PCR/Direction/Sampling/Mode  Normal
+```
+
+The `ZenithPowerBiased` exponent, the `CustomBiased` distribution, and its sampling resolution are set by
+
+```sh
+/MusAirS/PCR/Direction/Sampling/Power             2
+/MusAirS/PCR/Direction/Sampling/Custom/Formula    x^2
+/MusAirS/PCR/Direction/Sampling/Custom/Histogram  direction.root h
+/MusAirS/PCR/Direction/Sampling/Custom/Graph      direction.root g
+/MusAirS/PCR/Direction/Sampling/Custom/NPoint     10000
+```
+
+For `CustomBiased`, the variable of a formula and the abscissa of a histogram or graph are $x = \cos\theta$ over $[\cos\theta_{\max}, 1]$.  The custom direction spectrum is sampled with ROOT's cached CDF on `NPoint` points (default 10000, range 10-10000000).  ROOT builds the CDF on first use; `SetRange` and `SetNpx` invalidate it.  The generator sets the range only when the spectrum, `NPoint`, or geometry changes, not on every event, so the cached CDF is reused.  `NPoint` controls the CDF accuracy and one-time build cost, not the per-event cost.  Custom direction histograms and graphs are interpreted as densities with respect to $x$; counts in non-uniform bins must be divided by the bin width, and the histogram or graph must cover the sampling range.
+
+Let $f(\Omega) = \cos\theta/\pi$ be the physical angular distribution over the full downward hemisphere, and let $u_{\min}=\cos\theta_{\max}$.  The world accepts the fraction $1-u_{\min}^2$ of this distribution, and the direction weight includes that acceptance.  The modes sample $g(\Omega)$ and assign
+
+| Mode                | $g(\Omega)$             | $w_\Omega(\Omega)$                                                                 |
+| ------------------- | ----------------------- | ---------------------------------------------------------------------------------- |
+| `Normal`            | $\propto \cos\theta$    | $1-u_{\min}^2$                                                                     |
+| `ZenithPowerBiased` | $\propto \cos^n\theta$  | $\frac{2}{n+1}(1-u_{\min}^{n+1})\cos^{1-n}\theta$                                  |
+| `CustomBiased`      | $\propto G(\cos\theta)$ | $\propto \cos\theta/G(\cos\theta)$                                                |
+
+Here $G(\cos\theta)$ is the user-supplied custom distribution.  The `ZenithPowerBiased` exponent must be finite and non-negative; the default is $n=2$, so the `Power` command can be omitted when that value is wanted.  $n=1$ reproduces `Normal`, and $n=0$ gives a uniform distribution in $\cos\theta$ (uniform solid angle).  The `Normal` and `ZenithPowerBiased` weights are normalized to the full downward hemisphere.  `CustomBiased` is unnormalized: its weight is proportional to $\cos\theta/G(\cos\theta)$, with an arbitrary overall constant.  For an absolute flux, multiply by $2I/(1-u_{\min}^2)$ with $I=\int_{u_{\min}}^1 G(u)\,du$, or normalize $G$ so that $I=1$.
 
 #### Units
 
-The unit system is the Geant4 one (MeV, mm, ns). In particular **the variable of a spectrum formula is the kinetic energy in MeV**, so a formula containing an explicit energy scale must be written in MeV: a spectrum with a cutoff at 10 TeV is `exp(-x/1e7)`, not `exp(-x/1e4)`. Scale-free power laws such as `x^-2.7` are unaffected. The same applies to a formula given to `/MusAirS/PCR/Energy/Sampling/Custom/Formula`, and to a spectrum read from a graph or a histogram, whose abscissa is also the kinetic energy in MeV. The `/MusAirS/PCR/Energy/Min` and `/MusAirS/PCR/Energy/Max` commands, in contrast, take a value with a unit; a value outside the range of the spectrum is clamped to the nearest end of that range, with a warning, and a minimum that is not below the current maximum is an error.
+The unit system is the Geant4 one (MeV, mm, ns). In particular **the variable of a spectrum formula is the kinetic energy in MeV**, so a formula containing an explicit energy scale must be written in MeV: a spectrum with a cutoff at 10 TeV is `exp(-x/1e7)`, not `exp(-x/1e4)`. Scale-free power laws such as `x^-2.7` are unaffected. The same applies to a formula given to `/MusAirS/PCR/Energy/Sampling/Custom/Formula`, and to a spectrum read from a graph or a histogram, whose abscissa is also the kinetic energy in MeV. The `/MusAirS/PCR/Energy/Min` and `/MusAirS/PCR/Energy/Max` commands, in contrast, take a value with a unit; a value outside the range of the spectrum is clamped to the nearest end of that range, with a warning, and a minimum that is not below the current maximum is an error.  Direction custom distributions use the dimensionless variable $x = \cos\theta$.
 
 ## Save primary vertex data
 

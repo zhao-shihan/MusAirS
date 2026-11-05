@@ -24,7 +24,9 @@
 
 #include <memory>
 #include <string_view>
+#include <utility>
 
+class G4UIcmdWithADouble;
 class G4UIcmdWithADoubleAndUnit;
 class G4UIcmdWithAnInteger;
 class G4UIcmdWithAString;
@@ -66,6 +68,12 @@ private:
     std::unique_ptr<G4UIcmdWithAString> fCustomBiasedEnergySpectrumFormula;
     std::unique_ptr<G4UIcommand> fCustomBiasedEnergySpectrumHistogram;
     std::unique_ptr<G4UIcommand> fCustomBiasedEnergySpectrumGraph;
+    std::unique_ptr<G4UIcmdWithAString> fDirectionSamplingMode;
+    std::unique_ptr<G4UIcmdWithADouble> fZenithBiasExponent;
+    std::unique_ptr<G4UIcmdWithAString> fCustomBiasedDirectionSpectrumFormula;
+    std::unique_ptr<G4UIcommand> fCustomBiasedDirectionSpectrumHistogram;
+    std::unique_ptr<G4UIcommand> fCustomBiasedDirectionSpectrumGraph;
+    std::unique_ptr<G4UIcmdWithAnInteger> fNDirectionSpectrumPoint;
 };
 
 } // namespace Messenger
