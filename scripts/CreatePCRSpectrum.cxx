@@ -108,9 +108,7 @@
 // USINE do not reproduce the measured D/4He flux ratio above ~2 GeV/n, which is
 // precisely why the high-rigidity behavior is taken from the measured ratios
 // rather than from a model.  Below 1.92 GV, where deuterons are not measured,
-// D/p is frozen at the value of the first measured bin; that range lies below
-// the 13.3 GV cutoff at Zhaoqing and does not affect the simulation of that
-// site.
+// D/p is frozen at the value of the first measured bin.
 //
 // 5. Conversion from rigidity to kinetic energy
 //
