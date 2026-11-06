@@ -203,7 +203,24 @@ It accepts any particle of the Geant4 particle table, and takes the kinetic ener
 
 Primary vertices are placed on the top of the atmosphere at the point where the initial primary direction points at the ground center `(0, 0, GroundAltitude)`.  By default, the zenith angle $\theta$ is sampled with probability density proportional to $\cos\theta$ over the range of angles accepted by the world volume, and the azimuth angle is uniform.  This is the angular distribution of an isotropic cosmic-ray flux crossing the horizontal ground: the $\cos\theta$ factor is the projected area of the ground, and the finite acceptance of the world volume is included in the direction weight.  The direction sampling can be biased; see [Direction sampling](#direction-sampling).  Only the initial direction is aimed; a charged primary is subsequently deflected by the geomagnetic field during tracking.
 
-The example file `primary_cosmic_ray.root` is built by `scripts/CreateEnergySpectrum.cxx` and holds the seven-year AMS-02 proton and helium fluxes [Phys. Rept. **894** (2021) 1] as the histograms `AMS_Proton` and `AMS_Helium`.  Their bins are the rigidity bins of the measurement converted to the kinetic energy of the primary in MeV, which for helium is the total kinetic energy of the nucleus and not the energy per nucleon, and their content is the measured flux divided by the bin width, so that the integral over a bin is the measured number of particles in that bin.  Because the normalization is physical, the two spectra can be combined with weights proportional to their integral fluxes when a mixed composition is wanted.
+The example file `primary_cosmic_ray.root` is built by `scripts/CreatePCRSpectrum.cxx`, which reads the published AMS-02 tables and writes six histograms:
+
+| Histogram | Species | Rigidity range |
+| --- | --- | --- |
+| `AMS_Proton` | protons | 1.00-1800 GV |
+| `AMS_Helium4` | ⁴He | 1.92-3000 GV |
+| `AMS_Deuteron` | deuterons | 1.00-1800 GV |
+| `AMS_Helium3` | ³He | 1.92-3000 GV |
+| `AMS_Hydrogen` | Z = 1 flux as published (p + D) | 1.00-1800 GV |
+| `AMS_Helium` | Z = 2 flux as published (⁴He + ³He) | 1.92-3000 GV |
+
+The four species are listed in order of decreasing flux; the two measured totals follow them and are stored for reference only.
+
+The two measured fluxes are the seven-year AMS-02 measurements [Phys. Rept. **894** (2021) 1]; the four species are obtained from them with the measured D/p and ³He/⁴He flux ratios of [Phys. Rev. Lett. **132** (2024) 261001], so that `AMS_Proton` + `AMS_Deuteron` and `AMS_Helium4` + `AMS_Helium3` reproduce the measured Z = 1 and Z = 2 fluxes bin by bin.  Above 21.1 GV, where AMS does not measure deuterons or ³He, the two ratios are continued with the fits given in that Letter; the header of the script documents the construction and the reasons for it.  `AMS_Hydrogen` and `AMS_Helium` are kept for comparisons with the published tables and must not be used in the same composition as the four species spectra, which already add up to them.
+
+The bins of every histogram are the rigidity bins of the measurement converted to the total kinetic energy of the primary in MeV, which for nuclei is the energy of the whole nucleus and not the energy per nucleon, and the content is the flux density per MeV, so that the integral of a bin is the measured flux in that bin, per unit area, time and solid angle, and the integral of a histogram is a physical flux in m⁻² s⁻¹ sr⁻¹.  The histograms carry no bin errors: the published uncertainties are not propagated, because the generator samples central values only and because the correlations between the fluxes and the ratios are not published; the uncertainties are given in the tables of the two references.  The four species have different masses and therefore slightly different abscissae: they are combined with weights proportional to their integral fluxes, not by adding bin contents.
+
+`scripts/run_AMS_lite.mac` (and its `full` and `wo_pipm` variants) runs the four species in a single session, one Geant4 run per species, and writes all of them to one file per process: `G4Run0` protons, `G4Run1` ⁴He, `G4Run2` deuterons, `G4Run3` ³He.  The minimum kinetic energies are chosen so that every species starts at the same 13.3 GV vertical geomagnetic cutoff at Zhaoqing, $E_{k,\min}=\sqrt{(ZR_c)^2+M^2}-M$, i.e. 12.40 GeV for protons, 23.13 GeV for ⁴He, 11.56 GeV for deuterons and 23.94 GeV for ³He; they differ because the kinetic energy is not proportional to the rigidity for different masses.  The particle, the spectrum and the minimum energy can be changed between `beamOn` commands, so a composition is obtained by running the macro once and weighting the runs afterwards.
 
 The spectrum is sampled with one of four modes, selected by
 
