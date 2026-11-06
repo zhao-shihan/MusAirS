@@ -3,7 +3,7 @@
 Atmosphere:
   MaxAltitude: 90000000
   SliceMode: Altitude
-  NSlice: 1000
+  NSlice: 450
 Earth:
   GroundAltitude: 0
 Field:
@@ -13,4 +13,4 @@ Field:
     - -2.61202e-08
 World:
   Width: 2000000000
-  MaxHeight: 150000000
+  MaxHeight: 100000000
