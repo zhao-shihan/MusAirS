@@ -24,7 +24,9 @@
 #include "G4VPrimaryGenerator.hh"
 
 #include <concepts>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -35,6 +37,21 @@ class TGraph;
 class TH1;
 
 namespace MusAirS::inline Generator {
+
+namespace detail {
+
+struct Spectrum {
+    std::shared_ptr<TF1> function;
+    std::function<double(double, double, int, bool)> integral;
+
+    auto operator->() -> TF1* { return function.get(); }
+    auto operator->() const -> const TF1* { return function.get(); }
+    auto operator*() -> TF1& { return *function; }
+    auto operator*() const -> const TF1& { return *function; }
+    explicit operator bool() const { return function != nullptr; }
+};
+
+} // namespace detail
 
 class PrimaryCosmicRayGenerator : public G4VPrimaryGenerator {
 public:
@@ -85,8 +102,19 @@ public:
     virtual auto GeneratePrimaryVertex(G4Event* event) -> void override;
 
 private:
-    auto ValidateEnergySpectrumForSampling(enum EnergySamplingMode mode) const -> void;
-    auto ValidateEnergyRangeForSampling(enum EnergySamplingMode mode, double eMin) const -> void;
+    struct SpectrumIntegralCache {
+        std::optional<double> value;
+        double xMin{};
+        double xMax{};
+        int nGrid{};
+        bool logGrid{};
+    };
+
+private:
+    auto ValidateEnergySpectrumForSampling() const -> void;
+    auto ValidateEnergyRange(double eMin, double eMax) const -> void;
+    auto SetupEnergySpectrum(detail::Spectrum spectrum) -> void;
+    auto SpectrumIntegral(detail::Spectrum& spectrum, double xMin, double xMax, int nPoint, bool logGrid, SpectrumIntegralCache& cache) -> double;
 
     auto SampleEnergy() -> std::pair<double, double>;
     auto SampleDirection(double minCosTheta) -> std::pair<G4ThreeVector, double>;
@@ -94,17 +122,20 @@ private:
 private:
     G4ParticleDefinition* fParticle;
 
-    std::unique_ptr<TF1> fEnergySpectrum;
+    detail::Spectrum fEnergySpectrum;
     int fNEnergySpectrumPoint;
     double fIntrinsicMinEnergy;
     double fIntrinsicMaxEnergy;
+    SpectrumIntegralCache fEnergySpectrumIntegral;
     enum EnergySamplingMode fEnergySamplingMode;
-    std::unique_ptr<TF1> fCustomBiasedEnergySpectrum;
+    detail::Spectrum fCustomBiasedEnergySpectrum;
+    SpectrumIntegralCache fCustomBiasedEnergyIntegral;
 
     enum DirectionSamplingMode fDirectionSamplingMode;
     double fZenithBiasExponent;
     int fNDirectionSpectrumPoint;
-    std::unique_ptr<TF1> fCustomBiasedDirectionSpectrum;
+    detail::Spectrum fCustomBiasedDirectionSpectrum;
+    SpectrumIntegralCache fCustomBiasedDirectionIntegral;
 
     PrimaryCosmicRayGeneratorMessenger::Register<PrimaryCosmicRayGenerator> fMessengerRegister;
 };
