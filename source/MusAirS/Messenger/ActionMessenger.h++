@@ -30,14 +30,14 @@ namespace MusAirS {
 
 inline namespace Action {
 class PrimaryGeneratorAction;
-class SteppingAction;
+class StackingAction;
 } // namespace Action
 
 inline namespace Messenger {
 
 class ActionMessenger final : public Mustard::Geant4X::SingletonMessenger<ActionMessenger,
                                                                           PrimaryGeneratorAction,
-                                                                          SteppingAction> {
+                                                                          StackingAction> {
     friend Mustard::Env::SingletonFactory;
 
 private:

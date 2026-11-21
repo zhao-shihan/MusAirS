@@ -17,11 +17,11 @@
 // MusAirS. If not, see <https://www.gnu.org/licenses/>.
 
 #include "MusAirS/Action/DetectorConstruction.h++"
+#include "MusAirS/Action/SteppingAction.h++"
 #include "MusAirS/Detector/Definition/Atmosphere.h++"
 #include "MusAirS/Detector/Definition/Earth.h++"
 #include "MusAirS/Detector/Definition/World.h++"
 #include "MusAirS/Messenger/DetectorMessenger.h++"
-#include "MusAirS/SD/EarthSD.h++"
 
 #include "Mustard/Detector/Definition/DefinitionBase.h++"
 #include "Mustard/Detector/Field/AsG4Field.h++"
@@ -63,9 +63,9 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
     auto& earth{fWorld->NewDaughter<Detector::Definition::Earth>(fCheckOverlap)};
     fWorld->NewDaughter<Detector::Definition::Atmosphere>(fCheckOverlap);
 
-    // Register SD
+    // Let the stepping action kill tracks that cross the ground surface.
 
-    earth.RegisterSD(new SD::EarthSD{"EarthSD"});
+    SteppingAction::Instance().GroundPhysicalVolume(earth.PhysicalVolume());
 
     // Register field
 

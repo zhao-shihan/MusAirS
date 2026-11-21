@@ -17,7 +17,7 @@
 // MusAirS. If not, see <https://www.gnu.org/licenses/>.
 
 #include "MusAirS/Action/PrimaryGeneratorAction.h++"
-#include "MusAirS/Action/SteppingAction.h++"
+#include "MusAirS/Action/StackingAction.h++"
 #include "MusAirS/Messenger/ActionMessenger.h++"
 
 #include "G4ApplicationState.hh"
@@ -53,7 +53,7 @@ ActionMessenger::ActionMessenger() :
     fKillEMShower->AvailableForStates(G4State_Idle);
 
     fKillNeutrino = std::make_unique<G4UIcmdWithABool>("/MusAirS/Action/KillNeutrino", this);
-    fKillNeutrino->SetGuidance("Neutrino will be killed if set.");
+    fKillNeutrino->SetGuidance("Kill neutrinos at generation if set. Otherwise they are transported and their ground hits are recorded.");
     fKillNeutrino->SetParameterName("bool", false);
     fKillNeutrino->AvailableForStates(G4State_Idle);
 
@@ -75,16 +75,16 @@ auto ActionMessenger::SetNewValue(G4UIcommand* command, G4String value) -> void 
             r.SwitchToGPSX();
         });
     } else if (command == fKillEMShower.get()) {
-        Deliver<SteppingAction>([&](auto&& r) {
+        Deliver<StackingAction>([&](auto&& r) {
             r.KillEMShower(fKillEMShower->GetNewBoolValue(value));
         });
     } else if (command == fKillNeutrino.get()) {
-        Deliver<SteppingAction>([&](auto&& r) {
+        Deliver<StackingAction>([&](auto&& r) {
             r.KillNeutrino(fKillNeutrino->GetNewBoolValue(value));
         });
     } else if (command == fKillChargedPion.get()) {
         const auto kill{fKillChargedPion->GetNewBoolValue(value)};
-        Deliver<SteppingAction>([&](auto&& r) {
+        Deliver<StackingAction>([&](auto&& r) {
             r.KillChargedPion(kill);
         });
     }

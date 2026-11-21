@@ -20,6 +20,7 @@
 #include "MusAirS/Action/EventAction.h++"
 #include "MusAirS/Action/PrimaryGeneratorAction.h++"
 #include "MusAirS/Action/RunAction.h++"
+#include "MusAirS/Action/StackingAction.h++"
 #include "MusAirS/Action/SteppingAction.h++"
 #include "MusAirS/Action/TrackingAction.h++"
 
@@ -33,6 +34,7 @@ auto ActionInitialization::Build() const -> void {
     SetUserAction(new RunAction);
     SetUserAction(new PrimaryGeneratorAction);
     SetUserAction(new EventAction);
+    SetUserAction(new StackingAction);
     SetUserAction(new TrackingAction);
     SetUserAction(new SteppingAction);
 }

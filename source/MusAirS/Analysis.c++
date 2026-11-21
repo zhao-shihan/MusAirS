@@ -20,16 +20,10 @@
 #include "MusAirS/Action/TrackingAction.h++"
 #include "MusAirS/Analysis.h++"
 
-#include "Mustard/Utility/VectorCast.h++"
-
-#include "Eigen/Core"
-
 #include "muc/algorithm"
 
 #include "fmt/format.h"
 
-#include <cmath>
-#include <numbers>
 #include <vector>
 
 namespace MusAirS {
@@ -42,7 +36,7 @@ Analysis::Analysis() :
     fReactionChainOutput{},
     fPrimaryVertexData{},
     fTrackData{},
-    fEarthSDHitTrackIDData{},
+    fGroundHitTrackIDData{},
     fMessengerRegister{this} {}
 
 auto Analysis::RunBeginUserAction(int runID) -> void {
@@ -82,7 +76,7 @@ auto Analysis::EventEndUserAction() -> void {
     }
     fPrimaryVertexData = {};
     fTrackData = {};
-    fEarthSDHitTrackIDData = {};
+    fGroundHitTrackIDData = {};
 }
 
 auto Analysis::RunEndUserAction(int) -> void {
@@ -94,10 +88,10 @@ auto Analysis::RunEndUserAction(int) -> void {
 
 auto Analysis::BuildReactionChain() const -> gtl::flat_hash_map<int, ReactionChain> {
     gtl::flat_hash_map<int, ReactionChain> chain;
-    for (auto&& trackID : *fEarthSDHitTrackIDData) {
-        auto& track{fTrackData->at(trackID)};
-        F<"KillProc">(*track) = "<0|"; // track is killed by EarthSD
-        BuildReactionChainImpl(trackID, chain[F<"PDGID">(*track)]);
+    for (auto trackID : fGroundHitTrackIDData) {
+        auto& track{*fTrackData->at(trackID)};
+        F<"KillProc">(track) = "<0|"; // track is killed at the ground
+        BuildReactionChainImpl(trackID, chain[F<"PDGID">(track)]);
     }
     return chain;
 }
@@ -111,10 +105,6 @@ auto Analysis::BuildReactionChainImpl(int trackID, ReactionChain& chain) const -
         // Trace recursively
         BuildReactionChainImpl(parTrkID, chain);
     }
-    // Amend Zenith and phi here
-    const auto p{Mustard::VectorCast<Eigen::Vector3d>(F<"p">(track))};
-    F<"Zenith">(track) = 1 + p.z() / p.norm();
-    F<"phi">(track) = std::atan2(p.x(), p.y()) + std::numbers::pi;
     // Insert into reaction chain
     chain.emplace(trackID);
 }

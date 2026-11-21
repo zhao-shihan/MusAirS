@@ -24,6 +24,8 @@
 #include "G4Event.hh"
 #include "G4EventManager.hh"
 #include "G4ProcessType.hh"
+#include "G4Step.hh"
+#include "G4StepPoint.hh"
 #include "G4SteppingManager.hh"
 #include "G4Track.hh"
 #include "G4TrackingManager.hh"
@@ -31,6 +33,8 @@
 
 #include "fmt/format.h"
 
+#include <cmath>
+#include <numbers>
 #include <stdexcept>
 #include <string_view>
 
@@ -57,6 +61,10 @@ auto TrackingAction::UpdateTrackData(const G4Track& g4Track) -> void {
     const auto& particle{*g4Track.GetDefinition()};
     const auto vertexEk{g4Track.GetVertexKineticEnergy()};
     const auto vertexMomentum{g4Track.GetVertexMomentumDirection() * std::sqrt(vertexEk * (vertexEk + 2 * particle.GetPDGMass()))};
+    auto momentumDirection{g4Track.GetMomentumDirection()}; // guaranteed to be normalized
+    if (momentumDirection.mag2() == 0) [[unlikely]] {       // few processes (e.g. G4GammaConversionToMuons) reset direction to zero
+        momentumDirection = g4Track.GetStep()->GetPreStepPoint()->GetMomentumDirection();
+    }
     auto& eventManager{*G4EventManager::GetEventManager()};
     const auto killerProcess{eventManager.GetTrackingManager()->GetSteppingManager()->GetfCurrentProcess()};
 
@@ -83,11 +91,11 @@ auto TrackingAction::UpdateTrackData(const G4Track& g4Track) -> void {
     F<"Ek">(track) = g4Track.GetKineticEnergy();
     F<"p">(track) = g4Track.GetMomentum();
     F<"Sigma">(track) = g4Track.GetPolarization();
-    F<"Helicity">(track) = g4Track.GetMomentumDirection() * g4Track.GetPolarization();
-    // F<"Zenith">(track) = <delay to event end analysis>
-    // F<"phi">(track) = <delay to event end analysis>
+    F<"Helicity">(track) = momentumDirection * g4Track.GetPolarization();
+    F<"Zenith">(track) = 1 + momentumDirection.z();
+    F<"phi">(track) = std::atan2(momentumDirection.x(), momentumDirection.y()) + std::numbers::pi;
     F<"TrkLen">(track) = g4Track.GetTrackLength();
-    F<"KillProc">(track) = killerProcess->GetProcessName(); // if hit EarthSD, will be <0| in event end analysis
+    F<"KillProc">(track) = killerProcess->GetProcessName(); // if killed at the ground, will be <0| in event end analysis
     F<"Weight">(track) = g4Track.GetWeight();
 }
 

@@ -23,7 +23,6 @@
 #include "MusAirS/Data/PrimaryVertex.h++"
 #include "MusAirS/Data/Track.h++"
 #include "MusAirS/Messenger/AnalysisMessenger.h++"
-#include "MusAirS/SD/EarthSD.h++"
 
 #include "Mustard/Data/Container/ArcTupleVector.h++"
 #include "Mustard/Data/Processing/Writer.h++"
@@ -32,6 +31,7 @@
 #include "G4Types.hh"
 
 #include "gtl/phmap.hpp"
+#include "gtl/vector.hpp"
 
 #include <optional>
 #include <string>
@@ -46,7 +46,7 @@ public:
 
     auto SubmitPrimaryVertexData(const typename PrimaryGeneratorAction::PrimaryVertexDataType& data) -> void { fPrimaryVertexData = &data; }
     auto SubmitTrackData(typename TrackingAction::TrackDataType& data) -> void { fTrackData = &data; }
-    auto SubmitEarthSDHitTrackID(const typename EarthSD::HitTrackIDDataType& hc) -> void { fEarthSDHitTrackIDData = &hc; }
+    auto AddGroundHitTrackID(int trackID) -> void { fGroundHitTrackIDData.push_back(trackID); }
 
     auto WriterTarget(std::string target) -> void { fWriterTarget = std::move(target); }
 
@@ -68,7 +68,7 @@ private:
 
     const typename PrimaryGeneratorAction::PrimaryVertexDataType* fPrimaryVertexData;
     typename TrackingAction::TrackDataType* fTrackData;
-    const typename EarthSD::HitTrackIDDataType* fEarthSDHitTrackIDData;
+    gtl::vector<int> fGroundHitTrackIDData;
 
     AnalysisMessenger::Register<Analysis> fMessengerRegister;
 };

@@ -36,10 +36,6 @@ class DefinitionBase;
 
 namespace MusAirS {
 
-inline namespace SD {
-class EarthSD;
-} // namespace SD
-
 inline namespace Action {
 
 class DetectorConstruction final : public Mustard::Env::PassiveSingleton<DetectorConstruction>,
