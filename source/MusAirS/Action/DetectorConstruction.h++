@@ -29,6 +29,7 @@
 #include "G4VUserDetectorConstruction.hh"
 
 #include <memory>
+#include <tuple>
 
 namespace Mustard::Detector::Definition {
 class DefinitionBase;
@@ -49,10 +50,11 @@ public:
     auto Construct() -> G4VPhysicalVolume* override;
 
 public:
-    using ProminentDescription = std::tuple<Detector::Description::Atmosphere,
-                                            Detector::Description::Earth,
-                                            Detector::Description::Field,
-                                            Detector::Description::World>;
+    using ProminentDescription = std::tuple<
+        Detector::Description::Atmosphere,
+        Detector::Description::Earth,
+        Detector::Description::Field,
+        Detector::Description::World>;
 
 private:
     bool fCheckOverlap;

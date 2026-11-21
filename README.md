@@ -35,7 +35,6 @@ Simulation of cosmic ray air shower.
   - [Save primary vertex data](#save-primary-vertex-data)
   - [Who ordered neutrino?](#who-ordered-neutrino)
   - [Interpret the result](#interpret-the-result)
-  - [Output writer target](#output-writer-target)
   - [Bug tracking](#bug-tracking)
   - [Contributing](#contributing)
 
@@ -48,7 +47,7 @@ MusAirS requires [Mustard](https://github.com/zhao-shihan/Mustard) `0.26.1121` a
 - ROOT ≥ 6.36.00 (components `Core Imt MathCore Hist Tree ROOTDataFrame ROOTNTuple RIO`),
 - Geant4 ≥ 11.0.0 (components `ui_all gdml vis_all`),
 - MPI ≥ 4.1,
-- CMake ≥ 3.25, Ninja (or GNU Make), and GCC ≥ 13 or Clang ≥ 19.
+- CMake ≥ 3.25, Ninja (or GNU Make), and GCC ≥ 13, Clang ≥ 19, IntelLLVM ≥ 2025 or MSVC ≥ 19.50.
 
 MusAirS finds Mustard with CPM. An installed Mustard is used when `find_package` finds one; otherwise CPM downloads tag `v0.26.1121` into the source cache `.cache/cpm`. The first configure needs network, and later configures reuse the cache.
 
@@ -62,13 +61,14 @@ cmake --build build -j
 
 Useful build options:
 
-| Option                                             | Default       | Meaning                                            |
-| -------------------------------------------------- | ------------- | -------------------------------------------------- |
-| `MUSAIRS_UNITY_BUILD` / `MUSAIRS_FULL_UNITY_BUILD` | `OFF` / `OFF` | unity build (also forwarded to an in-tree Mustard) |
-| `MUSAIRS_ENABLE_IPO`                               | `ON`          | LTO/IPO in Release, for the MusAirS target         |
-| `MUSAIRS_WERROR`                                   | `OFF`         | treat MusAirS compilation warnings as errors       |
+| Option                                             | Default       | Meaning                                                  |
+| -------------------------------------------------- | ------------- | -------------------------------------------------------- |
+| `MUSAIRS_UNITY_BUILD` / `MUSAIRS_FULL_UNITY_BUILD` | `OFF` / `OFF` | unity build (also forwarded to an in-tree Mustard)       |
+| `MUSAIRS_ENABLE_IPO`                               | `ON`          | LTO/IPO in Release, for the MusAirS target               |
+| `MUSAIRS_USE_SHARED_MSVC_RT`                       | `ON`          | MSVC runtime library, shared (`.dll`) or static (`.lib`) |
+| `MUSAIRS_WERROR`                                   | `OFF`         | treat MusAirS compilation warnings as errors             |
 
-An in-tree Mustard gets `MUSTARD_UNITY_BUILD` / `MUSTARD_FULL_UNITY_BUILD` from the `MUSAIRS_*` options above, `MUSTARD_USE_FFTW=OFF`, and `MUSTARD_USE_SHARED_MSVC_RT=${MUSAIRS_USE_SHARED_MSVC_RT}`; the other `MUSTARD_*` options keep their Mustard defaults.
+An in-tree Mustard inherits the `MUSAIRS_UNITY_BUILD`, `MUSAIRS_FULL_UNITY_BUILD` and `MUSAIRS_USE_SHARED_MSVC_RT` values and is built with `MUSTARD_USE_FFTW=OFF`; its other options keep their defaults.
 
 ### How to run
 
@@ -86,7 +86,7 @@ Useful runtime options (provided by Mustard's CLI):
 | `--lite`                                           | do not print the Mustard banner                                                                                                                                                       |
 | `--rng <engine>`                                   | random engine, one of `xoshiro256**`, `xoshiro256++`, `xoshiro256+`, `xoshiro512**`, `xoshiro512++`, `xoshiro512+`, `mt1993764`, `mt1993732` and `splitmix64`; default `xoshiro512**` |
 | `--seed <int64>`                                   | seed; `0` means a random device, otherwise deterministic (a predefined deterministic seed is used by default)                                                                         |
-| `--physics-list <list>`                            | Geant4 reference physics list (default `FTFP_BERT`)                                                                                                                                   |
+| `--physics-list <list>`                            | Geant4 reference physics list                                                                                                                                                         |
 | `--import-dd`, `--export-dd`, `--emport-dd <file>` | detector description import/export/emport before `/run/initialize`                                                                                                                    |
 | `--mustard-version`, `--mustard-version-short`     | print the Mustard version                                                                                                                                                             |
 
@@ -102,7 +102,7 @@ or
 ```sh
 ./MusAirS -i <macro_for_initialization>
 ```
-Without a macro, a default initialization macro fires a 1 TeV proton from 100 km using GPS, with visualization when available.
+Without a macro, a default initialization macro sets up a 1 TeV proton from 100 km with GPS and opens the viewer when visualization is available; issue `/run/beamOn` to start.
 
 #### Batch session
 
@@ -114,7 +114,7 @@ Parallel computing:
 ```sh
 mpiexec -n <nproc> ./MusAirS <run_macro>
 ```
-In a parallel run each MPI process writes its own output file inside a process-specific directory named after the requested file, with a `_p<rank>` suffix (e.g. `MusAirS/MusAirS_p0.root`); merge or reduce the per-rank files afterwards.
+In a parallel run each MPI process writes its own output file inside a directory named after the requested file (plus a node subdirectory on a cluster), with a `_p<rank>` suffix (e.g. `MusAirS/MusAirS_p0.root`); merge or reduce the per-rank files afterwards.
 
 ## Coordinate convention
 
@@ -136,11 +136,11 @@ In a parallel run each MPI process writes its own output file inside a process-s
 | phi            | $\mathrm{atan2}(\hat p_x, \hat p_y)+\pi$ | $0$: North, $\frac{\pi}{2}$: East, $\pi$: South, $\frac{3\pi}{2}$: West |
 | Zenith         | $1+\hat p_z$                             | $0$: Sky, $1$: Horizon                                                  |
 
-$\hat{\boldsymbol{p}}$ is the momentum direction at the end of the track, or at the ground surface for the hitting track.
+$\hat{\boldsymbol{p}}$ is the momentum direction at the end of the track (at the ground surface for the hitting track). Both angles describe the arrival direction, opposite to $\hat{\boldsymbol{p}}$.
 
 ## Choose an alternative physics list
 
-MusAirS uses FTFP_BERT as the default physics list. However, you may change it by option `--physics-list`. For example,
+MusAirS uses FTFP_BERT as the default physics list. Change it with `--physics-list`:
 ```sh
 MusAirS --physics-list QGSP_BERT
 ```
@@ -154,7 +154,7 @@ The rest of the physics configuration is set by the program itself, so that ever
 - The default production cuts are **1 km** for gamma, e- and e+ and **3 m** for the proton. The proton cut is the kinetic-energy threshold of the recoiling nucleus in an elastic scatter; in Geant4's linear range-to-energy convention 3 m corresponds to 300 MeV.
 - The reference-list neutron tracking cut of 10 us is replaced by **10 ms** and a **300 MeV** kinetic-energy limit. The default cut would stop neutrons long before the first interaction of a primary from 100 km, about 280 us; 300 MeV is the pion-production threshold below which a neutron cannot feed the muon component.
 - The hadronic and electromagnetic tables are extended to **1 PeV**.
-- The optional conversion processes of `G4EmExtraPhysics` (gamma to muon pair, positron to muon pair, muon to muon pair, positron to hadrons) keep their default disabled state; muons are produced electromagnetically through photonuclear processes.
+- The optional conversion processes of `G4EmExtraPhysics` (gamma to muon pair, positron to muon pair, muon to muon pair, positron to hadrons) keep their default disabled state. The photonuclear, electro-nuclear and muon-nuclear processes of the same list stay enabled and produce the hadrons whose decays feed the muon component.
 
 The cuts can be overridden in the macro. The `lite` and `wo_pipm` example macros lower the electromagnetic cuts to 1 pc and kill the electromagnetic shower, which is suitable when only muons from pion and kaon decay are of interest.
 
@@ -163,7 +163,7 @@ The cuts can be overridden in the macro. The `lite` and `wo_pipm` example macros
 /run/setCutForAGivenParticle e- 1 pc
 /run/setCutForAGivenParticle e+ 1 pc
 ```
-A 1 pc range cut saturates the range-to-energy conversion at 9.55 GeV, which switches off the electromagnetic shower.
+A 1 pc range cut saturates the range-to-energy conversion at 9.55 GeV, so only secondaries above that energy are produced and the electromagnetic shower is strongly suppressed.
 
 The `/MusAirS/Action/KillEMShower`, `/MusAirS/Action/KillNeutrino` and `/MusAirS/Action/KillChargedPion` switches discard the corresponding particles right after generation. All other particles are tracked and recorded when they reach the ground.
 
@@ -259,7 +259,7 @@ With $f(E)$ the physical spectrum and $g(E)$ the sampling distribution, the ener
 | `LogUniformBiased` | $1/[E\ln(E_{\max}/E_{\min})]$        | $f(E)E\ln(E_{\max}/E_{\min})$            | recommended for production, equal statistics per decade of energy |
 | `CustomBiased`     | $g_{\text{user}}(E)/I_{\text{user}}$ | $f(E)I_{\text{user}}/g_{\text{user}}(E)$ | shaping the sample toward the observable of interest              |
 
-The four modes use normalized sampling distributions, so their weights are importance ratios. Formula and graph normalization use a log-spaced energy grid or a linear direction grid; histogram normalization sums bin content times the overlap with the sampled range. In `Normal`, $w_E(E)$ is the spectrum integral $I_f=\int f(E)\,\mathrm{d}E$ over the sampled range; the other modes include the corresponding integral through $f(E)/g(E)$. For `CustomBiased`, $I_{\text{user}}=\int g_{\text{user}}(E)\,\mathrm{d}E$ and $w_E(E)=f(E)I_{\text{user}}/g_{\text{user}}(E)$; the custom spectrum must have a finite positive integral and positive values over the sampled range. Custom energy histograms and graphs are densities in $E$, so counts must be divided by the bin width and the spectrum must cover the sampling range. Partial bins at a range edge are treated as densities over the truncated width, with the same interval used for sampling and normalization. `Normal` and `CustomBiased` use ROOT's cached CDF, while `UniformBiased` and `LogUniformBiased` sample analytically. The stored weight $w_E(E)$ already includes the absolute energy normalization, so combining runs needs exposure or composition weights. $w_E(E)$ is an energy-integrated flux and $w_\Omega(\Omega)$ is dimensionless.
+The four modes use normalized sampling distributions, so their weights are importance ratios. Formula and graph normalization use a log-spaced energy grid or a linear direction grid; histogram normalization sums bin content times the overlap with the sampled range. In `Normal`, $w_E(E)$ is the spectrum integral $I_f=\int f(E)\,\mathrm{d}E$ over the sampled range; the other modes include the corresponding integral through $f(E)/g(E)$. For `CustomBiased`, $I_{\text{user}}=\int g_{\text{user}}(E)\,\mathrm{d}E$ and $w_E(E)=f(E)I_{\text{user}}/g_{\text{user}}(E)$; the custom spectrum must have a finite positive integral and positive values over the sampled range. Custom energy histograms and graphs are densities in $E$, so counts must be divided by the bin width and the spectrum must cover the sampling range. Partial bins at a range edge are treated as densities over the truncated width, with the same interval used for sampling and normalization. `Normal` and `CustomBiased` use ROOT's cached CDF, while `UniformBiased` and `LogUniformBiased` sample analytically. The stored weight $w_E(E)$ is an energy-integrated flux that already includes the absolute normalization, so combining runs needs exposure or composition weights; $w_\Omega(\Omega)$ is dimensionless.
 
 #### Direction sampling
 
@@ -279,17 +279,17 @@ The `ZenithPowerBiased` exponent, the `CustomBiased` distribution, and its sampl
 /MusAirS/PCR/Direction/Sampling/Custom/NPoint     10000
 ```
 
-For `CustomBiased`, the user-supplied distribution $g_{\text{user}}(x)$ is given by a formula or by a histogram or graph in $x=\cos\theta$ over $[\cos\theta_{\max},1]$. ROOT's cached CDF samples the spectrum on `NPoint` points (default 10000, allowed 10-10000000), built on first use and invalidated by `SetRange` or `SetNpx`. The generator rebuilds it only when the spectrum, `NPoint` or geometry changes, so the per-event cost is unaffected. Formula and graph normalization use at least 1,000,000 points, or `NPoint` if larger; histogram normalization is exact and independent of `NPoint`. Increase `NPoint` if the spectrum has features narrower than the CDF grid. Custom direction histograms and graphs are densities in $x$, so counts must be divided by the bin width and the spectrum must cover the sampling range.
+For `CustomBiased`, the user-supplied distribution $g_{\text{user}}(\cos\theta)$ is given by a formula in $x=\cos\theta$, or by a histogram or graph over $[\cos\theta_{\max},1]$. ROOT's cached CDF samples the spectrum on `NPoint` points (default 10000, allowed 10-10000000), built on first use and invalidated by `SetRange` or `SetNpx`. The generator rebuilds it only when the spectrum, `NPoint` or geometry changes, so the per-event cost is unaffected. Formula and graph normalization use at least 1,000,000 points, or `NPoint` if larger; histogram normalization is exact and independent of `NPoint`. Increase `NPoint` if the spectrum has features narrower than the CDF grid. As for the energy spectrum, custom direction histograms and graphs are densities in $x=\cos\theta$.
 
 Let $f(\Omega)=\cos\theta/\pi$ be the physical angular distribution over the full downward hemisphere and $g(\Omega)$ the sampling distribution; let $u_{\min}=\cos\theta_{\max}$. The world accepts the fraction $1-u_{\min}^2$ of $f(\Omega)$, and the direction weight includes that acceptance. The modes sample $g(\Omega)$ and assign
 
-| Mode                | $g(\Omega)$                           | $w_\Omega(\Omega)$                                                 |
-| ------------------- | ------------------------------------- | ------------------------------------------------------------------ |
-| `Normal`            | $\propto \cos\theta$                  | $1-u_{\min}^2$                                                     |
-| `ZenithPowerBiased` | $\propto \cos^n\theta$                | $\frac{2}{n+1}(1-u_{\min}^{n+1})\cos^{1-n}\theta$                  |
-| `CustomBiased`      | $\propto g_{\text{user}}(\cos\theta)$ | $\frac{2\cos\theta\,I_{\text{user}}}{g_{\text{user}}(\cos\theta)}$ |
+| Mode                | $g(\Omega)$                           | $w_\Omega(\Omega)$                                                        |
+| ------------------- | ------------------------------------- | ------------------------------------------------------------------------- |
+| `Normal`            | $\propto \cos\theta$                  | $1-u_{\min}^2$                                                            |
+| `ZenithPowerBiased` | $\propto \cos^n\theta$                | $\frac{2}{n+1}(1-u_{\min}^{n+1})\cos^{1-n}\theta$                         |
+| `CustomBiased`      | $\propto g_{\text{user}}(\cos\theta)$ | $\frac{2\cos\theta\,I_{\text{user},\Omega}}{g_{\text{user}}(\cos\theta)}$ |
 
-Here $g_{\text{user}}(\cos\theta)$ is the user-supplied distribution, and for `CustomBiased` $I_{\text{user}}=\int_{u_{\min}}^{1} g_{\text{user}}(u)\,\mathrm{d}u$. The `ZenithPowerBiased` exponent must be finite and non-negative; the default is $n=2$, so the `Power` command can be omitted for that value. $n=1$ reproduces `Normal`, and $n=0$ gives a uniform distribution in $\cos\theta$ (uniform solid angle). The physical $f(\Omega)$ is normalized over the full downward hemisphere; each mode's weight has expectation $1-u_{\min}^2$ over the accepted cone, and $g_{\text{user}}(\cos\theta)$ must have a finite positive integral and positive values over the sampled range.
+Here $g_{\text{user}}(\cos\theta)$ is the user-supplied distribution, and for `CustomBiased` $I_{\text{user},\Omega}=\int_{u_{\min}}^{1} g_{\text{user}}(u)\,\mathrm{d}u$. The `ZenithPowerBiased` exponent must be finite and non-negative; the default is $n=2$, so the `Power` command can be omitted for that value. $n=1$ reproduces `Normal`, and $n=0$ gives a uniform distribution in $\cos\theta$ (uniform solid angle). The physical $f(\Omega)$ is normalized over the full downward hemisphere; each mode's weight has expectation $1-u_{\min}^2$ over the accepted cone, and $g_{\text{user}}(\cos\theta)$ must have a finite positive integral and positive values over the sampled range.
 
 #### Units
 
@@ -313,7 +313,7 @@ For example, the following macro lines generate protons from 100 km above sea le
 /gps/ene/min          3 GeV
 /gps/ene/max          10 TeV
 ```
-Detailed usage can be found in the [Geant4 Book For Application Developers](https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/GettingStarted/generalParticleSource.html).
+Detailed usage is in the [Geant4 General Particle Source](https://geant4-userdoc.web.cern.ch/UsersGuides/ForApplicationDeveloper/html/GettingStarted/generalParticleSource.html) documentation.
 
 ## Save primary vertex data
 
@@ -332,7 +332,7 @@ Neutrinos are killed at generation by default, since modelling their interaction
 
 ## Interpret the result
 
-Each Geant4 run is written to a directory named `G4Run<id>`, with the collections that are enabled for the run.
+Each Geant4 run is written to a directory named `G4Run<id>`, with the collections that are enabled for the run. The output file is set with `/Mustard/Analysis/FilePath <file>` before `/run/beamOn`; without it the file is named `MusAirS_untitled`.
 
 | Collection                                                                 | Content                                                                                            |
 | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -361,33 +361,22 @@ For the hitting track the end-of-track values are taken at the ground surface; f
 
 A track terminated by a discrete absorption process (pair production, photoelectric effect, inelastic hadronic interaction, annihilation) or by an at-rest process has its final energy and momentum set to zero by Geant4. Such tracks remain in the output as ancestors of a ground hit. Their `Zenith` and `phi` come from the momentum direction, which Geant4 keeps in these cases; if a process resets it to zero, the direction at the start of the last step is used. Both columns are therefore defined for every entry; for a track at rest they give the direction of its last motion.
 
-By default the collections are ROOT `RNTuple`s, which `ROOT::RDataFrame` reads directly by their directory-qualified name. For example, the kinetic energy of the muons that reached the ground in the first run:
+By default the collections are ROOT `RNTuple`s. `ROOT::RDataFrame` reads a collection by its directory-qualified name, e.g. the kinetic energy of the muons that reached the ground in the first run:
 
 ```c++
 ROOT::RDataFrame df{"G4Run0/ReactionChain(13)", "MusAirS.root"};
 auto muonKineticEnergy = df.Filter("PDGID == 13 && KillProc == \"<0|\"").Take<float>("Ek");
 ```
 
-To write ROOT `TTree`s instead (e.g. for `hadd`), set `MUSTARD_DATA_WRITER_DEFAULT_TARGET=TTree` in the environment or run `/MusAirS/Analysis/WriterTarget TTree` before `/run/beamOn`; the collection names are preserved. A `TTree` collection lives in a ROOT directory, so retrieve it from the file first. `ROOT::RDataFrame` can also read a `TTree`, and `TTree::Draw` is available:
+To write ROOT `TTree`s, set `MUSTARD_DATA_WRITER_DEFAULT_TARGET=TTree` in the environment or run `/MusAirS/Analysis/WriterTarget TTree` before `/run/beamOn`; the collection names are preserved, so the same `RDataFrame` code applies. The `TTree` interface is available as usual:
 
 ```c++
 TFile file("MusAirS.root");
 auto* tree = file.Get<TDirectory>("G4Run0")->Get<TTree>("ReactionChain(13)");
-ROOT::RDataFrame df{*tree};
-auto muonKineticEnergy = df.Filter("PDGID == 13 && KillProc == \"<0|\"").Take<float>("Ek");
 tree->Draw("Ek", "PDGID == 13 && KillProc == \"<0|\"");
 ```
 
 When running in parallel, every MPI process writes its own file (see [Batch session](#batch-session)); merge or read the per-rank files together afterwards, e.g. `hadd` when writing `TTree`s.
-
-## Output writer target
-
-The analysis writes ROOT `RNTuple`s by default. The output format can be changed either by the `MUSTARD_DATA_WRITER_DEFAULT_TARGET` environment variable (`RNTuple` or `TTree`) or at run time with
-
-```sh
-/MusAirS/Analysis/WriterTarget RNTuple  # default
-/MusAirS/Analysis/WriterTarget TTree    # one TTree per collection instead
-```
 
 ## Bug tracking
 

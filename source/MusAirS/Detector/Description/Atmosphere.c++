@@ -28,6 +28,8 @@
 
 #include "gsl/gsl"
 
+#include "fmt/format.h"
+
 #include <array>
 #include <cmath>
 #include <cstddef>

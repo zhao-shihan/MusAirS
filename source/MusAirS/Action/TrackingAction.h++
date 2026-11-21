@@ -19,7 +19,6 @@
 #pragma once
 
 #include "MusAirS/Data/Track.h++"
-#include "MusAirS/Messenger/AnalysisMessenger.h++"
 
 #include "Mustard/Data/Container/ArcTupleHashMap.h++"
 #include "Mustard/Env/ObjectRegistry/PassiveSingleton.h++"
@@ -50,8 +49,6 @@ private:
     G4ThreeVector fVertexSigma;
 
     TrackDataType fTrackData;
-
-    AnalysisMessenger::Register<TrackingAction> fMessengerRegister;
 };
 
 } // namespace MusAirS::inline Action

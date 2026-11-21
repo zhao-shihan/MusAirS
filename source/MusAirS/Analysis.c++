@@ -24,8 +24,6 @@
 
 #include "fmt/format.h"
 
-#include <vector>
-
 namespace MusAirS {
 
 Analysis::Analysis() :

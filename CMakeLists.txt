@@ -109,6 +109,8 @@ message(STATUS "MusAirS install path: ${CMAKE_INSTALL_PREFIX} (add -DCMAKE_INSTA
 
 # Global compile configs, before finding dependencies.
 include(MusAirSGlobalCompileConfig)
+# Dependencies are built in-tree but never installed, so they must be static.
+set(BUILD_SHARED_LIBS OFF)
 # Find Mustard with CPM (an installed Mustard is preferred). ROOT, Geant4, MPI,
 # Eigen, fmt, ... are all found by Mustard and propagated through the
 # Mustard::Mustard usage requirements.
@@ -135,7 +137,6 @@ target_link_libraries(MusAirS PRIVATE Mustard::Mustard)
 target_compile_options(MusAirS PRIVATE ${MUSAIRS_PRIVATE_COMPILE_OPTIONS})
 target_compile_definitions(MusAirS PRIVATE ${MUSAIRS_PRIVATE_COMPILE_DEFINITIONS})
 set_target_properties(MusAirS PROPERTIES
-    CXX_STANDARD 20
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF)
 

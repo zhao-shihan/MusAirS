@@ -17,18 +17,14 @@
 // MusAirS. If not, see <https://www.gnu.org/licenses/>.
 
 #include "MusAirS/Action/TrackingAction.h++"
-#include "MusAirS/Analysis.h++"
 
 #include "Mustard/IO/PrettyLog.h++"
 
 #include "G4Event.hh"
 #include "G4EventManager.hh"
-#include "G4ProcessType.hh"
 #include "G4Step.hh"
 #include "G4StepPoint.hh"
-#include "G4SteppingManager.hh"
 #include "G4Track.hh"
-#include "G4TrackingManager.hh"
 #include "G4VProcess.hh"
 
 #include "fmt/format.h"
@@ -44,8 +40,7 @@ TrackingAction::TrackingAction() :
     PassiveSingleton{this},
     G4UserTrackingAction{},
     fVertexSigma{},
-    fTrackData{},
-    fMessengerRegister{this} {}
+    fTrackData{} {}
 
 auto TrackingAction::PreUserTrackingAction(const G4Track* track) -> void {
     fVertexSigma = track->GetPolarization();
@@ -56,17 +51,25 @@ auto TrackingAction::PostUserTrackingAction(const G4Track* track) -> void {
 }
 
 auto TrackingAction::UpdateTrackData(const G4Track& g4Track) -> void {
-    const auto creatorProcess{g4Track.GetCreatorProcess()};
+    const auto eventID{G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID()};
     const auto trackID{g4Track.GetTrackID()};
     const auto& particle{*g4Track.GetDefinition()};
+    const auto& step{*g4Track.GetStep()};
+    const auto killerProcess{step.GetPostStepPoint()->GetProcessDefinedStep()};
+    if (killerProcess == nullptr) [[unlikely]] {
+        Mustard::PrintWarning(fmt::format(
+            "Event {} track {} (PDG ID: {}) has no step-defining process and is not recorded.",
+            eventID, trackID, particle.GetPDGEncoding()));
+        return;
+    }
+
+    const auto creatorProcess{g4Track.GetCreatorProcess()};
     const auto vertexEk{g4Track.GetVertexKineticEnergy()};
     const auto vertexMomentum{g4Track.GetVertexMomentumDirection() * std::sqrt(vertexEk * (vertexEk + 2 * particle.GetPDGMass()))};
-    auto momentumDirection{g4Track.GetMomentumDirection()}; // guaranteed to be normalized
-    if (momentumDirection.mag2() == 0) [[unlikely]] {       // few processes (e.g. G4GammaConversionToMuons) reset direction to zero
-        momentumDirection = g4Track.GetStep()->GetPreStepPoint()->GetMomentumDirection();
+    auto momentumDirection{g4Track.GetMomentumDirection()}; // usually normalized; a few processes (e.g. G4GammaConversionToMuons) reset it to zero
+    if (momentumDirection.mag2() == 0) [[unlikely]] {
+        momentumDirection = step.GetPreStepPoint()->GetMomentumDirection();
     }
-    auto& eventManager{*G4EventManager::GetEventManager()};
-    const auto killerProcess{eventManager.GetTrackingManager()->GetSteppingManager()->GetfCurrentProcess()};
 
     const auto [it, inserted]{fTrackData.try_emplace(trackID, Mustard::Data::MakeArcTuple<Data::Track>())};
     if (not inserted) {
@@ -74,7 +77,7 @@ auto TrackingAction::UpdateTrackData(const G4Track& g4Track) -> void {
     }
 
     auto& track{*it->second};
-    F<"EvtID">(track) = eventManager.GetConstCurrentEvent()->GetEventID();
+    F<"EvtID">(track) = eventID;
     F<"ParTrkID">(track) = creatorProcess ? g4Track.GetParentID() : -1;
     // F<"ParPDGID">(track) = <delay to event end analysis>
     F<"CreatProc">(track) = creatorProcess ? std::string_view{creatorProcess->GetProcessName()} : "|0>";

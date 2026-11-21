@@ -30,7 +30,6 @@ namespace MusAirS {
 
 class Analysis;
 inline namespace Action {
-class TrackingAction;
 class PrimaryGeneratorAction;
 } // namespace Action
 
@@ -38,7 +37,6 @@ inline namespace Messenger {
 
 class AnalysisMessenger final : public Mustard::Geant4X::SingletonMessenger<AnalysisMessenger,
                                                                             Analysis,
-                                                                            TrackingAction,
                                                                             PrimaryGeneratorAction> {
     friend Mustard::Env::SingletonFactory;
 

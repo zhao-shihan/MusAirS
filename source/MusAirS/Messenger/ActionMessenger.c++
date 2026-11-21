@@ -48,7 +48,7 @@ ActionMessenger::ActionMessenger() :
     fSwitchToGPSX->AvailableForStates(G4State_Idle);
 
     fKillEMShower = std::make_unique<G4UIcmdWithABool>("/MusAirS/Action/KillEMShower", this);
-    fKillEMShower->SetGuidance("EM shower (e+, e-, gamma) will be killed if set.");
+    fKillEMShower->SetGuidance("EM shower (e+, e-, gamma) will be killed at generation if set.");
     fKillEMShower->SetParameterName("bool", false);
     fKillEMShower->AvailableForStates(G4State_Idle);
 
@@ -58,7 +58,7 @@ ActionMessenger::ActionMessenger() :
     fKillNeutrino->AvailableForStates(G4State_Idle);
 
     fKillChargedPion = std::make_unique<G4UIcmdWithABool>("/MusAirS/Action/KillChargedPion", this);
-    fKillChargedPion->SetGuidance("Charged pions will be killed if set.");
+    fKillChargedPion->SetGuidance("Charged pions will be killed at generation if set.");
     fKillChargedPion->SetParameterName("bool", false);
     fKillChargedPion->AvailableForStates(G4State_Idle);
 }

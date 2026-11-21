@@ -28,8 +28,6 @@
 #include "Mustard/Data/Processing/Writer.h++"
 #include "Mustard/Simulation/AnalysisBase.h++"
 
-#include "G4Types.hh"
-
 #include "gtl/phmap.hpp"
 #include "gtl/vector.hpp"
 
@@ -40,7 +38,7 @@
 
 namespace MusAirS {
 
-class Analysis final : public Mustard::Simulation::AnalysisBase<Analysis, "MusAirs"> {
+class Analysis final : public Mustard::Simulation::AnalysisBase<Analysis, "MusAirS"> {
 public:
     Analysis();
 
