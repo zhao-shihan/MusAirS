@@ -37,8 +37,6 @@ constexpr auto defaultMacro = {
     "/gps/position             0 0 100 km",
     "/gps/energy               1 TeV",
     "",
-    "/MusAirS/SD/EarthSD/DetectNeutrino yes",
-    "",
     "/Mustard/Analysis/FilePath MusAirS_vis.root",
     "/Mustard/Analysis/FileMode RECREATE",
     "",

@@ -37,7 +37,6 @@
 /run/setCutForAGivenParticle gamma 1 pc
 /MusAirS/Action/KillEMShower yes
 /MusAirS/Action/KillChargedPion yes
-/MusAirS/SD/EarthSD/DetectNeutrino no
 /MusAirS/Analysis/SavePrimaryVertexData no
 
 #############################################################################

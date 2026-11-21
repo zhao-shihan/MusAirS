@@ -16,7 +16,6 @@
 /MusAirS/PCR/Energy/Max                      10 TeV
 /MusAirS/PCR/Energy/Sampling/Mode            LogUniformBiased
 
-/MusAirS/SD/EarthSD/DetectNeutrino yes
 /MusAirS/Analysis/SavePrimaryVertexData no
 
 #############################################################################
