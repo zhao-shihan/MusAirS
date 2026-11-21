@@ -18,20 +18,23 @@
 
 #pragma once
 
-#include "Mustard/Data/TupleModel.h++"
-#include "Mustard/Data/Value.h++"
+#include "Mustard/Data/Model.h++"
+#include "Mustard/Data/Object/Field.h++"
 
 #include "muc/array"
 
+#include <cstdint>
+
 namespace MusAirS::Data {
 
-using PrimaryVertex = Mustard::Data::TupleModel<
-    Mustard::Data::Value<int, "EvtID", "Event ID">,
-    Mustard::Data::Value<int, "PDGID", "PDG ID">,
-    Mustard::Data::Value<double, "t0", "Primary time">,
-    Mustard::Data::Value<muc::array3f, "x0", "Primary position">,
-    Mustard::Data::Value<float, "Ek0", "Primary kinetic energy">,
-    Mustard::Data::Value<muc::array3f, "p0", "Primary momentum">,
-    Mustard::Data::Value<float, "Weight", "Track weight">>;
+struct PrimaryVertex final
+    : Mustard::Data::Model<
+          Mustard::Data::Field<int, "EvtID", std::int32_t, "Event ID">,
+          Mustard::Data::Field<int, "PDGID", std::int32_t, "PDG ID">,
+          Mustard::Data::Field<double, "t0", double, "Primary time">,
+          Mustard::Data::Field<muc::array3f, "x0", muc::array3f, "Primary position">,
+          Mustard::Data::Field<float, "Ek0", float, "Primary kinetic energy">,
+          Mustard::Data::Field<muc::array3f, "p0", muc::array3f, "Primary momentum">,
+          Mustard::Data::Field<float, "Weight", float, "Track weight">> {};
 
 } // namespace MusAirS::Data

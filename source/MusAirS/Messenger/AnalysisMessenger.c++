@@ -32,7 +32,8 @@ namespace MusAirS::inline Messenger {
 AnalysisMessenger::AnalysisMessenger() :
     SingletonMessenger{},
     fDirectory{},
-    fSavePrimaryVertexData{} {
+    fSavePrimaryVertexData{},
+    fWriterTarget{} {
 
     fDirectory = std::make_unique<G4UIdirectory>("/MusAirS/Analysis/");
     fDirectory->SetGuidance("MusAirS::Analysis controller.");
@@ -41,6 +42,12 @@ AnalysisMessenger::AnalysisMessenger() :
     fSavePrimaryVertexData->SetGuidance("Save primary vertex data if enabled.");
     fSavePrimaryVertexData->SetParameterName("mode", false);
     fSavePrimaryVertexData->AvailableForStates(G4State_Idle);
+
+    fWriterTarget = std::make_unique<G4UIcmdWithAString>("/MusAirS/Analysis/WriterTarget", this);
+    fWriterTarget->SetGuidance("Set the target format of the analysis output writer. Available values: TTree, RNTuple. When unset, MUSTARD_DATA_WRITER_DEFAULT_TARGET decides (default: RNTuple).");
+    fWriterTarget->SetParameterName("target", false);
+    fWriterTarget->SetCandidates("TTree RNTuple");
+    fWriterTarget->AvailableForStates(G4State_Idle);
 }
 
 AnalysisMessenger::~AnalysisMessenger() = default;
@@ -49,6 +56,10 @@ auto AnalysisMessenger::SetNewValue(G4UIcommand* command, G4String value) -> voi
     if (command == fSavePrimaryVertexData.get()) {
         Deliver<PrimaryGeneratorAction>([&](auto&& r) {
             r.SavePrimaryVertexData(fSavePrimaryVertexData->GetNewBoolValue(value));
+        });
+    } else if (command == fWriterTarget.get()) {
+        Deliver<Analysis>([&](auto&& r) {
+            r.WriterTarget(value);
         });
     }
 }

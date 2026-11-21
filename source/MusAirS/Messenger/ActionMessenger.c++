@@ -16,6 +16,7 @@
 // You should have received a copy of the GNU General Public License along with
 // MusAirS. If not, see <https://www.gnu.org/licenses/>.
 
+#include "MusAirS/Action/PrimaryGeneratorAction.h++"
 #include "MusAirS/Action/SteppingAction.h++"
 #include "MusAirS/Messenger/ActionMessenger.h++"
 

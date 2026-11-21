@@ -26,7 +26,9 @@
 #include "Mustard/Detector/Definition/DefinitionBase.h++"
 #include "Mustard/Detector/Field/AsG4Field.h++"
 #include "Mustard/Detector/Field/UniformMagneticField.h++"
+#include "Mustard/Math/Vector.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
+#include "Mustard/Utility/VectorCast.h++"
 
 #include "G4ChordFinder.hh"
 #include "G4FieldManager.hh"
@@ -72,7 +74,7 @@ auto DetectorConstruction::Construct() -> G4VPhysicalVolume* {
     using Stepper = G4TDormandPrince45<Equation, 12>;
     using Driver = G4InterpolationDriver<Stepper>;
 
-    const auto field{new Field{Detector::Description::Field::Instance().MagneticField()}};
+    const auto field{new Field{Mustard::VectorCast<Mustard::Math::Vector3D>(Detector::Description::Field::Instance().MagneticField())}};
     const auto equation{new Equation{field}}; // clang-format off
     const auto stepper{new Stepper{equation}};
     const auto driver{new Driver{fMinDriverStep, stepper, 12}}; // clang-format on

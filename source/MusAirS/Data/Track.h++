@@ -18,39 +18,40 @@
 
 #pragma once
 
-#include "Mustard/Data/Tuple.h++"
-#include "Mustard/Data/Value.h++"
+#include "Mustard/Data/Model.h++"
+#include "Mustard/Data/Object/Field.h++"
 
 #include "muc/array"
 
+#include <cstdint>
 #include <string>
-#include <vector>
 
 namespace MusAirS::Data {
 
-using Track = Mustard::Data::TupleModel<
-    Mustard::Data::Value<int, "EvtID", "Event ID">,
-    Mustard::Data::Value<int, "ParTrkID", "Parent track ID">,
-    Mustard::Data::Value<int, "ParPDGID", "Parent PDG ID">,
-    Mustard::Data::Value<std::string, "CreatProc", "Track creator process">,
-    Mustard::Data::Value<int, "TrkID", "Track ID">,
-    Mustard::Data::Value<int, "PDGID", "Particle PDG ID">,
-    Mustard::Data::Value<float, "t0", "Initial time">,
-    Mustard::Data::Value<muc::array3f, "x0", "Initial position">,
-    Mustard::Data::Value<float, "Ek0", "Initial kinetic energy">,
-    Mustard::Data::Value<muc::array3f, "p0", "Initial momentum">,
-    Mustard::Data::Value<muc::array3f, "Sigma0", "Initial spin direction">,
-    Mustard::Data::Value<float, "Helicity0", "Initial helicity">,
-    Mustard::Data::Value<float, "t", "Final time">,
-    Mustard::Data::Value<muc::array3f, "x", "Final position">,
-    Mustard::Data::Value<float, "Ek", "Final kinetic energy">,
-    Mustard::Data::Value<muc::array3f, "p", "Final momentum">,
-    Mustard::Data::Value<muc::array3f, "Sigma", "Final spin direction">,
-    Mustard::Data::Value<float, "Helicity", "Final helicity">,
-    Mustard::Data::Value<float, "Zenith", "Final 1 - cos(zenith angle)">,
-    Mustard::Data::Value<float, "phi", "Final azimuth angle">,
-    Mustard::Data::Value<float, "TrkLen", "Track total length">,
-    Mustard::Data::Value<std::string, "KillProc", "Track killer process">,
-    Mustard::Data::Value<float, "Weight", "Track weight">>;
+struct Track final
+    : Mustard::Data::Model<
+          Mustard::Data::Field<int, "EvtID", std::int32_t, "Event ID">,
+          Mustard::Data::Field<int, "ParTrkID", std::int32_t, "Parent track ID">,
+          Mustard::Data::Field<int, "ParPDGID", std::int32_t, "Parent PDG ID">,
+          Mustard::Data::Field<std::string, "CreatProc", std::string, "Track creator process">,
+          Mustard::Data::Field<int, "TrkID", std::int32_t, "Track ID">,
+          Mustard::Data::Field<int, "PDGID", std::int32_t, "Particle PDG ID">,
+          Mustard::Data::Field<float, "t0", float, "Initial time">,
+          Mustard::Data::Field<muc::array3f, "x0", muc::array3f, "Initial position">,
+          Mustard::Data::Field<float, "Ek0", float, "Initial kinetic energy">,
+          Mustard::Data::Field<muc::array3f, "p0", muc::array3f, "Initial momentum">,
+          Mustard::Data::Field<muc::array3f, "Sigma0", muc::array3f, "Initial spin direction">,
+          Mustard::Data::Field<float, "Helicity0", float, "Initial helicity">,
+          Mustard::Data::Field<float, "t", float, "Final time">,
+          Mustard::Data::Field<muc::array3f, "x", muc::array3f, "Final position">,
+          Mustard::Data::Field<float, "Ek", float, "Final kinetic energy">,
+          Mustard::Data::Field<muc::array3f, "p", muc::array3f, "Final momentum">,
+          Mustard::Data::Field<muc::array3f, "Sigma", muc::array3f, "Final spin direction">,
+          Mustard::Data::Field<float, "Helicity", float, "Final helicity">,
+          Mustard::Data::Field<float, "Zenith", float, "Final 1 - cos(zenith angle)">,
+          Mustard::Data::Field<float, "phi", float, "Final azimuth angle">,
+          Mustard::Data::Field<float, "TrkLen", float, "Track total length">,
+          Mustard::Data::Field<std::string, "KillProc", std::string, "Track killer process">,
+          Mustard::Data::Field<float, "Weight", float, "Track weight">> {};
 
 } // namespace MusAirS::Data

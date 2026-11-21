@@ -23,7 +23,7 @@
 namespace MusAirS::Detector::Description {
 
 class World final : public Mustard::Detector::Description::DescriptionBase<World> {
-    friend Mustard::Env::Memory::SingletonInstantiator;
+    friend Mustard::Env::SingletonFactory;
 
 private:
     World();

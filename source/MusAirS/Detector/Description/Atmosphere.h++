@@ -25,7 +25,7 @@
 namespace MusAirS::Detector::Description {
 
 class Atmosphere final : public Mustard::Detector::Description::DescriptionWithCacheBase<Atmosphere> {
-    friend Mustard::Env::Memory::SingletonInstantiator;
+    friend Mustard::Env::SingletonFactory;
 
 private:
     Atmosphere();

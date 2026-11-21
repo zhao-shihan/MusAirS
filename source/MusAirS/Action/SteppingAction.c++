@@ -35,7 +35,7 @@
 
 #include "muc/math"
 
-#include "fmt/core.h"
+#include "fmt/format.h"
 
 #include <string_view>
 
@@ -79,7 +79,7 @@ auto SteppingAction::UserSteppingAction(const G4Step* step) -> void {
     if (track->GetCurrentStepNumber() >= fgNStepLimit) [[unlikely]] {
         track->SetTrackStatus(fStopAndKill);
         Mustard::PrintWarning(
-            fmt::format("Event {} track {} (PDG ID: {}) has more than {} steps, killing it (Ek = {})",
+            fmt::format("Event {} track {} (PDG ID: {}) has more than {} steps, killing it (Ek = {}).",
                         G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID(),
                         track->GetTrackID(), pdgID, fgNStepLimit,
                         std::string_view{G4String{G4BestUnit{track->GetKineticEnergy(), "Energy"}}}));

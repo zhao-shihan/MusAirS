@@ -34,7 +34,7 @@
 namespace MusAirS::inline SD {
 
 EarthSD::EarthSD(const G4String& sdName) :
-    Mustard::NonCopyableBase{},
+    Mustard::NoncopyableBase{},
     G4VSensitiveDetector{sdName},
     fDetectNeutrino{false},
     fHitTrackIDData{},
@@ -51,26 +51,29 @@ auto EarthSD::ProcessHits(G4Step* theStep, G4TouchableHistory*) -> G4bool {
     theStep->GetTrack()->SetTrackStatus(fStopAndKill);
 
     const auto& step{*theStep};
-    if (not step.IsFirstStepInVolume()) { return false; } // ensure first step
+    if (not step.IsFirstStepInVolume()) {
+        return false;
+    } // ensure first step
 
     const auto& track{*step.GetTrack()};
-    if (track.GetCurrentStepNumber() < 2) { return false; } // ensure track coming from outside
+    if (track.GetCurrentStepNumber() < 2) {
+        return false;
+    } // ensure track coming from outside
 
     const auto& particle{*track.GetDefinition()};
     const auto pdgID{particle.GetPDGEncoding()};
 
-    if (fDetectNeutrino) { goto SkipIgnoringNeutrino; }
-    enum { vE = 12,
-           vMu = 14,
-           vTau = 16 };
-    if (const auto absPDGID{muc::abs(pdgID)};
-        absPDGID == vE or absPDGID == vMu or absPDGID == vTau) { // ignoring neutrino
-        return false;
+    if (not fDetectNeutrino) {
+        enum { vE = 12,
+               vMu = 14,
+               vTau = 16 };
+        if (const auto absPDGID{muc::abs(pdgID)};
+            absPDGID == vE or absPDGID == vMu or absPDGID == vTau) { // ignoring neutrino
+            return false;
+        }
     }
-SkipIgnoringNeutrino:
 
     fHitTrackIDData.emplace_back(track.GetTrackID());
-
     return true;
 }
 

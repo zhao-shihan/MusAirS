@@ -25,7 +25,7 @@
 namespace MusAirS::Detector::Description {
 
 class Field final : public Mustard::Detector::Description::DescriptionBase<Field> {
-    friend Mustard::Env::Memory::SingletonInstantiator;
+    friend Mustard::Env::SingletonFactory;
 
 private:
     Field();

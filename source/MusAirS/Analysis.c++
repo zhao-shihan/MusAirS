@@ -20,25 +20,16 @@
 #include "MusAirS/Action/TrackingAction.h++"
 #include "MusAirS/Analysis.h++"
 
-#include "Mustard/Env/MPIEnv.h++"
-#include "Mustard/Geant4X/Utility/ConvertGeometry.h++"
 #include "Mustard/Utility/VectorCast.h++"
 
-#include "muc/algorithm"
-
-#include "TFile.h"
-#include "TMacro.h"
-
 #include "Eigen/Core"
+
+#include "muc/algorithm"
 
 #include "fmt/format.h"
 
 #include <cmath>
 #include <numbers>
-#include <optional>
-#include <stdexcept>
-#include <string_view>
-#include <unordered_map>
 #include <vector>
 
 namespace MusAirS {
@@ -46,6 +37,7 @@ namespace MusAirS {
 Analysis::Analysis() :
     AnalysisBase{this},
     fCurrentRunID{},
+    fWriterTarget{},
     fPrimaryVertexOutput{},
     fReactionChainOutput{},
     fPrimaryVertexData{},
@@ -55,18 +47,37 @@ Analysis::Analysis() :
 
 auto Analysis::RunBeginUserAction(int runID) -> void {
     fCurrentRunID = runID;
-    if (PrimaryGeneratorAction::Instance().SavePrimaryVertexData()) { fPrimaryVertexOutput.emplace(fmt::format("G4Run{}/PrimaryVertex", runID)); }
+    if (PrimaryGeneratorAction::Instance().SavePrimaryVertexData()) {
+        const auto name{fmt::format("G4Run{}/PrimaryVertex", runID)};
+        if (fWriterTarget) {
+            fPrimaryVertexOutput.emplace(name, *fWriterTarget);
+        } else {
+            fPrimaryVertexOutput.emplace(name);
+        }
+    }
 }
 
 auto Analysis::EventEndUserAction() -> void {
-    if (fPrimaryVertexOutput) { fPrimaryVertexOutput->Fill(*fPrimaryVertexData); }
+    if (fPrimaryVertexOutput) {
+        fPrimaryVertexOutput->Fill(*fPrimaryVertexData);
+    }
     for (auto&& [pdgID, chain] : BuildReactionChain()) {
-        const auto [it, _]{fReactionChainOutput.try_emplace(pdgID, fmt::format("G4Run{}/ReactionChain({})", fCurrentRunID, pdgID))};
-        auto&& [__, output]{*it};
+        const auto name{fmt::format("G4Run{}/ReactionChain({})", fCurrentRunID, pdgID)};
+        auto it{fReactionChainOutput.end()};
+        if (fWriterTarget) {
+            it = fReactionChainOutput.try_emplace(pdgID, name, *fWriterTarget).first;
+        } else {
+            it = fReactionChainOutput.try_emplace(pdgID, name).first;
+        }
+        auto& output{it->second};
+        Mustard::Data::ArcTupleVector<Data::Track> sorted;
+        sorted.reserve(chain.size());
+        for (auto trackID : chain) {
+            sorted.push_back(fTrackData->at(trackID));
+        }
         // Sort by track ID so that the parents always precede their children
         // and the output does not depend on the hash container's iteration order
-        std::vector<Mustard::Data::Tuple<Data::Track>*> sorted{chain.cbegin(), chain.cend()};
-        muc::timsort(sorted, [](auto* lhs, auto* rhs) { return Get<"TrkID">(*lhs) < Get<"TrkID">(*rhs); });
+        muc::timsort(sorted, [](const auto& lhs, const auto& rhs) { return F<"TrkID">(*lhs) < F<"TrkID">(*rhs); });
         output.Fill(sorted);
     }
     fPrimaryVertexData = {};
@@ -75,38 +86,37 @@ auto Analysis::EventEndUserAction() -> void {
 }
 
 auto Analysis::RunEndUserAction(int) -> void {
-    // write data
-    if (fPrimaryVertexOutput) { fPrimaryVertexOutput->Write(); }
-    for (auto&& [_, output] : fReactionChainOutput) { output.Write(); }
-    // reset output
+    // Writing is handled by the writers' destructors, so destroy them here,
+    // before the analysis base closes the output file.
     fPrimaryVertexOutput.reset();
     fReactionChainOutput.clear();
 }
 
-auto Analysis::BuildReactionChain() const -> std::unordered_map<int, ReactionChain> {
-    std::unordered_map<int, ReactionChain> chain;
+auto Analysis::BuildReactionChain() const -> gtl::flat_hash_map<int, ReactionChain> {
+    gtl::flat_hash_map<int, ReactionChain> chain;
     for (auto&& trackID : *fEarthSDHitTrackIDData) {
         auto& track{fTrackData->at(trackID)};
-        Get<"KillProc">(track) = "<0|"; // track is killed by EarthSD
-        BuildReactionChainImpl(track, chain[Get<"PDGID">(track)]);
+        F<"KillProc">(*track) = "<0|"; // track is killed by EarthSD
+        BuildReactionChainImpl(trackID, chain[F<"PDGID">(*track)]);
     }
     return chain;
 }
 
-auto Analysis::BuildReactionChainImpl(Mustard::Data::Tuple<Data::Track>& track, ReactionChain& chain) const -> void {
-    if (Get<"ParTrkID">(track) != -1) {
-        auto& parentTrack{fTrackData->at(Get<"ParTrkID">(track))};
+auto Analysis::BuildReactionChainImpl(int trackID, ReactionChain& chain) const -> void {
+    auto& track{*fTrackData->at(trackID)};
+    if (const auto parTrkID{F<"ParTrkID">(track)}; parTrkID != -1) {
+        auto& parentTrack{*fTrackData->at(parTrkID)};
         // Amend parent PDGID here
-        Get<"ParPDGID">(track) = Get<"PDGID">(parentTrack);
+        F<"ParPDGID">(track) = F<"PDGID">(parentTrack);
         // Trace recursively
-        BuildReactionChainImpl(parentTrack, chain);
+        BuildReactionChainImpl(parTrkID, chain);
     }
     // Amend Zenith and phi here
-    const auto p{Mustard::VectorCast<Eigen::Vector3d>(Get<"p">(track))};
-    Get<"Zenith">(track) = 1 + p.z() / p.norm();
-    Get<"phi">(track) = std::atan2(p.x(), p.y()) + std::numbers::pi;
+    const auto p{Mustard::VectorCast<Eigen::Vector3d>(F<"p">(track))};
+    F<"Zenith">(track) = 1 + p.z() / p.norm();
+    F<"phi">(track) = std::atan2(p.x(), p.y()) + std::numbers::pi;
     // Insert into reaction chain
-    chain.emplace(&track);
+    chain.emplace(trackID);
 }
 
 } // namespace MusAirS

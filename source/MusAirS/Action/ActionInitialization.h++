@@ -18,13 +18,13 @@
 
 #pragma once
 
-#include "Mustard/Env/Memory/PassiveSingleton.h++"
+#include "Mustard/Env/ObjectRegistry/PassiveSingleton.h++"
 
 #include "G4VUserActionInitialization.hh"
 
 namespace MusAirS::inline Action {
 
-class ActionInitialization final : public Mustard::Env::Memory::PassiveSingleton<ActionInitialization>,
+class ActionInitialization final : public Mustard::Env::PassiveSingleton<ActionInitialization>,
                                    public G4VUserActionInitialization {
 public:
     ActionInitialization();

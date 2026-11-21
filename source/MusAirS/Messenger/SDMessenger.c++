@@ -18,12 +18,13 @@
 
 #include "MusAirS/Action/SteppingAction.h++"
 #include "MusAirS/Messenger/SDMessenger.h++"
+#include "MusAirS/SD/EarthSD.h++"
 
 #include "G4UIcmdWithABool.hh"
 #include "G4UIdirectory.hh"
 #include "G4UImanager.hh"
 
-#include "fmt/core.h"
+#include "fmt/format.h"
 
 namespace MusAirS::inline Messenger {
 

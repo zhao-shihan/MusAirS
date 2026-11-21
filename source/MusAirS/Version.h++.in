@@ -25,12 +25,12 @@
 namespace MusAirS {
 
 enum struct Version : int {
-    Major = @MusAirS_VERSION_MAJOR@,
-    Minor = @MusAirS_VERSION_MINOR@,
-    Patch = @MusAirS_VERSION_PATCH@
+    Major = @MUSAIRS_VERSION_MAJOR@,
+    Minor = @MUSAIRS_VERSION_MINOR@,
+    Patch = @MUSAIRS_VERSION_PATCH@
 };
 
-constexpr inline const char versionString[]{"@MusAirS_VERSION@"};
+constexpr inline const char versionString[]{"@MUSAIRS_VERSION@"};
 
 constexpr inline const char compilerIDString[]{"@CMAKE_CXX_COMPILER_ID@"};
 constexpr inline const char compilerVersionString[]{"@CMAKE_CXX_COMPILER_VERSION@"};

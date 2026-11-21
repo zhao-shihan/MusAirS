@@ -20,26 +20,23 @@
 
 #include "MusAirS/Action/PrimaryGeneratorAction.h++"
 #include "MusAirS/Action/TrackingAction.h++"
+#include "MusAirS/Data/PrimaryVertex.h++"
 #include "MusAirS/Data/Track.h++"
 #include "MusAirS/Messenger/AnalysisMessenger.h++"
 #include "MusAirS/SD/EarthSD.h++"
 
-#include "Mustard/Data/Output.h++"
-#include "Mustard/Data/Tuple.h++"
+#include "Mustard/Data/Container/ArcTupleVector.h++"
+#include "Mustard/Data/Processing/Writer.h++"
 #include "Mustard/Simulation/AnalysisBase.h++"
-
-#include "muc/hash_set"
 
 #include "G4Types.hh"
 
-#include "gsl/gsl"
+#include "gtl/phmap.hpp"
 
-#include <filesystem>
-#include <memory>
+#include <optional>
+#include <string>
 #include <unordered_map>
 #include <utility>
-
-class TFile;
 
 namespace MusAirS {
 
@@ -51,20 +48,23 @@ public:
     auto SubmitTrackData(typename TrackingAction::TrackDataType& data) -> void { fTrackData = &data; }
     auto SubmitEarthSDHitTrackID(const typename EarthSD::HitTrackIDDataType& hc) -> void { fEarthSDHitTrackIDData = &hc; }
 
+    auto WriterTarget(std::string target) -> void { fWriterTarget = std::move(target); }
+
 private:
     auto RunBeginUserAction(int runID) -> void override;
     auto EventEndUserAction() -> void override;
     auto RunEndUserAction(int) -> void override;
 
-    using ReactionChain = muc::flat_hash_set<Mustard::Data::Tuple<Data::Track>*>;
-    auto BuildReactionChain() const -> std::unordered_map<int, ReactionChain>;
-    auto BuildReactionChainImpl(Mustard::Data::Tuple<Data::Track>& track, ReactionChain& chain) const -> void;
+    using ReactionChain = gtl::flat_hash_set<int>;
+    auto BuildReactionChain() const -> gtl::flat_hash_map<int, ReactionChain>;
+    auto BuildReactionChainImpl(int trackID, ReactionChain& chain) const -> void;
 
 private:
     int fCurrentRunID;
+    std::optional<std::string> fWriterTarget;
 
-    std::optional<Mustard::Data::Output<Data::PrimaryVertex>> fPrimaryVertexOutput;
-    std::unordered_map<int, Mustard::Data::Output<Data::Track>> fReactionChainOutput;
+    std::optional<Mustard::Data::Writer<Data::PrimaryVertex>> fPrimaryVertexOutput;
+    std::unordered_map<int, Mustard::Data::Writer<Data::Track>> fReactionChainOutput;
 
     const typename PrimaryGeneratorAction::PrimaryVertexDataType* fPrimaryVertexData;
     typename TrackingAction::TrackDataType* fTrackData;

@@ -34,6 +34,7 @@ Simulation of cosmic ray air shower.
   - [Save primary vertex data](#save-primary-vertex-data)
   - [Who ordered neutrino?](#who-ordered-neutrino)
   - [Interpret the result](#interpret-the-result)
+  - [Output writer target](#output-writer-target)
   - [Bug tracking](#bug-tracking)
   - [Contributing](#contributing)
 
@@ -42,26 +43,54 @@ Simulation of cosmic ray air shower.
 
 ### Dependencies
 
-Required, built-in if not found (network or pre-downloaded source is required):
+MusAirS requires [Mustard (A modern, distributed offline software framework for HEP experiments)](https://github.com/zhao-shihan/Mustard) `0.26.1121` and the [dependencies](https://github.com/zhao-shihan/Mustard?tab=readme-ov-file#required-dependencies) of Mustard:
 
-1. [Mustard (A modern, distributed offline software framework for HEP experiments)](https://github.com/zhao-shihan/Mustard) (≥ 0.26.315, built-in if not found) and its [dependencies](https://github.com/zhao-shihan/Mustard?tab=readme-ov-file#dependencies).
+- ROOT ≥ 6.36.00 (components `Core Imt MathCore Hist Tree ROOTDataFrame ROOTNTuple RIO`),
+- Geant4 ≥ 11.0.0 (components `ui_all gdml vis_all`),
+- MPI ≥ 4.1,
+- CMake ≥ 3.24, Ninja (or GNU Make), and GCC ≥ 13 or Clang ≥ 19.
+
+Mustard is found with CPM: an installed Mustard is used when `find_package` finds one (pass its prefix if necessary), otherwise CPM downloads tag `v0.26.1121` into the source cache `.cache/cpm`. The first configure therefore needs network; later configures reuse the cache.
 
 ### How to build (GNU/Linux)
 
-In source directory, execute line-by-line:
+In the source directory, execute:
 ```sh
-mkdir build
-cd build
-cmake ..
-make -j8
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
 ```
+
+Useful build options:
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `MUSAIRS_UNITY_BUILD` / `MUSAIRS_FULL_UNITY_BUILD` | `ON` / `ON` | unity build for MusAirS only (unlimited batch) |
+| `MUSAIRS_ENABLE_IPO` | `ON` | LTO/IPO in Release, for MusAirS only |
+| `MUSAIRS_WERROR` | `OFF` | treat MusAirS compilation warnings as errors |
+
+An in-tree Mustard is configured with `MUSTARD_BUILD_TESTING=OFF`, `MUSTARD_UNITY_BUILD=OFF`, `MUSTARD_FULL_UNITY_BUILD=OFF` and `MUSTARD_USE_FFTW=OFF`; the other `MUSTARD_*` options keep their Mustard defaults.
 
 ### How to run
 
-In build directory, look help:
+In the build directory, look for help:
 ```sh
 ./MusAirS --help
 ```
+
+Useful runtime options (provided by Mustard's CLI):
+
+| Option | Meaning |
+| --- | --- |
+| `-v`, `--verbose` | raise verbosity (-2 quiet ... 2 verbose; repeatable, e.g. `-vv`) |
+| `-q`, `--quiet` | lower verbosity (repeatable; can be mixed with `-v`) |
+| `--lite` | do not print the Mustard banner |
+| `--rng <engine>` | random engine: `xoshiro256**`, `xoshiro256++`, `xoshiro256+`, `xoshiro512**` (default), `xoshiro512++`, `xoshiro512+`, `mt1993764`, `mt1993732`, `splitmix64` |
+| `--seed <int64>` | seed; `0` means a random device, otherwise deterministic (a predefined deterministic seed is used by default) |
+| `--physics-list <list>` | Geant4 reference physics list (default `FTFP_BERT`) |
+| `--import-dd`, `--export-dd`, `--emport-dd <yaml>` | detector description import/export/emport before `/run/initialize` |
+| `--mustard-version`, `--mustard-version-short` | print the Mustard version |
+
+The random number stream is unified: the environment installs one engine as both CLHEP's global engine and ROOT's `gRandom`, and it is reseeded with mutually exclusive seeds per `/run/beamOn` in MPI runs. Use `--seed` for reproducible production runs.
 
 #### Interactive session
 
@@ -82,8 +111,9 @@ Run in batch, sequentially:
 ```
 Parallel computing:
 ```sh
-mpirun -n <nproc> ./MusAirS <run_macro>
+mpiexec -n <nproc> ./MusAirS <run_macro>
 ```
+In a parallel run each MPI process writes its own output file inside a process-specific directory named after the requested file, with a `_p<rank>` suffix (e.g. `MusAirS/MusAirS_p0.root`); merge or reduce the per-rank files afterwards.
 
 ## Coordinate convention
 
@@ -144,9 +174,10 @@ There are some adjustable geometric and field parameters. See [the geometry desc
 You can adjust these parameters by importing the YAML file through macro commands. For example,
 ```sh
 /Mustard/Detector/Description/Import another.yaml # or,
-# Ixport = Export, import, and then export. This is useful for debugging.
-/Mustard/Detector/Description/Ixport another.yaml
+# Emport = Export, import, and then export. This is useful for debugging.
+/Mustard/Detector/Description/Emport another.yaml
 ```
+The same three operations are also available as the command-line options `--import-dd`, `--export-dd` and `--emport-dd`, which run before `/run/initialize`.
 
 ### Atmosphere modeling
 
@@ -290,7 +321,37 @@ Neutrino hits are not recorded by default (since there are to much neutrino). Yo
 
 ## Interpret the result
 
-// TODO
+The output ROOT file contains one directory per Geant4 run (`G4Run<id>`), and each directory contains the primaries (`PrimaryVertex`, if enabled) and one `ReactionChain(<PDG ID>)` collection per primary particle species that hit the ground. The reaction chain is ordered by track ID, so a parent always precedes its children.
+
+By default the analysis writes ROOT `RNTuple`s, which `ROOT::RDataFrame` reads directly by their directory-qualified name:
+
+```c++
+ROOT::RDataFrame df{"G4Run0/ReactionChain(22)", "MusAirS_p0.root"};
+const auto muonEnergy = df.Take<double>("Ek0");
+```
+
+To write `TTree`s instead (e.g. for `hadd` or `TTree::Draw`), set `MUSTARD_DATA_WRITER_DEFAULT_TARGET=TTree` in the environment, or run `/MusAirS/Analysis/WriterTarget TTree` before `/run/beamOn`; the same collection names are preserved. A `TTree` collection lives in a ROOT directory, so read it through the file and the directory, or use `TTree::Draw` directly:
+
+```c++
+TFile file("MusAirS_p0.root");
+auto tree = (TTree*)((TDirectoryFile*)file.Get("G4Run0"))->Get("ReactionChain(22)");
+tree->Draw("Ek0", "Weight > 0");
+
+ROOT::RDataFrame df{*tree};
+```
+
+When running in parallel, every MPI process writes its own file into a process-specific directory with a `_p<rank>` suffix (e.g. `MusAirS/MusAirS_p0.root`); merge or read the per-rank files together afterwards (e.g. `hadd` when writing `TTree`s). The output columns include the event and direction weights (`Weight`), so every distribution can be reweighted afterwards.
+
+## Output writer target
+
+The analysis writes ROOT `RNTuple`s by default. The output format can be changed either by the `MUSTARD_DATA_WRITER_DEFAULT_TARGET` environment variable (`RNTuple` or `TTree`) or at run time with
+
+```sh
+/MusAirS/Analysis/WriterTarget RNTuple  # default
+/MusAirS/Analysis/WriterTarget TTree    # one TTree per collection instead
+```
+
+This is the `Mustard::Data::Writer` backend selection of Mustard 0.26.1121.
 
 ## Bug tracking
 

@@ -24,7 +24,7 @@
 #include "MusAirS/Detector/Description/World.h++"
 #include "MusAirS/Messenger/NumericMessenger.h++"
 
-#include "Mustard/Env/Memory/PassiveSingleton.h++"
+#include "Mustard/Env/ObjectRegistry/PassiveSingleton.h++"
 
 #include "G4VUserDetectorConstruction.hh"
 
@@ -42,7 +42,7 @@ class EarthSD;
 
 inline namespace Action {
 
-class DetectorConstruction final : public Mustard::Env::Memory::PassiveSingleton<DetectorConstruction>,
+class DetectorConstruction final : public Mustard::Env::PassiveSingleton<DetectorConstruction>,
                                    public G4VUserDetectorConstruction {
 public:
     DetectorConstruction(bool checkOverlap);
@@ -54,9 +54,9 @@ public:
 
 public:
     using ProminentDescription = std::tuple<Detector::Description::Atmosphere,
-                                        Detector::Description::Earth,
-                                        Detector::Description::Field,
-                                        Detector::Description::World>;
+                                            Detector::Description::Earth,
+                                            Detector::Description::Field,
+                                            Detector::Description::World>;
 
 private:
     bool fCheckOverlap;

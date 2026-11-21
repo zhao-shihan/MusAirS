@@ -21,28 +21,18 @@
 #include "MusAirS/Data/Track.h++"
 #include "MusAirS/Messenger/AnalysisMessenger.h++"
 
-#include "Mustard/Data/Tuple.h++"
-#include "Mustard/Env/Memory/PassiveSingleton.h++"
-
-#include "muc/hash_map"
+#include "Mustard/Data/Container/ArcTupleHashMap.h++"
+#include "Mustard/Env/ObjectRegistry/PassiveSingleton.h++"
 
 #include "G4ThreeVector.hh"
 #include "G4UserTrackingAction.hh"
 
-#include <functional>
-#include <memory>
-#include <memory_resource>
-#include <utility>
-#include <vector>
-
 namespace MusAirS::inline Action {
 
-class TrackingAction final : public Mustard::Env::Memory::PassiveSingleton<TrackingAction>,
+class TrackingAction final : public Mustard::Env::PassiveSingleton<TrackingAction>,
                              public G4UserTrackingAction {
 public:
-    using TrackDataType = muc::flat_hash_map<int, Mustard::Data::Tuple<Data::Track>,
-                                             std::hash<int>, std::equal_to<int>,
-                                             std::pmr::polymorphic_allocator<std::pair<const int, Mustard::Data::Tuple<Data::Track>>>>;
+    using TrackDataType = Mustard::Data::ArcTupleHashMap<int, Data::Track>;
 
 public:
     TrackingAction();
@@ -50,7 +40,7 @@ public:
     auto PreUserTrackingAction(const G4Track* track) -> void override;
     auto PostUserTrackingAction(const G4Track* track) -> void override;
 
-    auto ClearTrackData() -> void { return fTrackData.clear(); }
+    auto ClearTrackData() -> void { fTrackData.clear(); }
     auto TrackData() -> auto& { return fTrackData; }
 
 private:
@@ -59,7 +49,6 @@ private:
 private:
     G4ThreeVector fVertexSigma;
 
-    std::pmr::unsynchronized_pool_resource fMemoryPool;
     TrackDataType fTrackData;
 
     AnalysisMessenger::Register<TrackingAction> fMessengerRegister;

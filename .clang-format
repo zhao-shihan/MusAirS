@@ -9,15 +9,14 @@ AlignEscapedNewlines: Left
 AlignOperands: Align
 AlignTrailingComments: true
 AllowAllArgumentsOnNextLine: true
-AllowAllConstructorInitializersOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: true
 AllowShortBlocksOnASingleLine: Always
 AllowShortCaseLabelsOnASingleLine: false
 AllowShortEnumsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: All
-AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortIfStatementsOnASingleLine: false
 AllowShortLambdasOnASingleLine: All
-AllowShortLoopsOnASingleLine: true
+AllowShortLoopsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: false
 AlwaysBreakTemplateDeclarations: Yes
@@ -43,61 +42,13 @@ EmptyLineAfterAccessModifier: Never
 EmptyLineBeforeAccessModifier: LogicalBlock
 FixNamespaceComments: true
 IncludeBlocks: Regroup
-IncludeCategories: 
-  # special
-  - Regex: '"Randomize\.hh"'
-    Priority: 4
-  - Regex: '"globals\.hh"'
-    Priority: 4
-  # general
-  - Regex: '"Mustard/.*\.h.*"'
-    Priority: 1
-  - Regex: '"CLHEP/.*"'
-    Priority: 2
-  - Regex: '"ROOT/.*"'
-    Priority: 3
-  - Regex: '"R.*\.hxx"'
-    Priority: 3
-  - Regex: '"R.*\.h"'
-    Priority: 3
-  - Regex: '".*/T.*\.h"'
-    Priority: 3
-  - Regex: '"T.*\.h"'
-    Priority: 3
-  - Regex: '"G4.*"'
-    Priority: 4
-  - Regex: '"backward\.hpp"'
-    Priority: 5
-  - Regex: '"yaml-cpp/.*"'
-    Priority: 6
-  - Regex: '"argparse/.*"'
-    Priority: 7
-  - Regex: '"Eigen/.*"'
-    Priority: 8
-  - Regex: '"gsl.*\.h"'
-    Priority: 9
-  - Regex: '"mpi.*\.h"'
-    Priority: 10
-  - Regex: '"muc/.*"'
-    Priority: 11
-  - Regex: '"envparse/.*"'
-    Priority: 12
-  - Regex: '"gsl/.*"'
-    Priority: 13
-  - Regex: '"fmt/.*\.h"'
-    Priority: 14
-  # very general
-  - Regex: '".*"'
-    Priority: 0
-  - Regex: '<.*>'
-    Priority: 15
 IndentAccessModifiers: false
 IndentCaseBlocks: false
 IndentCaseLabels: false
 IndentExternBlock: AfterExternBlock
 IndentGotoLabels: false
 IndentPPDirectives: AfterHash
-IndentRequires: true
+IndentRequiresClause: true
 IndentWidth: 4
 IndentWrappedFunctionNames: false
 KeepEmptyLinesAtTheStartOfBlocks: true
@@ -110,6 +61,9 @@ PackConstructorInitializers: Never
 PointerAlignment: Left
 ReferenceAlignment: Left
 ReflowComments: true
+RequiresClausePosition: OwnLineWithBrace
+RemoveEmptyLinesInUnwrappedLines: true
+RequiresExpressionIndentation: OuterScope
 SeparateDefinitionBlocks: Leave
 ShortNamespaceLines: 0
 SortIncludes: CaseSensitive
@@ -141,3 +95,95 @@ SpacesInSquareBrackets: false
 Standard: Latest
 TabWidth: 4
 UseTab: Never
+
+IncludeCategories:
+  # MusAirS project headers first
+  - Regex: '"MusAirS/.*\.h.*"'
+    Priority: 0
+    CaseSensitive: true
+  # CLHEP
+  - Regex: '"CLHEP/.*"'
+    Priority: 2
+    CaseSensitive: true
+  # CLHEP headers that must come after ROOT and before G4 (kept from the
+  # original MusAirS configuration)
+  - Regex: '"Randomize\.hh"'
+    Priority: 4
+    CaseSensitive: true
+  - Regex: '"globals\.hh"'
+    Priority: 4
+    CaseSensitive: true
+  # Geant4
+  - Regex: '"G4.*"'
+    Priority: 4
+    CaseSensitive: true
+  # yaml-cpp / argparse / gtl / Eigen (Mustard's public dependencies)
+  - Regex: '"yaml-cpp/.*"'
+    Priority: 5
+    CaseSensitive: true
+  - Regex: '"argparse/.*"'
+    Priority: 6
+    CaseSensitive: true
+  - Regex: '"gtl/.*\.hpp"'
+    Priority: 7
+    CaseSensitive: true
+  - Regex: '"Eigen/.*"'
+    Priority: 8
+    CaseSensitive: true
+  - Regex: '"unsupported/Eigen/.*"'
+    Priority: 8
+    CaseSensitive: true
+  # GSL (C), mp1, MPI, muc, envparse, GSL (Microsoft), fmt
+  - Regex: '"gsl.*\.h"'
+    Priority: 9
+    CaseSensitive: true
+  - Regex: '"mp1/mp1.hpp"'
+    Priority: 10
+    CaseSensitive: true
+  - Regex: '"mpi.*\.h"'
+    Priority: 11
+    CaseSensitive: true
+  - Regex: '"muc/.*"'
+    Priority: 12
+    CaseSensitive: true
+  - Regex: '"envparse/.*\.h.*"'
+    Priority: 13
+    CaseSensitive: true
+  - Regex: '"gsl/.*"'
+    Priority: 14
+    CaseSensitive: true
+  - Regex: '"fmt/.*\.h"'
+    Priority: 15
+    CaseSensitive: true
+  # ROOT
+  - Regex: '"ROOT/.*"'
+    Priority: 3
+    CaseSensitive: true
+  - Regex: '"R.*\.hxx"'
+    Priority: 3
+    CaseSensitive: true
+  - Regex: '"R.*\.h"'
+    Priority: 3
+    CaseSensitive: true
+  - Regex: '".*/T.*\.h"'
+    Priority: 3
+    CaseSensitive: true
+  - Regex: '"T.*\.h"'
+    Priority: 3
+    CaseSensitive: true
+  - Regex: '"Fit/.*\.h"'
+    Priority: 3
+    CaseSensitive: true
+  - Regex: '"Math/.*\.h"'
+    Priority: 3
+    CaseSensitive: true
+  - Regex: '"Minuit2/.*\.h"'
+    Priority: 3
+    CaseSensitive: true
+  # very general
+  - Regex: '".*"'
+    Priority: 1
+    CaseSensitive: true
+  - Regex: '<.*>'
+    Priority: 16
+    CaseSensitive: true

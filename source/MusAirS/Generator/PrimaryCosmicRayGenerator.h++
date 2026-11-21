@@ -38,7 +38,7 @@ class TH1;
 
 namespace MusAirS::inline Generator {
 
-namespace detail {
+namespace impl {
 
 struct Spectrum {
     std::shared_ptr<TF1> function;
@@ -51,7 +51,7 @@ struct Spectrum {
     explicit operator bool() const { return function != nullptr; }
 };
 
-} // namespace detail
+} // namespace impl
 
 class PrimaryCosmicRayGenerator : public G4VPrimaryGenerator {
 public:
@@ -113,8 +113,8 @@ private:
 private:
     auto ValidateEnergySpectrumForSampling() const -> void;
     auto ValidateEnergyRange(double eMin, double eMax) const -> void;
-    auto SetupEnergySpectrum(detail::Spectrum spectrum) -> void;
-    auto SpectrumIntegral(detail::Spectrum& spectrum, double xMin, double xMax, int nPoint, bool logGrid, SpectrumIntegralCache& cache) -> double;
+    auto SetupEnergySpectrum(impl::Spectrum spectrum) -> void;
+    auto SpectrumIntegral(impl::Spectrum& spectrum, double xMin, double xMax, int nPoint, bool logGrid, SpectrumIntegralCache& cache) -> double;
 
     auto SampleEnergy() -> std::pair<double, double>;
     auto SampleDirection(double minCosTheta) -> std::pair<G4ThreeVector, double>;
@@ -122,19 +122,19 @@ private:
 private:
     G4ParticleDefinition* fParticle;
 
-    detail::Spectrum fEnergySpectrum;
+    impl::Spectrum fEnergySpectrum;
     int fNEnergySpectrumPoint;
     double fIntrinsicMinEnergy;
     double fIntrinsicMaxEnergy;
     SpectrumIntegralCache fEnergySpectrumIntegral;
     enum EnergySamplingMode fEnergySamplingMode;
-    detail::Spectrum fCustomBiasedEnergySpectrum;
+    impl::Spectrum fCustomBiasedEnergySpectrum;
     SpectrumIntegralCache fCustomBiasedEnergyIntegral;
 
     enum DirectionSamplingMode fDirectionSamplingMode;
     double fZenithBiasExponent;
     int fNDirectionSpectrumPoint;
-    detail::Spectrum fCustomBiasedDirectionSpectrum;
+    impl::Spectrum fCustomBiasedDirectionSpectrum;
     SpectrumIntegralCache fCustomBiasedDirectionIntegral;
 
     PrimaryCosmicRayGeneratorMessenger::Register<PrimaryCosmicRayGenerator> fMessengerRegister;

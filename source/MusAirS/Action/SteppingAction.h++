@@ -21,7 +21,7 @@
 #include "MusAirS/Messenger/ActionMessenger.h++"
 #include "MusAirS/Messenger/SDMessenger.h++"
 
-#include "Mustard/Env/Memory/PassiveSingleton.h++"
+#include "Mustard/Env/ObjectRegistry/PassiveSingleton.h++"
 
 #include "G4UserSteppingAction.hh"
 
@@ -31,7 +31,7 @@ class G4ParticleDefinition;
 
 namespace MusAirS::inline Action {
 
-class SteppingAction final : public Mustard::Env::Memory::PassiveSingleton<SteppingAction>,
+class SteppingAction final : public Mustard::Env::PassiveSingleton<SteppingAction>,
                              public G4UserSteppingAction {
 public:
     SteppingAction();

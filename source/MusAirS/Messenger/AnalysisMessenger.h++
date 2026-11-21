@@ -40,7 +40,7 @@ class AnalysisMessenger final : public Mustard::Geant4X::SingletonMessenger<Anal
                                                                             Analysis,
                                                                             TrackingAction,
                                                                             PrimaryGeneratorAction> {
-    friend Mustard::Env::Memory::SingletonInstantiator;
+    friend Mustard::Env::SingletonFactory;
 
 private:
     AnalysisMessenger();
@@ -52,6 +52,7 @@ public:
 private:
     std::unique_ptr<G4UIdirectory> fDirectory;
     std::unique_ptr<G4UIcmdWithABool> fSavePrimaryVertexData;
+    std::unique_ptr<G4UIcmdWithAString> fWriterTarget;
 };
 
 } // namespace Messenger

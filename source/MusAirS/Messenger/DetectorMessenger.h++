@@ -27,7 +27,7 @@ namespace MusAirS::inline Messenger {
 class DetectorMessenger final : public Mustard::Geant4X::DetectorMessenger<DetectorMessenger,
                                                                            DetectorConstruction,
                                                                            "MusAirS"> {
-    friend Mustard::Env::Memory::SingletonInstantiator;
+    friend Mustard::Env::SingletonFactory;
 
 private:
     DetectorMessenger() = default;

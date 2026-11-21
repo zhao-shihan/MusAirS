@@ -43,11 +43,11 @@ inline namespace Messenger {
 
 class PrimaryCosmicRayGeneratorMessenger final : public Mustard::Geant4X::SingletonMessenger<PrimaryCosmicRayGeneratorMessenger,
                                                                                              PrimaryCosmicRayGenerator> {
-    friend Mustard::Env::Memory::SingletonInstantiator;
+    friend Mustard::Env::SingletonFactory;
 
 private:
     PrimaryCosmicRayGeneratorMessenger();
-    ~PrimaryCosmicRayGeneratorMessenger() = default;
+    ~PrimaryCosmicRayGeneratorMessenger();
 
 public:
     auto SetNewValue(G4UIcommand* command, G4String value) -> void override;

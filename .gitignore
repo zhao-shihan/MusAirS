@@ -23,11 +23,11 @@
 **/temp/
 **/tmp/
 CMakeSettings.json
+cmake/CPM.cmake
 document/doxygen/html/
 document/doxygen/latex/
 document/doxygen/man/
 document/doxygen/rtf/
 document/doxygen/xml/
 install/
-thirdparty/
 source/MusAirS/Version.h++

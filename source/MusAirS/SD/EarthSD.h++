@@ -20,7 +20,7 @@
 
 #include "MusAirS/Messenger/SDMessenger.h++"
 
-#include "Mustard/Utility/NonCopyableBase.h++"
+#include "Mustard/Utility/ClassSemanticHelper.h++"
 
 #include "G4VSensitiveDetector.hh"
 
@@ -28,7 +28,7 @@
 
 namespace MusAirS::inline SD {
 
-class EarthSD : public Mustard::NonCopyableBase,
+class EarthSD : public Mustard::NoncopyableBase,
                 public G4VSensitiveDetector {
 public:
     using HitTrackIDDataType = std::vector<int>;

@@ -163,6 +163,8 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
     fNDirectionSpectrumPoint->AvailableForStates(G4State_Idle);
 }
 
+PrimaryCosmicRayGeneratorMessenger::~PrimaryCosmicRayGeneratorMessenger() = default;
+
 auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4String value) -> void {
     if (command == fParticle.get()) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
@@ -324,9 +326,13 @@ auto PrimaryCosmicRayGeneratorMessenger::ParseFileNameAndObjectName(std::string_
     std::vector<std::string_view> parameter;
     parameter.reserve(2);
     for (auto&& token : value | std::views::split(' ')) {
-        if (token.empty()) { continue; }
+        if (token.empty()) {
+            continue;
+        }
         parameter.emplace_back(token.begin(), token.end());
-        if (parameter.size() == 2) { return {parameter.front(), parameter.back()}; }
+        if (parameter.size() == 2) {
+            return {parameter.front(), parameter.back()};
+        }
     }
     return {};
 }

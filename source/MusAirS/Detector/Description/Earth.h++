@@ -23,7 +23,7 @@
 namespace MusAirS::Detector::Description {
 
 class Earth final : public Mustard::Detector::Description::DescriptionBase<Earth> {
-    friend Mustard::Env::Memory::SingletonInstantiator;
+    friend Mustard::Env::SingletonFactory;
 
 private:
     Earth();

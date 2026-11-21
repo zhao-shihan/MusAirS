@@ -19,8 +19,8 @@
 #include "MusAirS/Detector/Description/Atmosphere.h++"
 #include "MusAirS/Detector/Description/Earth.h++"
 
-#include "Mustard/Utility/LiteralUnit.h++"
 #include "Mustard/IO/PrettyLog.h++"
+#include "Mustard/Utility/LiteralUnit.h++"
 
 #include "G4SystemOfUnits.hh"
 
@@ -201,7 +201,7 @@ constexpr auto ISAMaxAltitude{90'000.0}; // [m] upper limit of the ISA model bel
 /// @brief Solve the ISA model at the given altitude in meter.
 /// @note The ISA model used here is only valid up to ISAMaxAltitude.
 auto ISASolve(double altitude) -> LouiEriksson::ISA<>::State {
-    if (altitude > ISAMaxAltitude) [[unlikely]] {
+    if (altitude > ISAMaxAltitude) {
         const auto message{fmt::format("Altitude {} m is above the upper limit of the ISA atmosphere model ({} m). "
                                        "Lower Atmosphere::MaxAltitude or use SliceMode Altitude.",
                                        altitude, ISAMaxAltitude)};
@@ -254,8 +254,8 @@ auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
             const auto [alt, converged]{
                 muc::find_root::brent([&, p = pressure[i]](auto z) { return CalculateP(z) - p; },
                                       zGround, *fMaxAltitude)};
-            if (not converged) [[unlikely]] {
-                const auto message{fmt::format("No altitude solution for atmosphere slice {} (P = {:.6g} Pa) in [{} m, {} m]",
+            if (not converged) {
+                const auto message{fmt::format("No altitude solution for atmosphere slice {} (P = {:.6g} Pa) in [{} m, {} m].",
                                                i, pressure[i] / pascal, zGround / m, *fMaxAltitude / m)};
                 Mustard::PrintError(message);
                 Mustard::Throw<std::runtime_error>(message);
@@ -295,7 +295,7 @@ void Atmosphere::ImportAllValue(const YAML::Node& node) {
             } else if (mode == "Pressure") {
                 fSliceMode = SliceMode::Pressure;
             } else {
-                Mustard::PrintError(fmt::format("Unknown slice mode '{}', skipping", mode));
+                Mustard::PrintError(fmt::format("Unknown slice mode '{}'; skipping.", mode));
             } }, "SliceMode");
     ImportValue(node, fNSlice, "NSlice");
 }

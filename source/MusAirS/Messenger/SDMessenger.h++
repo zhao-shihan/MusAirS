@@ -35,7 +35,7 @@ inline namespace Messenger {
 
 class SDMessenger final : public Mustard::Geant4X::SingletonMessenger<SDMessenger,
                                                                       EarthSD> {
-    friend Mustard::Env::Memory::SingletonInstantiator;
+    friend Mustard::Env::SingletonFactory;
 
 private:
     SDMessenger();
