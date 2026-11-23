@@ -111,6 +111,7 @@ private:
     };
 
 private:
+    auto GeneratePrimaryVertexImpl(G4Event* event) -> void;
     auto ValidateEnergySpectrumForSampling() const -> void;
     auto ValidateEnergyRange(double eMin, double eMax) const -> void;
     auto SetupEnergySpectrum(impl::Spectrum spectrum) -> void;

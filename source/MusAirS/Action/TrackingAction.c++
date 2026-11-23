@@ -18,7 +18,7 @@
 
 #include "MusAirS/Action/TrackingAction.h++"
 
-#include "Mustard/IO/PrettyLog.h++"
+#include "Mustard/Geant4X/Management/Exception.h++"
 
 #include "G4Event.hh"
 #include "G4EventManager.hh"
@@ -31,7 +31,6 @@
 
 #include <cmath>
 #include <numbers>
-#include <stdexcept>
 #include <string_view>
 
 namespace MusAirS::inline Action {
@@ -57,7 +56,7 @@ auto TrackingAction::UpdateTrackData(const G4Track& g4Track) -> void {
     const auto& step{*g4Track.GetStep()};
     const auto killerProcess{step.GetPostStepPoint()->GetProcessDefinedStep()};
     if (killerProcess == nullptr) [[unlikely]] {
-        Mustard::PrintWarning(fmt::format(
+        Mustard::Geant4X::Exception<JustWarning>(fmt::format(
             "Event {} track {} (PDG ID: {}) has no step-defining process and is not recorded.",
             eventID, trackID, particle.GetPDGEncoding()));
         return;
@@ -72,8 +71,10 @@ auto TrackingAction::UpdateTrackData(const G4Track& g4Track) -> void {
     }
 
     const auto [it, inserted]{fTrackData.try_emplace(trackID, Mustard::Data::MakeArcTuple<Data::Track>())};
-    if (not inserted) {
-        Mustard::Throw<std::runtime_error>(fmt::format("Track {} appeared twice. This should not happen.", trackID));
+    if (not inserted) [[unlikely]] {
+        Mustard::Geant4X::Exception<FatalException>(fmt::format(
+            "Track {} appeared twice. This should not happen.", trackID));
+        return;
     }
 
     auto& track{*it->second};

@@ -19,6 +19,8 @@
 #include "MusAirS/Generator/PrimaryCosmicRayGenerator.h++"
 #include "MusAirS/Messenger/PrimaryCosmicRayGeneratorMessenger.h++"
 
+#include "Mustard/Geant4X/Management/Exception.h++"
+
 #include "G4ApplicationState.hh"
 #include "G4UIcmdWithADouble.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"
@@ -27,13 +29,14 @@
 #include "G4UIcommand.hh"
 #include "G4UIdirectory.hh"
 #include "G4UIparameter.hh"
-#include "G4ios.hh"
 
-#include <exception>
+#include "fmt/format.h"
+
 #include <ranges>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace MusAirS::inline Messenger {
@@ -166,63 +169,55 @@ PrimaryCosmicRayGeneratorMessenger::PrimaryCosmicRayGeneratorMessenger() :
 PrimaryCosmicRayGeneratorMessenger::~PrimaryCosmicRayGeneratorMessenger() = default;
 
 auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4String value) -> void {
-    if (command == fParticle.get()) {
+    const auto deliver{[&](auto&& action) {
         Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
             try {
-                r.Particle(value);
+                action(r);
             } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
+                Mustard::Geant4X::Exception<JustWarning>(e.what());
             }
         });
+    }};
+
+    if (command == fParticle.get()) {
+        deliver([&](auto&& r) {
+            r.Particle(value);
+        });
     } else if (command == fEnergySpectrumFormula.get()) {
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.EnergySpectrum(value);
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        deliver([&](auto&& r) {
+            r.EnergySpectrum(value);
         });
     } else if (command == fEnergySpectrumHistogram.get()) {
         const auto [file, h]{ParseFileNameAndObjectName(value)};
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.template EnergySpectrum<TH1>(std::string{file}, std::string{h});
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        if (file.empty()) [[unlikely]] {
+            Mustard::Geant4X::Exception<JustWarning>(fmt::format(
+                "Command '{}' expects two parameters: <file> <object>.", command->GetCommandPath()));
+            return;
+        }
+        deliver([&](auto&& r) {
+            r.template EnergySpectrum<TH1>(std::string{file}, std::string{h});
         });
     } else if (command == fEnergySpectrumGraph.get()) {
         const auto [file, g]{ParseFileNameAndObjectName(value)};
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.template EnergySpectrum<TGraph>(std::string{file}, std::string{g});
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        if (file.empty()) [[unlikely]] {
+            Mustard::Geant4X::Exception<JustWarning>(fmt::format(
+                "Command '{}' expects two parameters: <file> <object>.", command->GetCommandPath()));
+            return;
+        }
+        deliver([&](auto&& r) {
+            r.template EnergySpectrum<TGraph>(std::string{file}, std::string{g});
         });
     } else if (command == fNEnergySpectrumPoint.get()) {
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.NEnergySpectrumPoint(fNEnergySpectrumPoint->GetNewIntValue(value));
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        deliver([&](auto&& r) {
+            r.NEnergySpectrumPoint(fNEnergySpectrumPoint->GetNewIntValue(value));
         });
     } else if (command == fMinEnergy.get()) {
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.MinEnergy(fMinEnergy->GetNewDoubleValue(value));
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        deliver([&](auto&& r) {
+            r.MinEnergy(fMinEnergy->GetNewDoubleValue(value));
         });
     } else if (command == fMaxEnergy.get()) {
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.MaxEnergy(fMaxEnergy->GetNewDoubleValue(value));
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        deliver([&](auto&& r) {
+            r.MaxEnergy(fMaxEnergy->GetNewDoubleValue(value));
         });
     } else if (command == fEnergySamplingMode.get()) {
         static const std::unordered_map<std::string_view, enum PrimaryCosmicRayGenerator::EnergySamplingMode> energySamplingMap{
@@ -231,38 +226,37 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
             {"LogUniformBiased", PrimaryCosmicRayGenerator::EnergySamplingMode::LogUniformBiased},
             {"CustomBiased",     PrimaryCosmicRayGenerator::EnergySamplingMode::CustomBiased    }
         };
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.EnergySamplingMode(energySamplingMap.at(value));
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        const auto mode{energySamplingMap.find(value)};
+        if (mode == energySamplingMap.end()) [[unlikely]] {
+            Mustard::Geant4X::Exception<JustWarning>(fmt::format("Unknown energy sampling mode '{}'.", value));
+            return;
+        }
+        deliver([&](auto&& r) {
+            r.EnergySamplingMode(mode->second);
         });
     } else if (command == fCustomBiasedEnergySpectrumFormula.get()) {
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.CustomBiasedEnergySpectrum(value);
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        deliver([&](auto&& r) {
+            r.CustomBiasedEnergySpectrum(value);
         });
     } else if (command == fCustomBiasedEnergySpectrumHistogram.get()) {
         const auto [file, h]{ParseFileNameAndObjectName(value)};
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.template CustomBiasedEnergySpectrum<TH1>(std::string{file}, std::string{h});
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        if (file.empty()) [[unlikely]] {
+            Mustard::Geant4X::Exception<JustWarning>(fmt::format(
+                "Command '{}' expects two parameters: <file> <object>.", command->GetCommandPath()));
+            return;
+        }
+        deliver([&](auto&& r) {
+            r.template CustomBiasedEnergySpectrum<TH1>(std::string{file}, std::string{h});
         });
     } else if (command == fCustomBiasedEnergySpectrumGraph.get()) {
         const auto [file, g]{ParseFileNameAndObjectName(value)};
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.template CustomBiasedEnergySpectrum<TGraph>(std::string{file}, std::string{g});
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        if (file.empty()) [[unlikely]] {
+            Mustard::Geant4X::Exception<JustWarning>(fmt::format(
+                "Command '{}' expects two parameters: <file> <object>.", command->GetCommandPath()));
+            return;
+        }
+        deliver([&](auto&& r) {
+            r.template CustomBiasedEnergySpectrum<TGraph>(std::string{file}, std::string{g});
         });
     } else if (command == fDirectionSamplingMode.get()) {
         static const std::unordered_map<std::string_view, enum PrimaryCosmicRayGenerator::DirectionSamplingMode> directionSamplingMap{
@@ -270,54 +264,45 @@ auto PrimaryCosmicRayGeneratorMessenger::SetNewValue(G4UIcommand* command, G4Str
             {"ZenithPowerBiased", PrimaryCosmicRayGenerator::DirectionSamplingMode::ZenithPowerBiased},
             {"CustomBiased",      PrimaryCosmicRayGenerator::DirectionSamplingMode::CustomBiased     }
         };
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.DirectionSamplingMode(directionSamplingMap.at(value));
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        const auto mode{directionSamplingMap.find(value)};
+        if (mode == directionSamplingMap.end()) [[unlikely]] {
+            Mustard::Geant4X::Exception<JustWarning>(fmt::format("Unknown direction sampling mode '{}'.", value));
+            return;
+        }
+        deliver([&](auto&& r) {
+            r.DirectionSamplingMode(mode->second);
         });
     } else if (command == fZenithBiasExponent.get()) {
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.ZenithBiasExponent(fZenithBiasExponent->GetNewDoubleValue(value));
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        deliver([&](auto&& r) {
+            r.ZenithBiasExponent(fZenithBiasExponent->GetNewDoubleValue(value));
         });
     } else if (command == fCustomBiasedDirectionSpectrumFormula.get()) {
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.CustomBiasedDirectionSpectrum(value);
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        deliver([&](auto&& r) {
+            r.CustomBiasedDirectionSpectrum(value);
         });
     } else if (command == fCustomBiasedDirectionSpectrumHistogram.get()) {
         const auto [file, h]{ParseFileNameAndObjectName(value)};
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.template CustomBiasedDirectionSpectrum<TH1>(std::string{file}, std::string{h});
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        if (file.empty()) [[unlikely]] {
+            Mustard::Geant4X::Exception<JustWarning>(fmt::format(
+                "Command '{}' expects two parameters: <file> <object>.", command->GetCommandPath()));
+            return;
+        }
+        deliver([&](auto&& r) {
+            r.template CustomBiasedDirectionSpectrum<TH1>(std::string{file}, std::string{h});
         });
     } else if (command == fCustomBiasedDirectionSpectrumGraph.get()) {
         const auto [file, g]{ParseFileNameAndObjectName(value)};
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.template CustomBiasedDirectionSpectrum<TGraph>(std::string{file}, std::string{g});
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        if (file.empty()) [[unlikely]] {
+            Mustard::Geant4X::Exception<JustWarning>(fmt::format(
+                "Command '{}' expects two parameters: <file> <object>.", command->GetCommandPath()));
+            return;
+        }
+        deliver([&](auto&& r) {
+            r.template CustomBiasedDirectionSpectrum<TGraph>(std::string{file}, std::string{g});
         });
     } else if (command == fNDirectionSpectrumPoint.get()) {
-        Deliver<PrimaryCosmicRayGenerator>([&](auto&& r) {
-            try {
-                r.NDirectionSpectrumPoint(fNDirectionSpectrumPoint->GetNewIntValue(value));
-            } catch (const std::runtime_error& e) {
-                G4cerr << e.what() << G4endl;
-            }
+        deliver([&](auto&& r) {
+            r.NDirectionSpectrumPoint(fNDirectionSpectrumPoint->GetNewIntValue(value));
         });
     }
 }

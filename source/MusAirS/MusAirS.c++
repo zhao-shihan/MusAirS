@@ -27,6 +27,7 @@
 #include "Mustard/CLI/Module/Geant4ReferencePhysicsListModule.h++"
 #include "Mustard/Env/Geant4Env.h++"
 #include "Mustard/Geant4X/Interface/MPIExecutive.h++"
+#include "Mustard/Geant4X/Management/Exception.h++"
 #include "Mustard/Geant4X/Physics/PionKaonDecayMakeSpinPhysics.h++"
 #include "Mustard/Geant4X/Run/MPIRunManager.h++"
 #include "Mustard/IO/Print.h++"
@@ -79,11 +80,13 @@ auto main(int argc, char* argv[]) -> int {
     physicsList->SetDefaultCutValue(1_km);
     physicsList->SetCutValue(3_m, "proton");
     // The default 10 us neutron tracking cut would kill every neutron in an air shower; use 10 ms instead
-    if (const auto neutronTrackingCut{const_cast<G4NeutronTrackingCut*>(
-            dynamic_cast<const G4NeutronTrackingCut*>(
-                physicsList->GetPhysics("neutronTrackingCut")))}) {
+    if (const auto neutronTrackingCut{const_cast<G4NeutronTrackingCut*>(dynamic_cast<const G4NeutronTrackingCut*>(
+            physicsList->GetPhysics("neutronTrackingCut")))}) [[likely]] {
         neutronTrackingCut->SetTimeLimit(10_ms);
         neutronTrackingCut->SetKineticEnergyLimit(300_MeV);
+    } else {
+        Mustard::Geant4X::MasterException<JustWarning>(
+            "The physics list has no 'neutronTrackingCut'; the default neutron tracking cut is not replaced.");
     }
     // Raise max energy
     G4HadronicParameters::Instance()->SetMaxEnergy(1_PeV);

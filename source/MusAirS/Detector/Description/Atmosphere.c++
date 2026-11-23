@@ -19,7 +19,7 @@
 #include "MusAirS/Detector/Description/Atmosphere.h++"
 #include "MusAirS/Detector/Description/Earth.h++"
 
-#include "Mustard/IO/PrettyLog.h++"
+#include "Mustard/Geant4X/Management/Exception.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
 
 #include "G4SystemOfUnits.hh"
@@ -33,9 +33,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
-#include <exception>
 #include <optional>
-#include <stdexcept>
 
 namespace MusAirS::Detector::Description {
 
@@ -73,47 +71,34 @@ public:
     static constexpr State s_DefaultState{101325.0, 1.225, 288.15};
 
     /**
-     * @brief Wrapper function for calculate() and pause()
+     * @brief Solve the ISA model at the given altitude.
      * @param[in] _height The altitude in meters
-     * @param[in,out] _state The atmospheric state at the given altitude
-     * @return true if able to calculate, else false
+     * @return The atmospheric state if the altitude is within the model, otherwise std::nullopt
      */
     static std::optional<State> TrySolve(const T& _height) noexcept {
 
-        std::optional<State> result;
-
-        try {
-
-            if (_height <= s_Alt[s_Alt.size() - 2U]) {
-
-                size_t ctr(0U);
-
-                State state{s_DefaultState};
-                Calculate(_height, state, ctr);
-
-                for (size_t i = 0U; i < s_A_Val.size(); ++i) {
-
-                    if (_height > s_Alt[ctr]) {
-
-                        if (ctr == 0U || ctr == 3U || ctr == 6U) {
-                            Pause(_height, state, ++ctr);
-                        } else {
-                            Calculate(_height, state, ++ctr);
-                        }
-                    }
-                }
-
-                result = state;
-            } else {
-                throw std::runtime_error("Altitude out of range!");
-            }
-        } catch (const std::exception& e) {
-            result = std::nullopt;
-
-            std::cerr << e.what() << std::endl;
+        if (not(_height <= s_Alt[s_Alt.size() - 2U])) {
+            return std::nullopt;
         }
 
-        return result;
+        size_t ctr(0U);
+
+        State state{s_DefaultState};
+        Calculate(_height, state, ctr);
+
+        for (size_t i = 0U; i < s_A_Val.size(); ++i) {
+
+            if (_height > s_Alt[ctr]) {
+
+                if (ctr == 0U || ctr == 3U || ctr == 6U) {
+                    Pause(_height, state, ++ctr);
+                } else {
+                    Calculate(_height, state, ++ctr);
+                }
+            }
+        }
+
+        return state;
     }
 
 private:
@@ -203,17 +188,20 @@ constexpr auto ISAMaxAltitude{90'000.0}; // [m] upper limit of the ISA model bel
 /// @brief Solve the ISA model at the given altitude in meter.
 /// @note The ISA model used here is only valid up to ISAMaxAltitude.
 auto ISASolve(double altitude) -> LouiEriksson::ISA<>::State {
-    if (altitude > ISAMaxAltitude) {
-        const auto message{fmt::format("Altitude {} m is above the upper limit of the ISA atmosphere model ({} m). "
-                                       "Lower Atmosphere::MaxAltitude or use SliceMode Altitude.",
-                                       altitude, ISAMaxAltitude)};
-        // The message of the following exception is printed by Mustard's terminate
-        // handler to stdout, which is buffered and lost on abort when the output is
-        // redirected, so report it to stderr as well
-        Mustard::PrintError(message);
-        Mustard::Throw<std::runtime_error>(message);
+    if (altitude > ISAMaxAltitude) [[unlikely]] {
+        Mustard::Geant4X::Exception<FatalErrorInArgument>(
+            fmt::format("Altitude {} m is above the upper limit of the ISA atmosphere model ({} m). "
+                        "Lower Atmosphere::MaxAltitude or use SliceMode Altitude.",
+                        altitude, ISAMaxAltitude));
+        return {};
     }
-    return LouiEriksson::ISA<>::TrySolve(altitude).value();
+    const auto state{LouiEriksson::ISA<>::TrySolve(altitude)};
+    if (not state) [[unlikely]] {
+        Mustard::Geant4X::Exception<FatalErrorInArgument>(
+            fmt::format("Cannot solve the ISA atmosphere model at altitude {} m.", altitude));
+        return {};
+    }
+    return *state;
 }
 
 } // namespace
@@ -227,6 +215,19 @@ Atmosphere::Atmosphere() :
     fStateSlice{this, [this] { return CalculateStateSlice(); }} {}
 
 auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
+    if (*fNSlice < 1) [[unlikely]] {
+        Mustard::Geant4X::Exception<FatalErrorInArgument>(
+            fmt::format("Atmosphere NSlice must be at least 1, but NSlice = {}.", *fNSlice));
+        return {};
+    }
+    if (not(std::isfinite(*fMaxAltitude) and *fMaxAltitude > Earth::Instance().GroundAltitude())) [[unlikely]] {
+        Mustard::Geant4X::Exception<FatalErrorInArgument>(
+            fmt::format("Atmosphere MaxAltitude must be finite and above the ground altitude, "
+                        "but MaxAltitude = {} m and GroundAltitude = {} m.",
+                        *fMaxAltitude / m, Earth::Instance().GroundAltitude() / m));
+        return std::vector<double>(*fNSlice); // Only reachable when G4 suppresses abortion; keep the result indexable.
+    }
+
     switch (fSliceMode) {
     case SliceMode::Altitude: {
         const auto zGround{Earth::Instance().GroundAltitude()};
@@ -256,11 +257,11 @@ auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
             const auto [alt, converged]{
                 muc::find_root::brent([&, p = pressure[i]](auto z) { return CalculateP(z) - p; },
                                       zGround, *fMaxAltitude)};
-            if (not converged) {
-                const auto message{fmt::format("No altitude solution for atmosphere slice {} (P = {:.6g} Pa) in [{} m, {} m].",
-                                               i, pressure[i] / pascal, zGround / m, *fMaxAltitude / m)};
-                Mustard::PrintError(message);
-                Mustard::Throw<std::runtime_error>(message);
+            if (not converged) [[unlikely]] {
+                Mustard::Geant4X::Exception<FatalException>(fmt::format(
+                    "No altitude solution for atmosphere slice {} (P = {:.6g} Pa) in [{} m, {} m].",
+                    i, pressure[i] / pascal, zGround / m, *fMaxAltitude / m));
+                return altitude;
             }
             altitude[i] = alt;
         }
@@ -273,6 +274,12 @@ auto Atmosphere::CalculateAltitudeSlice() const -> std::vector<double> {
 }
 
 auto Atmosphere::CalculateStateSlice() const -> std::vector<AtmoState> {
+    if (*fNSlice < 1) [[unlikely]] {
+        Mustard::Geant4X::Exception<FatalErrorInArgument>(fmt::format(
+            "Atmosphere NSlice must be at least 1, but NSlice = {}.", *fNSlice));
+        return {};
+    }
+
     constexpr auto CalculateState{
         [](double alt) -> AtmoState {
             const auto [p, rho, t]{ISASolve(alt / m)};
@@ -297,7 +304,8 @@ void Atmosphere::ImportAllValue(const YAML::Node& node) {
             } else if (mode == "Pressure") {
                 fSliceMode = SliceMode::Pressure;
             } else {
-                Mustard::PrintError(fmt::format("Unknown slice mode '{}'; skipping.", mode));
+                Mustard::Geant4X::MasterException<JustWarning>(fmt::format(
+                    "Unknown slice mode '{}'; keeping the previous mode.", mode));
             } }, "SliceMode");
     ImportValue(node, fNSlice, "NSlice");
 }

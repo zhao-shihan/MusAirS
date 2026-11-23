@@ -36,6 +36,10 @@ auto Atmosphere::Construct(bool checkOverlaps) -> void {
     const auto& earth{Description::Earth::Instance()};
     const auto& world{Description::World::Instance()};
 
+    // Validate and build the slices before placing anything. Without this,
+    // NSlice <= 0 would silently build a world with no atmosphere volume.
+    static_cast<void>(atmosphere.AltitudeSlice());
+
     switch (atmosphere.SliceMode()) {
     case Description::Atmosphere::SliceMode::Altitude: {
         const auto sliceThickness{(atmosphere.MaxAltitude() - earth.GroundAltitude()) / atmosphere.NSlice()};

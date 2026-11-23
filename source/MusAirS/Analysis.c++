@@ -20,6 +20,8 @@
 #include "MusAirS/Action/TrackingAction.h++"
 #include "MusAirS/Analysis.h++"
 
+#include "Mustard/Geant4X/Management/Exception.h++"
+
 #include "muc/algorithm"
 
 #include "fmt/format.h"
@@ -87,7 +89,13 @@ auto Analysis::RunEndUserAction(int) -> void {
 auto Analysis::BuildReactionChain() const -> gtl::flat_hash_map<int, ReactionChain> {
     gtl::flat_hash_map<int, ReactionChain> chain;
     for (auto trackID : fGroundHitTrackIDData) {
-        auto& track{*fTrackData->at(trackID)};
+        const auto it{fTrackData->find(trackID)};
+        if (it == fTrackData->end()) [[unlikely]] {
+            Mustard::Geant4X::Exception<FatalException>(
+                fmt::format("Run {}: ground hit track {} is not in the track data.", fCurrentRunID, trackID));
+            continue;
+        }
+        auto& track{*it->second};
         F<"KillProc">(track) = "<0|"; // track is killed at the ground
         BuildReactionChainImpl(trackID, chain[F<"PDGID">(track)]);
     }
@@ -95,9 +103,22 @@ auto Analysis::BuildReactionChain() const -> gtl::flat_hash_map<int, ReactionCha
 }
 
 auto Analysis::BuildReactionChainImpl(int trackID, ReactionChain& chain) const -> void {
-    auto& track{*fTrackData->at(trackID)};
+    const auto it{fTrackData->find(trackID)};
+    if (it == fTrackData->end()) [[unlikely]] {
+        Mustard::Geant4X::Exception<FatalException>(
+            fmt::format("Run {}: track {} is not in the track data.", fCurrentRunID, trackID));
+        return;
+    }
+    auto& track{*it->second};
     if (const auto parTrkID{F<"ParTrkID">(track)}; parTrkID != -1) {
-        auto& parentTrack{*fTrackData->at(parTrkID)};
+        const auto parentIt{fTrackData->find(parTrkID)};
+        if (parentIt == fTrackData->end()) [[unlikely]] {
+            Mustard::Geant4X::Exception<FatalException>(fmt::format(
+                "Run {}: parent track {} of track {} is not in the track data.",
+                fCurrentRunID, static_cast<int>(parTrkID), trackID));
+            return;
+        }
+        auto& parentTrack{*parentIt->second};
         // Amend parent PDGID here
         F<"ParPDGID">(track) = F<"PDGID">(parentTrack);
         // Trace recursively

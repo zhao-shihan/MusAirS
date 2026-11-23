@@ -19,7 +19,7 @@
 #include "MusAirS/Action/SteppingAction.h++"
 #include "MusAirS/Analysis.h++"
 
-#include "Mustard/IO/PrettyLog.h++"
+#include "Mustard/Geant4X/Management/Exception.h++"
 
 #include "G4Event.hh"
 #include "G4EventManager.hh"
@@ -47,7 +47,7 @@ auto SteppingAction::UserSteppingAction(const G4Step* step) -> void {
 
     if (track->GetCurrentStepNumber() >= fgNStepLimit) [[unlikely]] {
         track->SetTrackStatus(fStopAndKill);
-        Mustard::PrintWarning(fmt::format(
+        Mustard::Geant4X::Exception<JustWarning>(fmt::format(
             "Event {} track {} (PDG ID: {}) has more than {} steps, killing it (Ek = {}).",
             G4EventManager::GetEventManager()->GetConstCurrentEvent()->GetEventID(),
             track->GetTrackID(), track->GetParticleDefinition()->GetPDGEncoding(), fgNStepLimit,

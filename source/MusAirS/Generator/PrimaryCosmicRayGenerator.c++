@@ -22,6 +22,7 @@
 #include "MusAirS/Generator/PrimaryCosmicRayGenerator.h++"
 
 #include "Mustard/Env/MonteCarloEnv.h++"
+#include "Mustard/Geant4X/Management/Exception.h++"
 #include "Mustard/IO/PrettyLog.h++"
 #include "Mustard/Math/Random/Distribution/Uniform.h++"
 #include "Mustard/Utility/LiteralUnit.h++"
@@ -139,7 +140,7 @@ auto MakeSpectrum(const std::string& name, const TGraph& graph, int nPoint) -> i
 
 template<typename T>
 auto LoadSpectrum(const std::string& name, const std::string& fileName, const std::string& objectName, int nPoint) -> impl::Spectrum {
-    const auto file{std::unique_ptr<TFile>{TFile::Open(fileName.c_str())}};
+    const std::unique_ptr<TFile> file{TFile::Open(fileName.c_str())};
     if (file == nullptr) {
         Mustard::Throw<std::runtime_error>(fmt::format("Cannot open '{}'.", fileName));
     }
@@ -248,9 +249,10 @@ auto PrimaryCosmicRayGenerator::MinEnergy(double val) -> void {
         Mustard::Throw<std::runtime_error>(fmt::format("Minimum kinetic energy must be positive, but input = {}.", val));
     }
     const auto eMin{muc::clamp<"[]">(val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy)};
-    if (eMin != val) {
-        Mustard::MasterPrintWarning(fmt::format("Minimum kinetic energy {} MeV is outside the spectrum range [{}, {}] MeV and is clamped to {} MeV.",
-                                                val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy, eMin));
+    if (eMin != val) [[unlikely]] {
+        Mustard::Geant4X::MasterException<JustWarning>(fmt::format(
+            "Minimum kinetic energy {} MeV is outside the spectrum range [{}, {}] MeV and is clamped to {} MeV.",
+            val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy, eMin));
     }
     ValidateEnergyRange(eMin, fEnergySpectrum->GetXmax());
     fEnergySpectrum->SetRange(eMin, fEnergySpectrum->GetXmax());
@@ -259,9 +261,10 @@ auto PrimaryCosmicRayGenerator::MinEnergy(double val) -> void {
 
 auto PrimaryCosmicRayGenerator::MaxEnergy(double val) -> void {
     const auto eMax{muc::clamp<"[]">(val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy)};
-    if (eMax != val) {
-        Mustard::MasterPrintWarning(fmt::format("Maximum kinetic energy {} MeV is outside the spectrum range [{}, {}] MeV and is clamped to {} MeV.",
-                                                val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy, eMax));
+    if (eMax != val) [[unlikely]] {
+        Mustard::Geant4X::MasterException<JustWarning>(fmt::format(
+            "Maximum kinetic energy {} MeV is outside the spectrum range [{}, {}] MeV and is clamped to {} MeV.",
+            val, fIntrinsicMinEnergy, fIntrinsicMaxEnergy, eMax));
     }
     ValidateEnergyRange(fEnergySpectrum->GetXmin(), eMax);
     fEnergySpectrum->SetRange(fEnergySpectrum->GetXmin(), eMax);
@@ -340,6 +343,14 @@ template auto PrimaryCosmicRayGenerator::CustomBiasedDirectionSpectrum<TH1>(cons
 template auto PrimaryCosmicRayGenerator::CustomBiasedDirectionSpectrum<TGraph>(const std::string& fileName, const std::string& name) -> void;
 
 auto PrimaryCosmicRayGenerator::GeneratePrimaryVertex(G4Event* event) -> void {
+    try {
+        GeneratePrimaryVertexImpl(event);
+    } catch (const std::runtime_error& e) {
+        Mustard::Geant4X::Exception<RunMustBeAborted>(e.what());
+    }
+}
+
+auto PrimaryCosmicRayGenerator::GeneratePrimaryVertexImpl(G4Event* event) -> void {
     using namespace Mustard::LiteralUnit::MathConstantSuffix;
 
     const auto hMax{Detector::Description::Atmosphere::Instance().MaxAltitude()};
