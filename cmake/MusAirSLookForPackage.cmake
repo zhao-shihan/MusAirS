@@ -34,7 +34,7 @@ include(CPM)
 
 # Mustard. OPTIONS only configure an in-tree build of Mustard; they are ignored
 # when an installed Mustard is found, whose configuration is already fixed.
-set(MUSAIRS_MUSTARD_MINIMUM_REQUIRED 0.26.1121)
+set(MUSAIRS_MUSTARD_MINIMUM_REQUIRED 0.26.1123)
 CPMFindPackage(
     NAME Mustard
     GITHUB_REPOSITORY zhao-shihan/Mustard

@@ -54,7 +54,7 @@ cmake_dependent_option(MUSAIRS_UNITY_BUILD "Build MusAirS with unity build techn
 # Check compiler
 # =============================================================================
 
-# Keep in sync with Mustard 0.26.1121 (MUSTARD_MINIMUM_*_VERSION in Mustard's
+# Keep in sync with Mustard 0.26.1123 (MUSTARD_MINIMUM_*_VERSION in Mustard's
 # CMakeLists.txt). MusAirS must not be built with a compiler Mustard rejects.
 set(MUSAIRS_MINIMUM_GCC_VERSION 13)
 set(MUSAIRS_MINIMUM_CLANG_VERSION 19)
