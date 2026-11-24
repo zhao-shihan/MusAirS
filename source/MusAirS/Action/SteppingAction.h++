@@ -39,7 +39,7 @@ public:
 private:
     const G4VPhysicalVolume* fGroundPhysicalVolume;
 
-    static constexpr auto fgNStepLimit{10'000'000};
+    static constexpr auto fgNStepLimit{1'000'000};
 };
 
 } // namespace MusAirS::inline Action

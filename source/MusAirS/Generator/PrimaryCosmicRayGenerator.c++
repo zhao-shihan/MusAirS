@@ -235,8 +235,8 @@ template auto PrimaryCosmicRayGenerator::EnergySpectrum<TH1>(const std::string& 
 template auto PrimaryCosmicRayGenerator::EnergySpectrum<TGraph>(const std::string& fileName, const std::string& name) -> void;
 
 auto PrimaryCosmicRayGenerator::NEnergySpectrumPoint(int n) -> void {
-    if (not(n >= 10 and n <= 10'000'000)) {
-        Mustard::Throw<std::runtime_error>(fmt::format("Energy spectrum NPoint must be between 10 and 10000000, but n = {}.", n));
+    if (not(n >= 10 and n <= 1'000'000)) {
+        Mustard::Throw<std::runtime_error>(fmt::format("Energy spectrum NPoint must be between 10 and 1000000, but n = {}.", n));
     }
     if (fEnergySpectrum) {
         fEnergySpectrum->SetNpx(n);
@@ -288,8 +288,8 @@ auto PrimaryCosmicRayGenerator::ZenithBiasExponent(double n) -> void {
 }
 
 auto PrimaryCosmicRayGenerator::NDirectionSpectrumPoint(int n) -> void {
-    if (not(n >= 10 and n <= 10'000'000)) {
-        Mustard::Throw<std::runtime_error>(fmt::format("Direction spectrum NPoint must be between 10 and 10000000, but n = {}.", n));
+    if (not(n >= 10 and n <= 1'000'000)) {
+        Mustard::Throw<std::runtime_error>(fmt::format("Direction spectrum NPoint must be between 10 and 1000000, but n = {}.", n));
     }
     fNDirectionSpectrumPoint = n;
 }
