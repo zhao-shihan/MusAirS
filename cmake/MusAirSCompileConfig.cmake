@@ -20,7 +20,7 @@
 # MusAirS at C++20
 # =============================================================================
 
-# Mustard 0.26.1123 requires C++20 without compiler extensions. The requirement
+# Mustard 0.26.1127 requires C++20 without compiler extensions. The requirement
 # is not exported through the Mustard::Mustard interface, so MusAirS must set it
 # itself (an in-tree Mustard sets the same values before its own targets).
 set(CMAKE_CXX_STANDARD 20 CACHE STRING "C++ standard.")
@@ -61,7 +61,7 @@ set(MUSAIRS_PRIVATE_COMPILE_DEFINITIONS "")
 # Compile warnings for MusAirS
 # =============================================================================
 
-# Mustard 0.26.1123 moved its warning flags from the public to the private
+# Mustard 0.26.1127 moved its warning flags from the public to the private
 # interface, so a consumer no longer inherits them: MusAirS must set its own.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     list(APPEND MUSAIRS_PRIVATE_COMPILE_OPTIONS -Wall -Wextra -Wduplicated-cond -Wnon-virtual-dtor -pedantic -Wundef -Wunused-macros)
@@ -93,7 +93,7 @@ endif()
 # Definitions propagated by Mustard::Mustard
 # =============================================================================
 
-# Nothing must be duplicated here. Mustard 0.26.1123 exports its public compile
+# Nothing must be duplicated here. Mustard 0.26.1127 exports its public compile
 # definitions (OMPI_SKIP_MPICXX, MPICH_SKIP_MPICXX, EIGEN_DONT_PARALLELIZE,
 # EIGEN_FFTW_DEFAULT when MUSTARD_USE_FFTW is on, MUSTARD_USE_G4VIS, ...) and
 # its public warning suppressions for Eigen/GTL through the imported target.

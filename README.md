@@ -42,14 +42,14 @@ Simulation of cosmic ray air shower.
 
 ### Dependencies
 
-MusAirS requires [Mustard](https://github.com/zhao-shihan/Mustard) `0.26.1123` and its [dependencies](https://github.com/zhao-shihan/Mustard?tab=readme-ov-file#required-dependencies):
+MusAirS requires [Mustard](https://github.com/zhao-shihan/Mustard) `0.26.1127` and its [dependencies](https://github.com/zhao-shihan/Mustard?tab=readme-ov-file#required-dependencies):
 
 - ROOT ≥ 6.36.00 (components `Core Imt MathCore Hist Tree ROOTDataFrame ROOTNTuple RIO`),
 - Geant4 ≥ 11.0.0 (components `ui_all gdml vis_all`),
 - MPI ≥ 4.1,
 - CMake ≥ 3.25, Ninja (or GNU Make), and GCC ≥ 13, Clang ≥ 19, IntelLLVM ≥ 2025 or MSVC ≥ 19.50.
 
-MusAirS finds Mustard with CPM. An installed Mustard is used when `find_package` finds one; otherwise CPM downloads tag `v0.26.1123` into the source cache `.cache/cpm`. The first configure needs network, and later configures reuse the cache.
+MusAirS finds Mustard with CPM. An installed Mustard is used when `find_package` finds one; otherwise CPM downloads tag `v0.26.1127` into the source cache `.cache/cpm`. The first configure needs network, and later configures reuse the cache.
 
 ### How to build (GNU/Linux)
 
